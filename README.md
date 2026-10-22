@@ -52,9 +52,33 @@ Students can't use Blackboard's official API without approval from their school'
 
 ## Roadmap
 
-The hub is built as separate modules so new features can be added over time. Planned ideas include a weekly digest, course file organiser and study packs.
+**Stage 1: easy to start (in progress)**
 
-后续会以模块的形式持续加入新功能，例如每周学习简报、课件整理和复习资料包。
+- [x] One-click sign-in through a pop-up browser window, with silent renewal
+- [x] blackboard-mcp bundled in, nothing else to download
+- [x] Course file downloader: pick files and a folder (a USB drive works), organised by course, with text exports for AI tools
+- [ ] Portable zip: download, unzip, double-click, no Node.js install
+- [ ] First-run guide, with an FAQ page you can open any time
+- [ ] Final README with step-by-step screenshots
+
+**Stage 2: next**
+
+- New UI design and more modules (weekly digest, study packs)
+- AI Q&A over your course files, using your own API key
+
+**第一阶段：零门槛上手（进行中）**
+
+- [x] 弹窗一键登录，过期后自动续期
+- [x] 内置 blackboard-mcp，不用另外下载
+- [x] 课程文件下载器：勾选文件、选择保存位置（可以是 U 盘），按课程整理，可导出给 AI 用的文字版
+- [ ] 便携压缩包：下载、解压、双击即用，不用装 Node.js
+- [ ] 新手引导，常见问题随时可查
+- [ ] README 配图版使用说明定稿
+
+**第二阶段：之后**
+
+- 全新界面设计，加入更多模块（每周学习简报、复习资料包）
+- 接入 AI，用你自己的 API Key 对课程资料答疑
 
 ## Features
 
