@@ -6,7 +6,7 @@ import { extname, join } from 'node:path';
 import { exec, execFile } from 'node:child_process';
 import * as bb from './lib/bb.js';
 import { toIcs } from './lib/ics.js';
-import { demoChecklist, demoDownload, demoFiles, demoOverview, demoStatus } from './lib/demo.js';
+import { demoChecklist, demoDownload, demoFiles, demoMessages, demoOverview, demoStatus, demoThread } from './lib/demo.js';
 import { alreadyThere, planPaths } from './lib/downloader.js';
 import { checkDownloadDir, checkDurations, loadSettings, saveSettings } from './lib/settings.js';
 import { durations } from './lib/status.js';
@@ -18,7 +18,7 @@ const HOST = '127.0.0.1';
 const PUBLIC = join(import.meta.dirname, 'public');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml' };
 // Rules the page and the server share, served from lib/.
-const SHARED = new Set(['status.js', 'checklist-rows.js']);
+const SHARED = new Set(['status.js', 'checklist-rows.js', 'message-view.js']);
 const ALLOWED_HOSTS = new Set([`127.0.0.1:${PORT}`, `localhost:${PORT}`]);
 
 // The checklist is local data; demo mode keeps it in memory and writes nothing.
@@ -51,6 +51,17 @@ async function getOverview(force) {
   if (!force && cache && Date.now() - cache.at < CACHE_MS) return cache.data;
   const data = await withSession(() => bb.overview());
   cache = { at: Date.now(), data };
+  return data;
+}
+
+// Messages are one request per course; cache the thread list like the overview.
+let messagesCache;
+
+async function getMessages(force) {
+  if (DEMO) return demoMessages();
+  if (!force && messagesCache && Date.now() - messagesCache.at < CACHE_MS) return messagesCache.data;
+  const data = await withSession(() => bb.messageThreads());
+  messagesCache = { at: Date.now(), data };
   return data;
 }
 
@@ -288,6 +299,14 @@ const server = createServer(async (req, res) => {
       return send(res, 200, toIcs(todo), 'text/calendar; charset=utf-8', {
         'Content-Disposition': 'attachment; filename="blackboard-deadlines.ics"',
       });
+    }
+    if (url.pathname === '/api/messages' && req.method === 'GET') {
+      return send(res, 200, await getMessages(url.searchParams.has('refresh')));
+    }
+    const threadRoute = /^\/api\/messages\/(_\d+_\d+)\/([\w-]{1,64})$/.exec(url.pathname);
+    if (threadRoute && req.method === 'GET') {
+      const [, courseId, threadId] = threadRoute;
+      return send(res, 200, DEMO ? demoThread(courseId, threadId) : await withSession(() => bb.messageThread(courseId, threadId)));
     }
     if (url.pathname === '/api/config') {
       return send(res, 200, { demo: DEMO, baseUrl: DEMO ? 'https://demo.blackboard.com' : await bb.savedBaseUrl() });

@@ -44,6 +44,10 @@
 
 清单只保存在这台电脑上，换电脑看不到。
 
+### 课程消息
+
+**课程消息** 把老师和同学在各门课里发给你的 Blackboard 消息集中在一起，最新的在最上面，未读的标着"未读"。点一条就能展开看完整对话；要回复，点 **在 Blackboard 中打开**。可以只看未读，也可以按课程筛选。面板只读取消息，不会替你把消息标成已读。
+
 ### 下载课程文件
 
 在面板最下面的 **课程文件** 里，可以把课件一次性下载到你选的文件夹（比如 U 盘），方便交给 AI 工具或离线复习。
@@ -101,6 +105,7 @@ Students can't use Blackboard's official API without approval from their school'
 - **Announcements** from all open courses, newest first.
 - **Grades** per course, with percentages.
 - **Checklist**: opened assignments appear by themselves and tick when Blackboard shows them submitted (a manual tick is only a local mark); below, the student's own to-dos with optional due dates, edit in place, and undo after delete. Saved locally only, and still available while signed out.
+- **Course messages**: message threads from every open course in one list, newest first, with unread counts, filters by unread and course, and the full thread readable in place as plain text. Read-only: replying happens in Blackboard.
 - **Calendar export**: download an `.ics` file and import it into Google Calendar, Outlook or Apple Calendar. Each deadline has reminders 1 day and 3 days before, and a link back to the assignment.
 - **Course file downloader**: pick files course by course and save them to any folder (a USB drive works), organised by course and Blackboard folder. Files already there are skipped, public Google Docs/Slides/Sheets links are saved as PDF, and an optional `.txt` text export of each PDF, Word and PowerPoint file is ready to hand to an AI tool.
 - **One-click sign-in**: a pop-up browser window, with your school login remembered and silent renewal.

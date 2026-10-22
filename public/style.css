@@ -49,7 +49,7 @@ main { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)
 .tl-help { margin: 8px 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--muted); }
 .todo-hint { margin: 0 0 10px; }
 /* 清单 */
-#main.signed-out > .card:not(#checklistCard) { display: none; }
+#main.signed-out > .card:not(#checklistCard):not(#messagesCard) { display: none; }
 .cl-head { margin: 14px 0 6px; font-size: 14px; }
 .cl-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-top: 1px solid var(--line); }
 .cl-row:first-child { border-top: 0; }
@@ -81,6 +81,36 @@ input[type=checkbox].round:disabled { cursor: not-allowed; }
 .undo-bar { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 10; max-width: calc(100% - 32px);
   background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, .25); font-size: 14px; }
 .undo-bar button.link { color: inherit; font-weight: 600; font-size: 14px; }
+/* 课程消息 */
+.msg-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+.chips { display: inline-flex; gap: 6px; }
+.chip { padding: 4px 12px; border-radius: 999px; font-size: 13px; }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+#msgCourse { width: auto; flex: 1 1 160px; min-width: 0; margin: 0; padding: 5px 8px; font: 13px system-ui, "Microsoft YaHei", sans-serif;
+  border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--text); }
+.msg { border-top: 1px solid var(--line); padding: 8px 0; }
+.msg:first-child { border-top: 0; }
+.msg > summary { display: block; list-style: none; }
+.msg > summary::-webkit-details-marker { display: none; }
+.msg-top { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.msg-with { font-weight: 600; flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.rel-time { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.chev { color: var(--accent); font-size: 12px; white-space: nowrap; }
+.chev::before { content: "▸ 查看"; }
+.msg[open] .chev::before { content: "▾ 收起"; }
+.msg-preview { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.is-unread .msg-preview { color: var(--text); }
+.unread-tag { color: var(--blue); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.unread-tag .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--blue); margin-right: 4px; }
+.msg-thread { margin: 8px 0 4px; padding-left: 10px; border-left: 2px solid var(--line); }
+.msg-item { padding: 6px 0; }
+.msg-head { font-size: 13px; color: var(--muted); display: flex; gap: 6px; flex-wrap: wrap; align-items: baseline; }
+.msg-head b { color: var(--text); }
+.msg-item.mine .msg-head b { color: var(--accent); }
+.msg-text { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; }
+.msg-text.clamped { display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
+.msg-foot { margin-top: 6px; }
+.msg-foot .button { display: inline-block; font-size: 13px; padding: 5px 12px; }
 button.link { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; font-size: 13px; }
 .item { padding: 8px 0; border-top: 1px solid var(--line); }
 .item:first-of-type { border-top: 0; }

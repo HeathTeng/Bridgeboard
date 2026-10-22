@@ -1,5 +1,6 @@
 import { DEFAULTS, STATUSES, durations, statusLabel, statusOf, timeLeft } from './status.js';
 import { assignmentRows, sortRows } from './checklist-rows.js';
+import { courseOptions, filterThreads, relativeTime } from './message-view.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -100,7 +101,130 @@ setInterval(() => {
   renderAssignments();
   // Not while the student is typing in their own list.
   if (!document.activeElement?.closest('#clOwn')) renderOwn();
+  for (const s of document.querySelectorAll('.rel-time')) s.textContent = relativeTime(s.dataset.time || null);
 }, 60_000);
+
+// ---- 课程消息 ----
+
+let messageData = null; // { threads, unread }
+const msgFilter = { unreadOnly: false, courseId: '' };
+const threadCache = new Map(); // "courseId|threadId" -> messages, fetched when first opened
+const openThreads = new Set();
+const LONG_LINES = 6;
+const LONG_CHARS = 400;
+
+const note = (text) => el('p', { class: 'muted small' }, text);
+
+function timeSpan(iso) {
+  return el('span', { class: 'rel-time', 'data-time': iso ?? '', title: iso ? fmt.format(new Date(iso)) : '' }, relativeTime(iso));
+}
+
+function renderMessages() {
+  const box = $('messages');
+  $('msgTitle').textContent = messageData?.unread && signedIn ? `课程消息（${messageData.unread} 条未读）` : '课程消息';
+  $('msgControls').hidden = !signedIn || !messageData?.threads.length;
+  if (!signedIn) return box.replaceChildren(note('重新连接 Blackboard 后会显示消息。'));
+  if (!messageData) return box.replaceChildren(note('正在读取消息…'));
+  const { threads } = messageData;
+  if (!threads.length) return box.replaceChildren(note('还没有课程消息。老师或同学在 Blackboard 里给你发消息后，会出现在这里。'));
+
+  const options = courseOptions(threads);
+  if (!options.some((c) => c.id === msgFilter.courseId)) msgFilter.courseId = '';
+  $('msgCourse').replaceChildren(el('option', { value: '' }, '全部课程'), ...options.map((c) => el('option', { value: c.id }, c.name)));
+  $('msgCourse').value = msgFilter.courseId;
+  for (const b of document.querySelectorAll('#msgControls .chip')) {
+    b.setAttribute('aria-pressed', String((b.dataset.filter === 'unread') === msgFilter.unreadOnly));
+  }
+  const shown = filterThreads(threads, msgFilter);
+  if (!shown.length) return box.replaceChildren(note(msgFilter.unreadOnly ? '没有未读消息 🎉' : '这门课还没有消息。'));
+  box.replaceChildren(...shown.map(threadRow));
+}
+
+function threadRow(t) {
+  const key = `${t.courseId}|${t.id}`;
+  const body = el('div', { class: 'msg-thread' });
+  const row = el('details', { class: `msg${t.unread ? ' is-unread' : ''}` },
+    el('summary', {},
+      el('div', { class: 'msg-top' },
+        t.unread ? el('span', { class: 'unread-tag' }, el('span', { class: 'dot' }), `未读 ${t.unread}`) : null,
+        el('span', { class: 'msg-with' }, t.with),
+        timeSpan(t.time),
+        el('span', { class: 'chev' })),
+      el('div', { class: 'meta' }, `${t.course} · 最新：${t.from || '—'} · 共 ${t.total} 条`),
+      el('div', { class: 'msg-preview' }, t.preview)),
+    body);
+  row.addEventListener('toggle', () => {
+    if (row.open) {
+      openThreads.add(key);
+      showThread(t, body);
+    } else {
+      openThreads.delete(key);
+    }
+  });
+  if (openThreads.has(key)) row.open = true;
+  return row;
+}
+
+async function showThread(t, body) {
+  const key = `${t.courseId}|${t.id}`;
+  if (!threadCache.has(key)) {
+    body.replaceChildren(note('正在读取这段对话…'));
+    try {
+      const data = await api(`/api/messages/${encodeURIComponent(t.courseId)}/${encodeURIComponent(t.id)}`);
+      threadCache.set(key, data.messages);
+    } catch (err) {
+      return body.replaceChildren(el('p', { class: 'fail small' }, `没有读取成功：${err.message}。可以收起再点开重试。`));
+    }
+  }
+  const link = /^https:\/\//.test(t.link ?? '')
+    ? el('a', { href: t.link, target: '_blank', rel: 'noopener noreferrer', class: 'button' }, '在 Blackboard 中打开')
+    : note('（暂时没有 Blackboard 链接）');
+  body.replaceChildren(
+    ...threadCache.get(key).map(messageBlock),
+    el('div', { class: 'msg-foot' }, link,
+      note('要回复，请点「在 Blackboard 中打开」。在这里看过的消息，Blackboard 上仍会显示为未读，直到你在 Blackboard 里打开。')),
+  );
+}
+
+function messageBlock(m) {
+  const long = m.text.split('\n').length > LONG_LINES || [...m.text].length > LONG_CHARS;
+  const text = el('div', { class: `msg-text${long ? ' clamped' : ''}` }, m.text || '（没有文字内容）');
+  const more = long ? el('button', { type: 'button', class: 'link' }, '展开全文') : null;
+  more?.addEventListener('click', () => {
+    more.textContent = text.classList.toggle('clamped') ? '展开全文' : '收起';
+  });
+  return el('div', { class: `msg-item${m.mine ? ' mine' : ''}` },
+    el('div', { class: 'msg-head' },
+      el('b', {}, m.from || '—'),
+      m.time ? fmt.format(new Date(m.time)) : null,
+      m.unread ? el('span', { class: 'unread-tag' }, el('span', { class: 'dot' }), '未读') : null),
+    text,
+    more,
+    m.hasMedia ? note('这条消息里有图片或附件，请在 Blackboard 中查看。') : null);
+}
+
+async function loadMessages(refresh) {
+  if (refresh) threadCache.clear();
+  try {
+    messageData = await api(`/api/messages${refresh ? '?refresh' : ''}`);
+  } catch (err) {
+    messageData = null;
+    $('msgControls').hidden = true;
+    return $('messages').replaceChildren(el('p', { class: 'fail small' }, `消息没有读取成功：${err.message}。可以点右上角的「刷新」再试。`));
+  }
+  renderMessages();
+}
+
+for (const b of document.querySelectorAll('#msgControls .chip')) {
+  b.addEventListener('click', () => {
+    msgFilter.unreadOnly = b.dataset.filter === 'unread';
+    renderMessages();
+  });
+}
+$('msgCourse').addEventListener('change', () => {
+  msgFilter.courseId = $('msgCourse').value;
+  renderMessages();
+});
 
 // ---- 清单 ----
 
@@ -354,6 +478,7 @@ function showSignedOut() {
   $('main').hidden = false;
   $('main').classList.add('signed-out');
   renderAssignments();
+  renderMessages();
 }
 
 function renderAnnouncements(list) {
@@ -646,6 +771,10 @@ async function load(refresh = false) {
     $('main').classList.remove('signed-out');
     signedIn = true;
     renderAssignments();
+    // Messages load alongside the overview, so a slow course does not hold up the rest.
+    messageData = null;
+    renderMessages();
+    loadMessages(refresh);
     showBanner('正在读取 Blackboard 数据…');
     const data = await api(`/api/overview${refresh ? '?refresh' : ''}`);
     renderTodo(data.todo);
