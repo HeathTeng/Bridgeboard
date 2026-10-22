@@ -20,6 +20,12 @@ Someone who has never seen the hub opens it and knows what to do without reading
 - **Help button:** a 帮助 button in the header reopens the guide at page 1, and a 常见问题 link next to it (or in the footer) opens it straight at the FAQ page.
 - The guide is not shown again after it is finished or skipped once. Remember this in `~/.blackboard-study-hub/settings.json` (`guideSeen: true`), so it survives a new browser or profile.
 
+## Owner's notes (2026-10-22)
+
+- Every tip or hint text in the app starts with a small lightbulb icon (💡 or an equivalent inline SVG). The help button and the FAQ page use the same lightbulb, so the lightbulb always means "help".
+- The guide can be reopened at any time from the lightbulb help button.
+- Guide pages are data, not code: keep them in one file (for example `public/guide.js` exporting a list of pages with title, text and optional image), so adding a feature later means adding one page there.
+
 ## FAQ as the single source
 
 - `docs/FAQ.md` stays the only place the FAQ is written; the page reads it, so updating the file updates the app. Serve it from a read-only route (e.g. `GET /api/faq` returning the text) rather than exposing the whole `docs/` folder.
