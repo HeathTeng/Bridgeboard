@@ -17,7 +17,7 @@ A local web dashboard for Blackboard Learn Ultra, aimed at international student
 
 ## Who we design for
 
-Picture the user as extremely impatient, not technical at all, who reads nothing and must be taught everything from zero. For every feature: plain Chinese with no jargon, the explanation visible right where it is needed, empty and error states that say exactly what to do next, one obvious action, and protection against easy mistakes. When proposing a plan, list what such a user could get stuck on.
+Picture the user as extremely impatient, not technical at all, who reads nothing and must be taught everything from zero. For every feature: plain Chinese with no jargon, the explanation visible right where it is needed, empty and error states that say exactly what to do next, one obvious action, and protection against easy mistakes. When proposing a plan, list what such a user could get stuck on. This persona is for catching gaps, not for hiding information: real users are normal students, so keep full details visible (for example, always show full course names, which tell similar subjects apart).
 
 ## Rules
 
