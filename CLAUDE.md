@@ -30,8 +30,12 @@ A local web dashboard for Blackboard Learn Ultra, aimed at international student
 
 ## Roadmap
 
-Stage 1 (now), in order: pop-up Edge sign-in (done, needs real-school test) → bundle blackboard-mcp into vendor/ (done; rebuild with `npm run vendor`, keep vendor/THIRD-PARTY-NOTICES.txt in sync) → course file downloader (done, tested on a real account; not yet: attachments and files embedded in page bodies) → portable Windows zip via GitHub Actions Releases (done) → first-run guide with a always-available troubleshooting (FAQ) page → README "three steps to start".
+Order agreed with the owner (2026-10-22): **functional modules first, then UI design, then the first-run guide**, because the guide walks through every feature and would need redoing after each change.
 
-Stage 2: UI redesign and modules (weekly digest, study packs), AI Q&A with the student's own API key, then a public launch.
+- Done: pop-up sign-in with silent renewal; blackboard-mcp bundled in vendor/ (rebuild with `npm run vendor`, keep vendor/THIRD-PARTY-NOTICES.txt in sync); course file downloader (not yet: attachments and files embedded in page bodies); Windows portable zip via the Release workflow.
+- Next: the remaining functional modules (e.g. weekly digest, study packs, AI Q&A with the student's own API key). Keep their UI plain and consistent with the current page; no visual redesign yet.
+- Then: UI redesign, after walking through the whole dashboard with the owner and agreeing on their vision.
+- Then: first-run guide with the FAQ as its last page and an always-available help button (spec: `docs/dev/step5-onboarding.md`), then README screenshots, then a public launch.
+- Keep `docs/FAQ.md` current as features change, including the Windows run warnings (click 运行 / 更多信息 → 仍要运行).
 
 Progress is logged in the owner's GITHUB_PROGRESS.md.

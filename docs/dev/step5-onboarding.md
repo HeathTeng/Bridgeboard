@@ -1,4 +1,6 @@
-# Stage 1, step 5: first-run guide and help
+# First-run guide and help
+
+> On hold: the owner wants all functional modules and the UI redesign done first, so the guide is built once against the final page. Pages 2 to 4 below will need updating to match.
 
 Spec for Claude Code. Read CLAUDE.md first; its rules apply (zero dependencies, Chinese UI, no innerHTML for content).
 
