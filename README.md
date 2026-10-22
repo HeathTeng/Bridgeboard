@@ -80,11 +80,19 @@ Students can't use Blackboard's official API without approval from their school'
 - [x] Course file downloader: pick files and a folder (a USB drive works), organised by course, with text exports for AI tools
 - [x] Portable zip: download, unzip, double-click, no Node.js install
 
-**Stage 2: next**
+**Stage 2: everyday tools (in progress)**
 
-1. More modules (weekly digest, study packs) and AI Q&A over your course files, using your own API key
-2. A new UI design
-3. A first-run guide, with an FAQ page you can open any time, and a final illustrated README
+- [x] Five-colour deadlines with an adjustable timeline, and one-click links to each assignment in Blackboard
+- [x] Checklist: assignments add themselves when they open; your own to-dos below
+- [x] Course messages from every course in one place
+- [ ] Section navigation, a back-to-top button, and display settings (hide sections you don't use, short or full course names)
+- [ ] Strong phone reminders through Bark (iPhone) or ntfy (Android), opt-in
+- [ ] A new UI design
+- [ ] A first-run guide with an FAQ you can open any time, then the public launch
+
+**Later**
+
+- Course overview and study packs, AI Q&A over your course files with your own API key
 
 **第一阶段：零门槛上手（已完成）**
 
@@ -93,11 +101,19 @@ Students can't use Blackboard's official API without approval from their school'
 - [x] 课程文件下载器：勾选文件、选择保存位置（可以是 U 盘），按课程整理，可导出给 AI 用的文字版
 - [x] 便携压缩包：下载、解压、双击即用，不用装 Node.js
 
-**第二阶段：之后**
+**第二阶段：日常好用（进行中）**
 
-1. 加入更多模块（每周学习简报、复习资料包），接入 AI，用你自己的 API Key 对课程资料答疑
-2. 全新界面设计
-3. 新手引导（常见问题随时可查），README 配图版使用说明定稿
+- [x] 五色截止日期提醒，时间轴可拖动调整，点作业直达 Blackboard
+- [x] 清单：作业开放后自动加入，下面写自己的待办
+- [x] 课程消息：所有课程的消息集中在一处
+- [ ] 分区导航、回到顶部、显示设置（隐藏用不到的区域，课程名简短/完整切换）
+- [ ] 手机强提醒：Bark（iPhone）或 ntfy（安卓），可选开启
+- [ ] 全新界面设计
+- [ ] 新手引导（常见问题随时可查），然后正式发布
+
+**之后**
+
+- 课程概览和复习资料包，接入 AI，用你自己的 API Key 对课程资料答疑
 
 ## Features
 
