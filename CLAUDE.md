@@ -14,6 +14,10 @@ A local web dashboard for Blackboard Learn Ultra, aimed at international student
 - `start.bat` / `demo.bat`: double-click launchers for Windows. They use `runtime/node.exe` when present (portable zip), else `node` on PATH.
 - `scripts/build-portable.sh` + `.github/workflows/release.yml`: pushing a `v*` tag builds the Windows portable zip (app + node.exe, SHA-256 checked) and publishes it as a GitHub Release.
 
+## Who we design for
+
+Picture the user as extremely impatient, not technical at all, who reads nothing and must be taught everything from zero. For every feature: plain Chinese with no jargon, the explanation visible right where it is needed, empty and error states that say exactly what to do next, one obvious action, and protection against easy mistakes. When proposing a plan, list what such a user could get stuck on.
+
 ## Rules
 
 - **Read-only.** Never call Blackboard write operations (submit, quiz, mark reviewed). Never set `BLACKBOARD_MCP_ALLOW_WRITES`.
