@@ -6,6 +6,49 @@
 
 ![screenshot](docs/screenshot.png)
 
+## 新手使用步骤（Windows）
+
+不需要懂代码，按顺序做一次就好。
+
+**1. 安装 Node.js（只需一次）**
+打开 [nodejs.org](https://nodejs.org)，下载左边的 **LTS** 版本，一路点"下一步"安装。
+
+**2. 下载本项目**
+在本页面上方点绿色的 **Code** 按钮，选 **Download ZIP**，然后把压缩包解压到一个文件夹，比如 `D:\BLACKBOARD` 或你的 U 盘。
+
+**3. 准备 blackboard-mcp（暂时需要，下一个版本会内置，这一步就不用了）**
+打开 [blackboard-mcp](https://github.com/felipedias-ie/blackboard-mcp)，同样点 **Code → Download ZIP**，解压到同一个文件夹，并把解压出来的文件夹改名为 `blackboard-mcp`。然后进入这个文件夹，在地址栏里输入 `powershell` 并回车，**一行一行**粘贴运行：
+
+```
+npm install
+npx tsc -p tsconfig.build.json
+```
+
+做完后文件夹里应该是这样：
+
+```
+D:\BLACKBOARD\
+├── blackboard-mcp\
+└── blackboard-study-hub\    （第 2 步解压出来的，叫 blackboard-study-hub-main 也没关系）
+```
+
+**4. 双击 `start.bat`**
+在 `blackboard-study-hub` 文件夹里双击 `start.bat`。会出现一个黑色窗口（**不要关掉它**，关掉面板就停了），浏览器会自动打开面板。如果 Windows 提示"已保护你的电脑"，点"更多信息"，再点"仍要运行"。
+
+**5. 连接 Blackboard**
+填入你们学校的 Blackboard 网址（浏览器地址栏里到 `.com` 为止的部分），点 **连接 Blackboard**。
+
+![连接 Blackboard](docs/step-connect.png)
+
+**6. 在弹出的窗口里登录学校账号**
+像平时一样输入学号和密码。如果学校问 **"保持登录状态？"（Stay signed in?），一定要选"是"**，这样以后打开基本不用再登录。登录完成后窗口会自己关闭，面板显示你的截止日期、公告和成绩。
+
+以后每次使用，只要双击 `start.bat` 就行。想先看看效果，可以双击 `demo.bat`，用的是虚构的示例数据，不需要登录。
+
+遇到问题请看 **[常见问题](docs/FAQ.md)**。
+
+---
+
 ## Why
 
 Students can't use Blackboard's official API without approval from their school's admin. [blackboard-mcp](https://github.com/felipedias-ie/blackboard-mcp) solves that for AI assistants by reusing your own browser session. blackboard-study-hub builds on its client library and gives you a normal web page instead, with no AI client or terminal needed day to day.
@@ -38,7 +81,9 @@ your-folder/
 
 Or point `BB_MCP_PATH` at `blackboard-mcp/dist/index.js`.
 
-## Quick start
+## Quick start (command line)
+
+Windows users who don't use the terminal: follow the Chinese step-by-step guide above.
 
 ```bash
 git clone https://github.com/felipedias-ie/blackboard-mcp.git
@@ -58,6 +103,7 @@ Enter your school's Blackboard address and click **连接 Blackboard**. A separa
 - It remembers your school login, so next time connecting is usually automatic. If your school's login page asks "Stay signed in?", choose yes.
 - While the hub runs it keeps the session alive, and if it lapses it signs back in silently in the background.
 - If the pop-up doesn't work, expand "手动粘贴" on the page and paste a "Copy as cURL" instead.
+- More help: [FAQ (Chinese)](docs/FAQ.md).
 
 ## Privacy and safety
 
