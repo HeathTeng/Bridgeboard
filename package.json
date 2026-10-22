@@ -1,6 +1,6 @@
 {
   "name": "blackboard-study-hub",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "A local web dashboard for Blackboard Learn Ultra: deadlines, announcements, grades and a calendar feed, built on blackboard-mcp.",
   "type": "module",
   "license": "MIT",

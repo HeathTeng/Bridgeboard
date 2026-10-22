@@ -8,6 +8,7 @@ A local web dashboard for Blackboard Learn Ultra, aimed at international student
 - `lib/bb.js`: loads blackboard-mcp's library (`BB_MCP_PATH`, else the bundled `vendor/blackboard-mcp.js`, else `../blackboard-mcp/dist/index.js`) and shapes data for the page. Also keep-alive and silent renewal.
 - `lib/edge-login.js`: one-click sign-in. Opens Edge/Chrome with its own profile (`~/.blackboard-study-hub/browser-profile`), reads cookies over CDP on 127.0.0.1, closes the window.
 - `lib/ics.js`: deadline calendar export. `lib/demo.js`: fake data for `--demo`.
+- Five-colour deadlines: `lib/status.js` (`statusOf`, time-left labels; no Node-only code, the page loads it as `/status.js`), `lib/seen.js` (`~/.blackboard-study-hub/seen.json`, first-seen times when Blackboard gives no opening date), `lib/links.js` (assignment links, https on the school host only). Opening dates come from the content item's date release rule (`releaseStart` in `lib/bb.js`). The timeline durations (`newHours`, `dueSoonHours`) are in settings.json. Spec: `docs/dev/module1-deadlines.md`.
 - Course file downloader: `lib/downloader.js` (target paths, Windows length limit, skip-existing; pure, tested), `lib/office-text.js` (.docx/.pptx text via zlib, since the library only extracts PDF), `lib/settings.js` (`~/.blackboard-study-hub/settings.json`, download folder checks). Listing and the one-at-a-time download loop are `courseFiles` / `downloadAll` in `lib/bb.js`; the page sends file ids only, never URLs. Spec: `docs/dev/step3-downloader.md`.
 - `public/`: plain HTML/CSS/JS, Chinese UI, no build step.
 - `test/`: `node --test`. Run `npm test` before every commit.
@@ -36,7 +37,7 @@ Picture the user as extremely impatient, not technical at all, who reads nothing
 
 Order agreed with the owner (2026-10-22): **functional modules first, then UI design, then the first-run guide**, because the guide walks through every feature and would need redoing after each change.
 
-- Done: pop-up sign-in with silent renewal; blackboard-mcp bundled in vendor/ (rebuild with `npm run vendor`, keep vendor/THIRD-PARTY-NOTICES.txt in sync); course file downloader (not yet: attachments and files embedded in page bodies); Windows portable zip via the Release workflow.
+- Done: pop-up sign-in with silent renewal; blackboard-mcp bundled in vendor/ (rebuild with `npm run vendor`, keep vendor/THIRD-PARTY-NOTICES.txt in sync); course file downloader (not yet: attachments and files embedded in page bodies); Windows portable zip via the Release workflow; module 1, five-colour deadlines with the adjustable timeline and links to Blackboard.
 - Next: the remaining functional modules (e.g. weekly digest, study packs, AI Q&A with the student's own API key). Keep their UI plain and consistent with the current page; no visual redesign yet.
 - Then: UI redesign, after walking through the whole dashboard with the owner and agreeing on their vision.
 - Then: first-run guide with the FAQ as its last page and an always-available help button (spec: `docs/dev/step5-onboarding.md`), then README screenshots, then a public launch.

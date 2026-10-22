@@ -1,3 +1,5 @@
+import { DEFAULTS, STATUSES, durations, statusLabel, statusOf, timeLeft } from './status.js';
+
 const $ = (id) => document.getElementById(id);
 
 function el(tag, attrs = {}, ...children) {
@@ -13,15 +15,6 @@ function el(tag, attrs = {}, ...children) {
 
 const fmt = new Intl.DateTimeFormat('zh-CN', { month: 'numeric', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' });
 
-function relative(iso) {
-  const diff = Date.parse(iso) - Date.now();
-  const abs = Math.abs(diff);
-  const days = Math.floor(abs / 86400000);
-  const hours = Math.floor((abs % 86400000) / 3600000);
-  const span = days > 0 ? `${days} 天${hours ? ` ${hours} 小时` : ''}` : `${Math.max(1, hours)} 小时`;
-  return diff >= 0 ? `还剩 ${span}` : `已过 ${span}`;
-}
-
 async function api(path, options) {
   const res = await fetch(path, options);
   const data = await res.json().catch(() => ({}));
@@ -34,29 +27,74 @@ function showBanner(text) {
   $('banner').hidden = !text;
 }
 
-const BUCKETS = [
-  ['overdue', '已逾期'],
-  ['dueToday', '今天截止'],
-  ['upcoming', '即将截止'],
-  ['submitted', '已提交'],
-];
+// ---- 截止日期 ----
 
-function renderTodo(todo) {
+let todoItems = [];
+let timeline = { ...DEFAULTS }; // how long counts as "new" and "due soon"
+
+function renderTodo(todo = todoItems) {
+  todoItems = todo;
   const box = $('todo');
   box.replaceChildren();
   if (!todo.length) return box.append(el('p', { class: 'muted' }, '近期没有截止事项。'));
-  for (const [key, label] of BUCKETS) {
-    const items = todo.filter((t) => t.bucket === key);
+  const now = Date.now();
+  const withStatus = todo.map((t) => ({ ...t, status: statusOf(t, now, timeline) }));
+  for (const key of STATUSES) {
+    const items = withStatus.filter((t) => t.status === key);
     if (!items.length) continue;
-    box.append(el('div', { class: `group ${key}` },
-      el('h3', {}, `${label}（${items.length}）`),
+    box.append(el('div', { class: `group st-${key}` },
+      el('h3', {}, el('span', { class: 'dot' }), `${statusLabel(key, timeline)}（${items.length}）`),
       items.map((t) => el('div', { class: 'item' },
-        el('div', { class: 'title' }, t.title),
-        el('div', { class: 'meta' }, `${t.course} · ${fmt.format(new Date(t.due))} · ${relative(t.due)}`),
+        el('div', { class: 'title' }, /^https:\/\//.test(t.link ?? '')
+          ? el('a', { href: t.link, target: '_blank', rel: 'noopener noreferrer', title: '在 Blackboard 里打开' }, t.title)
+          : t.title),
+        el('div', { class: 'meta' }, `${t.course} · ${fmt.format(new Date(t.due))} · ${timeLeft(t, now)}`),
       )),
     ));
   }
 }
+
+function showTimeline() {
+  $('newRange').value = timeline.newHours || 5; // the far right end of the slider means "today"
+  $('soonRange').value = timeline.dueSoonHours;
+  $('newLabel').textContent = timeline.newHours ? `${timeline.newHours} 小时` : '当天';
+  $('soonLabel').textContent = `${timeline.dueSoonHours} 小时`;
+}
+
+function readTimeline() {
+  const v = Number($('newRange').value);
+  timeline = { newHours: v <= 5 ? 0 : v, dueSoonHours: Number($('soonRange').value) };
+  showTimeline();
+  renderTodo();
+}
+
+async function saveTimeline() {
+  try {
+    timeline = await api('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(timeline),
+    });
+    $('tlMsg').textContent = settings.demo ? '示例模式：只在这次运行时有效。' : '已保存，下次打开还在。';
+  } catch (err) {
+    $('tlMsg').textContent = `没有保存：${err.message}`;
+  }
+}
+
+for (const id of ['newRange', 'soonRange']) {
+  $(id).addEventListener('input', readTimeline);
+  $(id).addEventListener('change', saveTimeline);
+}
+
+$('resetTimeline').addEventListener('click', () => {
+  timeline = { ...DEFAULTS };
+  showTimeline();
+  renderTodo();
+  saveTimeline();
+});
+
+// Keep the colours and "还剩…" labels current while the page stays open.
+setInterval(() => { if (todoItems.length) renderTodo(); }, 60_000);
 
 function renderAnnouncements(list) {
   const box = $('announcements');
@@ -215,6 +253,9 @@ let settings = {};
 
 async function loadSettings() {
   settings = await api('/api/settings').catch(() => ({}));
+  timeline = durations(settings);
+  showTimeline();
+  if (todoItems.length) renderTodo();
   $('downloadDir').value = settings.downloadDir ?? '';
   $('pickDir').hidden = !settings.canPick;
   $('downloadDir').readOnly = Boolean(settings.demo);

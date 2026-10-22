@@ -48,6 +48,21 @@
 <main id="main" hidden>
   <section class="card">
     <h2>截止日期</h2>
+    <div class="timeline">
+      <div class="tl-track">
+        <span class="tl-side">刚开放<br><b id="newLabel">当天</b></span>
+        <input id="newRange" type="range" min="5" max="72" step="1" dir="rtl" aria-label="开放多久以内算新开放">
+        <span class="tl-now">现在</span>
+        <input id="soonRange" type="range" min="1" max="72" step="1" aria-label="离截止多久以内算临期">
+        <span class="tl-side">临期<br><b id="soonLabel">12 小时</b></span>
+      </div>
+      <div class="tl-help small">
+        往左拖：开放多久以内算"新开放"（蓝色）。往右拖：离截止多久以内算"临期"（橙色）。
+        选中手柄后，也可以用键盘的左右方向键微调。
+        <button id="resetTimeline" type="button" class="link">恢复默认</button> <span id="tlMsg"></span>
+      </div>
+    </div>
+    <p class="muted small todo-hint">点作业标题可以直接打开 Blackboard 的作业页面（Turnitin 这类会打开课程大纲）。</p>
     <div id="todo"></div>
   </section>
   <section class="card">
@@ -82,6 +97,6 @@
 </main>
 
 <footer class="muted small">数据只在你的电脑上处理，基于开源项目 <a href="https://github.com/felipedias-ie/blackboard-mcp" target="_blank" rel="noopener">blackboard-mcp</a>。</footer>
-<script src="app.js"></script>
+<script type="module" src="app.js"></script>
 </body>
 </html>

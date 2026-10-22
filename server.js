@@ -8,7 +8,8 @@ import * as bb from './lib/bb.js';
 import { toIcs } from './lib/ics.js';
 import { demoDownload, demoFiles, demoOverview, demoStatus } from './lib/demo.js';
 import { alreadyThere, planPaths } from './lib/downloader.js';
-import { checkDownloadDir, loadSettings, saveSettings } from './lib/settings.js';
+import { checkDownloadDir, checkDurations, loadSettings, saveSettings } from './lib/settings.js';
+import { durations } from './lib/status.js';
 
 const DEMO = process.argv.includes('--demo');
 const PORT = Number(process.env.PORT ?? 3100);
@@ -16,6 +17,9 @@ const HOST = '127.0.0.1';
 const PUBLIC = join(import.meta.dirname, 'public');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml' };
 const ALLOWED_HOSTS = new Set([`127.0.0.1:${PORT}`, `localhost:${PORT}`]);
+
+// Demo mode keeps the deadline timeline in memory instead of settings.json.
+let demoDurations = durations();
 
 // Blackboard is slow across many courses; reuse a result for a few minutes.
 let cache;
@@ -315,15 +319,23 @@ const server = createServer(async (req, res) => {
       });
     }
     if (url.pathname === '/api/settings' && req.method === 'GET') {
-      if (DEMO) return send(res, 200, { downloadDir: 'E:\\课程资料', canPick: false, demo: true });
-      return send(res, 200, { downloadDir: loadSettings().downloadDir ?? '', canPick: process.platform === 'win32' });
-    }
-    if (DEMO && ['/api/settings', '/api/pick-folder'].includes(url.pathname) && req.method === 'POST') {
-      return send(res, 400, { error: '示例模式不会保存文件，保存位置只是示例。' });
+      if (DEMO) return send(res, 200, { downloadDir: 'E:\\课程资料', canPick: false, demo: true, ...demoDurations });
+      const saved = loadSettings();
+      return send(res, 200, { downloadDir: saved.downloadDir ?? '', canPick: process.platform === 'win32', ...durations(saved) });
     }
     if (url.pathname === '/api/settings' && req.method === 'POST') {
-      const { downloadDir } = JSON.parse(await readBody(req));
-      return send(res, 200, saveSettings({ downloadDir: checkDownloadDir(downloadDir) }));
+      const body = JSON.parse(await readBody(req));
+      // The deadline timeline is saved on its own, and works in demo mode too.
+      if ('newHours' in body || 'dueSoonHours' in body) {
+        const picked = checkDurations(body);
+        if (DEMO) return send(res, 200, (demoDurations = picked));
+        return send(res, 200, durations(saveSettings(picked)));
+      }
+      if (DEMO) return send(res, 400, { error: '示例模式不会保存文件，保存位置只是示例。' });
+      return send(res, 200, saveSettings({ downloadDir: checkDownloadDir(body.downloadDir) }));
+    }
+    if (DEMO && url.pathname === '/api/pick-folder' && req.method === 'POST') {
+      return send(res, 400, { error: '示例模式不会保存文件，保存位置只是示例。' });
     }
     if (url.pathname === '/api/pick-folder' && req.method === 'POST') {
       if (process.platform !== 'win32') return send(res, 400, { error: '这台电脑不支持弹出选择窗口，请直接输入文件夹路径。' });
@@ -360,7 +372,9 @@ const server = createServer(async (req, res) => {
     if (req.method === 'GET') {
       const file = url.pathname === '/' ? 'index.html' : url.pathname.slice(1);
       if (!/^[\w.-]+$/.test(file)) return send(res, 404, 'Not found', 'text/plain');
-      const body = await readFile(join(PUBLIC, file)).catch(() => null);
+      // The status rules are shared with the server, so the page loads them from lib/.
+      const dir = file === 'status.js' ? join(import.meta.dirname, 'lib') : PUBLIC;
+      const body = await readFile(join(dir, file)).catch(() => null);
       if (!body) return send(res, 404, 'Not found', 'text/plain');
       return send(res, 200, body, TYPES[extname(file)] ?? 'application/octet-stream');
     }

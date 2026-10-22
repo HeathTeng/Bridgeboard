@@ -29,6 +29,12 @@
 
 以后每次使用，只要双击 `start.bat` 就行。想先看看效果，可以双击 `demo.bat`，用的是虚构的示例数据，不需要登录。
 
+### 截止日期的五种颜色
+
+每个截止事项都按紧急程度标上颜色和文字：🔴 已逾期、🟠 临期（默认 12 小时内截止）、🔵 新开放（默认当天开放）、🟡 进行中、🟢 已提交。点作业标题会在新标签页打开 Blackboard 里的作业页面。
+
+截止日期上方有一个时间轴：往左拖左边的手柄，调整开放多久以内算"新开放"（当天，或 6 到 72 小时）；往右拖右边的手柄，调整离截止多久以内算"临期"（1 到 72 小时）。颜色会立刻更新，下次打开还在；点 **恢复默认** 可以改回来。
+
 ### 下载课程文件
 
 在面板最下面的 **课程文件** 里，可以把课件一次性下载到你选的文件夹（比如 U 盘），方便交给 AI 工具或离线复习。
@@ -82,10 +88,10 @@ Students can't use Blackboard's official API without approval from their school'
 
 ## Features
 
-- **Deadlines** grouped into overdue, due today, upcoming and submitted, with time left.
+- **Five-colour deadlines**: overdue, due soon, newly opened, open and submitted, each with a text label and time left. Drag the timeline above the list to choose how long counts as "new" and "due soon"; it is saved for next time. Each title opens the assignment in Blackboard.
 - **Announcements** from all open courses, newest first.
 - **Grades** per course, with percentages.
-- **Calendar export**: download an `.ics` file and import it into Google Calendar, Outlook or Apple Calendar. Each deadline has reminders 1 day and 3 days before.
+- **Calendar export**: download an `.ics` file and import it into Google Calendar, Outlook or Apple Calendar. Each deadline has reminders 1 day and 3 days before, and a link back to the assignment.
 - **Course file downloader**: pick files course by course and save them to any folder (a USB drive works), organised by course and Blackboard folder. Files already there are skipped, public Google Docs/Slides/Sheets links are saved as PDF, and an optional `.txt` text export of each PDF, Word and PowerPoint file is ready to hand to an AI tool.
 - **One-click sign-in**: a pop-up browser window, with your school login remembered and silent renewal.
 - **Demo mode** with made-up data, for trying it without an account.
