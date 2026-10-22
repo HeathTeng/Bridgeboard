@@ -23,6 +23,11 @@ A local web dashboard for Blackboard Learn Ultra, aimed at international student
 - **Windows first.** The owner uses Windows + Edge. In Claude Code's `!` shell (Git Bash) use forward slashes in paths.
 - UI text is Chinese; README is bilingual. Times come from the API in UTC; display in local time.
 
+## Versions and releases
+
+- The owner wants a new release for every change pushed to `main`: bump the patch number by one each time (v0.2.0 → v0.2.1 → v0.2.2 …), set the same number in `package.json` `version`, commit, then push the tag (`git tag v0.2.1 && git push origin v0.2.1`). The Release workflow builds and publishes the Windows zip.
+- Bump the middle number (v0.3.0) only when the owner says a stage or big feature is finished.
+
 ## Roadmap
 
 Stage 1 (now), in order: pop-up Edge sign-in (done, needs real-school test) → bundle blackboard-mcp into vendor/ (done; rebuild with `npm run vendor`, keep vendor/THIRD-PARTY-NOTICES.txt in sync) → course file downloader (done, tested on a real account; not yet: attachments and files embedded in page bodies) → portable Windows zip via GitHub Actions Releases (done) → first-run guide with a always-available troubleshooting (FAQ) page → README "three steps to start".
