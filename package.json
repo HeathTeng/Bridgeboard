@@ -5,10 +5,16 @@
   "type": "module",
   "license": "MIT",
   "private": true,
-  "engines": { "node": ">=22.5.0" },
+  "engines": {
+    "node": ">=22.5.0"
+  },
   "scripts": {
     "start": "node server.js",
     "demo": "node server.js --demo",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "vendor": "esbuild ../blackboard-mcp/dist/index.js --bundle --format=esm --platform=node --target=node22 --outfile=vendor/blackboard-mcp.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
   }
 }

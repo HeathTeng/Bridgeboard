@@ -122,7 +122,7 @@ npm test
 ## Credits
 
 - **Author:** [Heath Teng (@HeathTeng)](https://github.com/HeathTeng), who designed and maintains this project, built with help from Claude Code.
-- **Built on:** [blackboard-mcp](https://github.com/felipedias-ie/blackboard-mcp) by [Felipe Dias (@felipedias-ie)](https://github.com/felipedias-ie), MIT licensed. Its Blackboard client library does the sign-in and data fetching; thank you, Felipe.
+- **Built on:** [blackboard-mcp](https://github.com/felipedias-ie/blackboard-mcp) by [Felipe Dias (@felipedias-ie)](https://github.com/felipedias-ie), MIT licensed. Its Blackboard client library does the sign-in and data fetching; thank you, Felipe. `vendor/blackboard-mcp.js` is a bundled build of blackboard-mcp v0.6.0 at commit [`fb05792`](https://github.com/felipedias-ie/blackboard-mcp/commit/fb057928ae200364ac3cda48d10779d33f5a4bb7) with its dependencies, made with `npm run vendor`; its license is in `vendor/LICENSE-blackboard-mcp`.
 
 **作者：** 滕泽浩（[@HeathTeng](https://github.com/HeathTeng)），负责项目设计与维护，开发过程中使用了 Claude Code。
 **致谢：** 本项目基于 Felipe Dias（[@felipedias-ie](https://github.com/felipedias-ie)）的开源项目 [blackboard-mcp](https://github.com/felipedias-ie/blackboard-mcp)（MIT 许可证）。
