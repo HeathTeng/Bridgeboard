@@ -8,6 +8,7 @@ A local web dashboard for Blackboard Learn Ultra, aimed at international student
 - `lib/bb.js`: loads blackboard-mcp's library (`BB_MCP_PATH`, else the bundled `vendor/blackboard-mcp.js`, else `../blackboard-mcp/dist/index.js`) and shapes data for the page. Also keep-alive and silent renewal.
 - `lib/edge-login.js`: one-click sign-in. Opens Edge/Chrome with its own profile (`~/.blackboard-study-hub/browser-profile`), reads cookies over CDP on 127.0.0.1, closes the window.
 - `lib/ics.js`: deadline calendar export. `lib/demo.js`: fake data for `--demo`.
+- Course file downloader: `lib/downloader.js` (target paths, Windows length limit, skip-existing; pure, tested), `lib/office-text.js` (.docx/.pptx text via zlib, since the library only extracts PDF), `lib/settings.js` (`~/.blackboard-study-hub/settings.json`, download folder checks). Listing and the one-at-a-time download loop are `courseFiles` / `downloadAll` in `lib/bb.js`; the page sends file ids only, never URLs. Spec: `docs/dev/step3-downloader.md`.
 - `public/`: plain HTML/CSS/JS, Chinese UI, no build step.
 - `test/`: `node --test`. Run `npm test` before every commit.
 - `start.bat` / `demo.bat`: double-click launchers for Windows.
@@ -23,7 +24,7 @@ A local web dashboard for Blackboard Learn Ultra, aimed at international student
 
 ## Roadmap
 
-Stage 1 (now), in order: pop-up Edge sign-in (done, needs real-school test) → bundle blackboard-mcp into vendor/ (done; rebuild with `npm run vendor`, keep vendor/THIRD-PARTY-NOTICES.txt in sync) → course file downloader (choose files, choose folder such as a USB drive, organised by course, skip existing, optional text-for-AI export) → portable Windows zip via GitHub Actions Releases → first-run guide with a always-available troubleshooting (FAQ) page → README "three steps to start".
+Stage 1 (now), in order: pop-up Edge sign-in (done, needs real-school test) → bundle blackboard-mcp into vendor/ (done; rebuild with `npm run vendor`, keep vendor/THIRD-PARTY-NOTICES.txt in sync) → course file downloader (done, tested on a real account; not yet: attachments and files embedded in page bodies) → portable Windows zip via GitHub Actions Releases → first-run guide with a always-available troubleshooting (FAQ) page → README "three steps to start".
 
 Stage 2: UI redesign and modules (weekly digest, study packs), AI Q&A with the student's own API key, then a public launch.
 

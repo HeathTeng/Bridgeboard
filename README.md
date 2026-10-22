@@ -29,6 +29,19 @@
 
 以后每次使用，只要双击 `start.bat` 就行。想先看看效果，可以双击 `demo.bat`，用的是虚构的示例数据，不需要登录。
 
+### 下载课程文件
+
+在面板最下面的 **课程文件** 里，可以把课件一次性下载到你选的文件夹（比如 U 盘），方便交给 AI 工具或离线复习。
+
+1. 点 **选择文件夹**，选一个保存位置。下次打开会记住。
+2. 点课程名展开，勾选要下载的文件；勾课程名前面的方框可以选中这门课的全部文件。
+3. 想让 AI 读课件，就勾上 **同时导出给 AI 用的文字版**：每个 PDF、Word、PowerPoint 旁边会多一个同名的 `.txt`。
+4. 点 **下载选中的文件**。下载完可以点 **打开文件夹** 查看。
+
+文件会按 `保存位置\课程名\Blackboard 里的文件夹\文件名` 分好类。已经下载过的文件会标 **已下载**，再下载时自动跳过，所以可以放心反复点。
+
+![下载课程文件](docs/step-download.png)
+
 遇到问题请看 **[常见问题](docs/FAQ.md)**。
 
 ---
@@ -49,6 +62,7 @@ The hub is built as separate modules so new features can be added over time. Pla
 - **Announcements** from all open courses, newest first.
 - **Grades** per course, with percentages.
 - **Calendar export**: download an `.ics` file and import it into Google Calendar, Outlook or Apple Calendar. Each deadline has reminders 1 day and 3 days before.
+- **Course file downloader**: pick files course by course and save them to any folder (a USB drive works), organised by course and Blackboard folder. Files already there are skipped, public Google Docs/Slides/Sheets links are saved as PDF, and an optional `.txt` text export of each PDF, Word and PowerPoint file is ready to hand to an AI tool.
 - **One-click sign-in**: a pop-up browser window, with your school login remembered and silent renewal.
 - **Demo mode** with made-up data, for trying it without an account.
 

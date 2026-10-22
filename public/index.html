@@ -58,6 +58,27 @@
     <h2>成绩</h2>
     <div id="grades"></div>
   </section>
+  <section class="card wide" id="filesCard">
+    <h2>课程文件</h2>
+    <p class="muted small">勾选课件，一次下载到你选的文件夹（比如 U 盘），按课程和 Blackboard 里的文件夹分好类。已经下载过的会自动跳过。</p>
+    <label for="downloadDir">保存位置</label>
+    <div class="dest">
+      <input id="downloadDir" type="text" placeholder="还没有选择，例如 E:\课程资料" spellcheck="false">
+      <button id="pickDir" type="button">选择文件夹</button>
+      <button id="saveDir" type="button" hidden>使用这个路径</button>
+    </div>
+    <p id="dirMsg" class="small"></p>
+    <label class="check"><input id="selectAll" type="checkbox"> 全选（已展开的课程）</label>
+    <div id="courseFiles"></div>
+    <label class="check"><input id="exportText" type="checkbox"> 同时导出给 AI 用的文字版 (.txt)：PDF、Word、PowerPoint 文件旁边会多一个同名 .txt</label>
+    <div class="actions dl-actions">
+      <button id="startDownload" type="button" class="primary">下载选中的文件</button>
+      <button id="stopDownload" type="button" hidden>停止</button>
+      <button id="openFolder" type="button" hidden>打开文件夹</button>
+    </div>
+    <p id="dlProgress" class="small"></p>
+    <div id="dlResult"></div>
+  </section>
 </main>
 
 <footer class="muted small">数据只在你的电脑上处理，基于开源项目 <a href="https://github.com/felipedias-ie/blackboard-mcp" target="_blank" rel="noopener">blackboard-mcp</a>。</footer>

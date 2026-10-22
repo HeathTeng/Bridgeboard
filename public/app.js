@@ -93,6 +93,240 @@ function renderGrades(courses) {
   }
 }
 
+// ---- 课程文件 ----
+
+function fmtSize(n) {
+  if (n == null) return '—';
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 ** 2) return `${(n / 1024).toFixed(0)} KB`;
+  return `${(n / 1024 ** 2).toFixed(1)} MB`;
+}
+
+const filesByCourse = new Map(); // courseId -> listed files
+const selected = new Set(); // "courseId|fileId"
+let refreshFiles = false;
+
+function syncCourseBox(courseId) {
+  const box = document.querySelector(`input[data-course="${courseId}"]`);
+  const files = filesByCourse.get(courseId);
+  if (!box || !files?.length) return;
+  const n = files.filter((f) => selected.has(`${courseId}|${f.id}`)).length;
+  box.checked = n === files.length;
+  box.indeterminate = n > 0 && n < files.length;
+}
+
+function updateSelectionUi() {
+  for (const id of filesByCourse.keys()) syncCourseBox(id);
+  $('startDownload').textContent = selected.size ? `下载选中的文件（${selected.size} 个）` : '下载选中的文件';
+}
+
+async function loadCourseFiles(course, body) {
+  if (filesByCourse.has(course.id)) return filesByCourse.get(course.id);
+  body.replaceChildren(el('p', { class: 'muted small' }, '正在读取这门课的文件…（文件多的课程可能要几十秒）'));
+  try {
+    const data = await api(`/api/courses/${course.id}/files${refreshFiles ? '?refresh' : ''}`);
+    filesByCourse.set(course.id, data.files);
+    renderFileTable(course, body, data.files);
+    return data.files;
+  } catch (err) {
+    body.replaceChildren(el('p', { class: 'fail small' }, `读取失败：${err.message}`));
+    return [];
+  }
+}
+
+function renderFileTable(course, body, files) {
+  const meta = document.querySelector(`[data-meta="${course.id}"]`);
+  const done = files.filter((f) => f.downloaded).length;
+  if (meta) meta.textContent = `${files.length} 个文件${done ? `，已下载 ${done} 个` : ''}`;
+  if (!files.length) return body.replaceChildren(el('p', { class: 'muted small' }, '这门课里没有找到可以下载的文件。'));
+  body.replaceChildren(el('table', { class: 'files' },
+    el('tr', {}, el('th', {}, ''), el('th', {}, '文件'), el('th', { class: 'size' }, '大小')),
+    files.map((f) => {
+      const key = `${course.id}|${f.id}`;
+      const box = el('input', { type: 'checkbox' });
+      box.checked = selected.has(key);
+      box.addEventListener('change', () => {
+        if (box.checked) selected.add(key); else selected.delete(key);
+        updateSelectionUi();
+      });
+      return el('tr', {},
+        el('td', {}, box),
+        el('td', {},
+          f.name,
+          f.external ? el('span', { class: 'tag ext' }, '外部文档') : null,
+          f.downloaded ? el('span', { class: 'tag done' }, '已下载') : null,
+          f.folder ? el('div', { class: 'where' }, f.folder) : null,
+        ),
+        el('td', { class: 'size' }, fmtSize(f.size)),
+      );
+    }),
+  ));
+  syncCourseBox(course.id);
+}
+
+function renderCourseFiles(courses, refresh) {
+  refreshFiles = refresh;
+  filesByCourse.clear();
+  selected.clear();
+  $('selectAll').checked = false;
+  const box = $('courseFiles');
+  box.replaceChildren();
+  if (!courses.length) return box.append(el('p', { class: 'muted' }, '没有课程。'));
+  for (const course of courses) {
+    const check = el('input', { type: 'checkbox', 'data-course': course.id, title: '选中这门课的全部文件' });
+    const body = el('div', {});
+    const details = el('details', { class: 'course' },
+      el('summary', {}, check, course.name, course.open ? null : el('span', { class: 'tag' }, '已结课'),
+        el('span', { class: 'meta', 'data-meta': course.id }, '点击展开')),
+      body,
+    );
+    // A click on the checkbox should not also fold the course open or shut.
+    check.addEventListener('click', (e) => e.stopPropagation());
+    check.addEventListener('change', async () => {
+      const want = check.checked;
+      details.open = true;
+      const files = await loadCourseFiles(course, body);
+      for (const f of files) {
+        if (want) selected.add(`${course.id}|${f.id}`); else selected.delete(`${course.id}|${f.id}`);
+      }
+      renderFileTable(course, body, files);
+      updateSelectionUi();
+    });
+    details.addEventListener('toggle', () => { if (details.open) loadCourseFiles(course, body); });
+    box.append(details);
+  }
+  updateSelectionUi();
+}
+
+$('selectAll').addEventListener('change', () => {
+  for (const [courseId, files] of filesByCourse) {
+    for (const f of files) {
+      if ($('selectAll').checked) selected.add(`${courseId}|${f.id}`); else selected.delete(`${courseId}|${f.id}`);
+    }
+  }
+  for (const details of document.querySelectorAll('#courseFiles details')) {
+    const id = details.querySelector('input[data-course]').dataset.course;
+    if (filesByCourse.has(id)) for (const b of details.querySelectorAll('.files input')) b.checked = $('selectAll').checked;
+  }
+  updateSelectionUi();
+});
+
+let settings = {};
+
+async function loadSettings() {
+  settings = await api('/api/settings').catch(() => ({}));
+  $('downloadDir').value = settings.downloadDir ?? '';
+  $('pickDir').hidden = !settings.canPick;
+  $('downloadDir').readOnly = Boolean(settings.demo);
+  if (settings.demo) $('dirMsg').textContent = '示例模式：不会真的保存文件。';
+}
+
+$('downloadDir').addEventListener('input', () => {
+  $('saveDir').hidden = settings.demo || $('downloadDir').value.trim() === (settings.downloadDir ?? '');
+});
+
+$('saveDir').addEventListener('click', async () => {
+  try {
+    settings = { ...settings, ...(await api('/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ downloadDir: $('downloadDir').value }),
+    })) };
+    $('downloadDir').value = settings.downloadDir;
+    $('saveDir').hidden = true;
+    $('dirMsg').textContent = '已保存，下次打开会记住。';
+    resetDownloadedMarks();
+  } catch (err) {
+    $('dirMsg').textContent = err.message;
+  }
+});
+
+$('pickDir').addEventListener('click', async () => {
+  $('pickDir').disabled = true;
+  $('dirMsg').textContent = '已经打开选择文件夹的窗口（如果没看到，看看任务栏）…';
+  try {
+    const r = await api('/api/pick-folder', { method: 'POST' });
+    if (r.downloadDir) {
+      settings = { ...settings, ...r };
+      $('downloadDir').value = r.downloadDir;
+      $('saveDir').hidden = true;
+      $('dirMsg').textContent = '已选择，下次打开会记住。';
+      resetDownloadedMarks();
+    } else {
+      $('dirMsg').textContent = '没有选择文件夹。';
+    }
+  } catch (err) {
+    $('dirMsg').textContent = err.message;
+  } finally {
+    $('pickDir').disabled = false;
+  }
+});
+
+/** The 已下载 marks depend on the folder, so re-read the courses already open. */
+function resetDownloadedMarks() {
+  for (const details of document.querySelectorAll('#courseFiles details')) {
+    const id = details.querySelector('input[data-course]').dataset.course;
+    if (!filesByCourse.has(id)) continue;
+    filesByCourse.delete(id);
+    const course = { id, name: '' };
+    if (details.open) loadCourseFiles(course, details.querySelector(':scope > div'));
+  }
+}
+
+function showResult(job) {
+  const r = job.result;
+  const box = $('dlResult');
+  if (job.state === 'error') return box.replaceChildren(el('p', { class: 'fail' }, `下载出错：${job.message}`));
+  const failed = r.failed.length;
+  box.replaceChildren(...[
+    el('p', {}, `${r.stopped ? '已停止。' : '完成。'}新下载 ${r.downloaded} 个，跳过 ${r.skipped} 个（已存在），失败 ${failed} 个。`),
+    failed ? el('ul', { class: 'small' }, r.failed.map((f) => el('li', {}, el('b', {}, f.name), '：', el('span', { class: 'fail' }, f.reason)))) : null,
+    r.noText?.length ? el('p', { class: 'muted small' }, `这些文件没能导出文字版（可能是扫描版 PDF，没有文字层）：${r.noText.join('、')}`) : null,
+  ].filter(Boolean));
+}
+
+$('startDownload').addEventListener('click', async () => {
+  if (!selected.size) return ($('dlProgress').textContent = '请先展开课程，勾选要下载的文件。');
+  if (!settings.demo && !settings.downloadDir) return ($('dlProgress').textContent = '请先选择保存位置。');
+  const items = [...selected].map((k) => { const [courseId, id] = k.split('|'); return { courseId, id }; });
+  $('startDownload').disabled = true;
+  $('stopDownload').hidden = false;
+  $('stopDownload').disabled = false;
+  $('openFolder').hidden = true;
+  $('dlResult').replaceChildren();
+  try {
+    let job = await api('/api/download', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items, exportText: $('exportText').checked }),
+    });
+    while (job.state === 'running') {
+      $('dlProgress').textContent = job.index ? `正在下载第 ${job.index} / ${job.total} 个：${job.name}` : '正在准备…';
+      await sleep(1000);
+      job = await api('/api/download');
+    }
+    $('dlProgress').textContent = '';
+    showResult(job);
+    $('openFolder').hidden = Boolean(settings.demo) || job.state !== 'done';
+    if (!settings.demo) resetDownloadedMarks();
+  } catch (err) {
+    $('dlProgress').textContent = `下载没有开始：${err.message}`;
+  } finally {
+    $('startDownload').disabled = false;
+    $('stopDownload').hidden = true;
+  }
+});
+
+$('stopDownload').addEventListener('click', async () => {
+  $('stopDownload').disabled = true;
+  $('dlProgress').textContent = '正在停止（当前这个文件下载完就停）…';
+  await api('/api/download/stop', { method: 'POST' }).catch(() => {});
+});
+
+$('openFolder').addEventListener('click', () => {
+  api('/api/open-folder', { method: 'POST' }).catch((err) => { $('dlProgress').textContent = err.message; });
+});
+
 async function load(refresh = false) {
   $('refresh').disabled = true;
   try {
@@ -113,6 +347,7 @@ async function load(refresh = false) {
     renderTodo(data.todo);
     renderAnnouncements(data.announcements);
     renderGrades(data.grades);
+    renderCourseFiles(data.courses, refresh);
     showBanner('');
   } catch (err) {
     if (err.code === 'NOT_AUTHENTICATED' || err.code === 'SESSION_EXPIRED' || err.code === 'NOT_CONFIGURED') {
@@ -177,4 +412,5 @@ $('doLogin').addEventListener('click', async () => {
 });
 
 api('/api/config').then((c) => { if (c.baseUrl && !$('baseUrl').value) $('baseUrl').value = c.baseUrl; }).catch(() => {});
+loadSettings();
 load();

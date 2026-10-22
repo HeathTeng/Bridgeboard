@@ -49,3 +49,21 @@ a { color: var(--accent); }
 button.big { font-size: 16px; padding: 12px 22px; margin-top: 8px; }
 .fallback { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
 .fallback summary { color: var(--muted); font-size: 14px; }
+input[type=checkbox] { width: auto; margin: 0 6px 0 0; vertical-align: middle; accent-color: var(--accent); }
+label.check { margin: 10px 0; }
+.dest { display: flex; gap: 8px; align-items: center; }
+.dest input { margin: 0; flex: 1; min-width: 0; }
+.dest button { white-space: nowrap; }
+.course { border-top: 1px solid var(--line); padding: 6px 0; }
+.course > summary { padding: 4px 0; }
+.course > summary .meta { color: var(--muted); font-size: 13px; margin-left: 6px; }
+.files td { vertical-align: top; overflow-wrap: anywhere; }
+.files td:first-child, .files th:first-child { width: 32px; }
+.files .size { width: 90px; color: var(--muted); }
+.files .where { color: var(--muted); font-size: 13px; }
+.tag { display: inline-block; font-size: 12px; padding: 0 6px; border-radius: 4px; margin-left: 6px; border: 1px solid var(--line); color: var(--muted); }
+.tag.done { color: var(--green); border-color: var(--green); }
+.tag.ext { color: var(--accent); border-color: var(--accent); }
+.dl-actions { margin-top: 8px; }
+.fail { color: var(--red); }
+@media (max-width: 560px) { .dest { flex-wrap: wrap; } .files .size { width: 70px; } }
