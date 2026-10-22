@@ -46,3 +46,6 @@ label { display: block; font-size: 14px; margin-top: 8px; }
 kbd, code { font-family: ui-monospace, Consolas, monospace; font-size: 13px; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
 footer { margin-top: 24px; text-align: center; }
 a { color: var(--accent); }
+button.big { font-size: 16px; padding: 12px 22px; margin-top: 8px; }
+.fallback { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; }
+.fallback summary { color: var(--muted); font-size: 14px; }

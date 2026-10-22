@@ -129,6 +129,32 @@ async function load(refresh = false) {
 
 $('refresh').addEventListener('click', () => load(true));
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+$('connect').addEventListener('click', async () => {
+  const url = $('baseUrl').value.trim();
+  if (!url) return ($('connectMsg').textContent = '请先填写学校的 Blackboard 网址。');
+  $('connect').disabled = true;
+  try {
+    let job = await api('/api/connect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    while (job.state === 'running') {
+      $('connectMsg').textContent = job.message;
+      await sleep(1000);
+      job = await api('/api/connect');
+    }
+    $('connectMsg').textContent = job.state === 'done' ? job.message : `没有连接成功：${job.message}`;
+    if (job.state === 'done') await load(true);
+  } catch (err) {
+    $('connectMsg').textContent = `没有连接成功：${err.message}`;
+  } finally {
+    $('connect').disabled = false;
+  }
+});
+
 $('doLogin').addEventListener('click', async () => {
   const curl = $('curl').value.trim();
   if (!curl) return ($('loginMsg').textContent = '请先粘贴内容。');
@@ -138,7 +164,7 @@ $('doLogin').addEventListener('click', async () => {
     const s = await api('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ curl, url: $('baseUrl').value.trim() }),
+      body: JSON.stringify({ curl, url: $('baseUrl').value.trim() || undefined }),
     });
     $('curl').value = '';
     $('loginMsg').textContent = `登录成功：${s.name}`;
@@ -150,4 +176,5 @@ $('doLogin').addEventListener('click', async () => {
   }
 });
 
+api('/api/config').then((c) => { if (c.baseUrl && !$('baseUrl').value) $('baseUrl').value = c.baseUrl; }).catch(() => {});
 load();

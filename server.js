@@ -17,12 +17,24 @@ const ALLOWED_HOSTS = new Set([`127.0.0.1:${PORT}`, `localhost:${PORT}`]);
 
 // Blackboard is slow across many courses; reuse a result for a few minutes.
 let cache;
+
+// One browser sign-in at a time; the page polls GET /api/connect for progress.
+let connectJob = { state: 'idle' };
 const CACHE_MS = 5 * 60 * 1000;
 
 async function getOverview(force) {
   if (DEMO) return demoOverview();
   if (!force && cache && Date.now() - cache.at < CACHE_MS) return cache.data;
-  const data = await bb.overview();
+  let data;
+  try {
+    data = await bb.overview();
+  } catch (err) {
+    // Expired mid-use: try the saved school login once before asking the user.
+    if (!['NOT_AUTHENTICATED', 'SESSION_EXPIRED'].includes(err.code)) throw err;
+    bb.resetClient();
+    if (!(await bb.renewSilently())) throw err;
+    data = await bb.overview();
+  }
   cache = { at: Date.now(), data };
   return data;
 }
@@ -66,6 +78,27 @@ const server = createServer(async (req, res) => {
         'Content-Disposition': 'attachment; filename="blackboard-deadlines.ics"',
       });
     }
+    if (url.pathname === '/api/config') {
+      return send(res, 200, { demo: DEMO, baseUrl: DEMO ? 'https://demo.blackboard.com' : await bb.savedBaseUrl() });
+    }
+    if (url.pathname === '/api/connect' && req.method === 'GET') {
+      return send(res, 200, connectJob);
+    }
+    if (url.pathname === '/api/connect' && req.method === 'POST') {
+      if (DEMO) return send(res, 400, { error: '示例模式下不需要登录。' });
+      if (connectJob.state === 'running') return send(res, 409, { error: '已经有一个登录窗口在进行中。' });
+      const { url: baseUrl } = JSON.parse(await readBody(req));
+      if (!baseUrl) return send(res, 400, { error: '请先填写学校的 Blackboard 网址。' });
+      connectJob = { state: 'running', message: '正在打开浏览器…' };
+      bb.connectWithBrowser(baseUrl, (message) => { connectJob = { state: 'running', message }; })
+        .then(async () => {
+          cache = undefined;
+          const s = await bb.status();
+          connectJob = { state: 'done', message: `登录成功：${s.name ?? ''}` };
+        })
+        .catch((err) => { connectJob = { state: 'error', message: err.message, hint: err.hint }; });
+      return send(res, 202, connectJob);
+    }
     if (url.pathname === '/api/login' && req.method === 'POST') {
       if (DEMO) return send(res, 400, { error: '示例模式下不需要登录。' });
       const { curl, url: baseUrl } = JSON.parse(await readBody(req));
@@ -87,12 +120,30 @@ const server = createServer(async (req, res) => {
   }
 });
 
+const link = `http://localhost:${PORT}`;
+
+function openPage() {
+  if (process.argv.includes('--no-open')) return;
+  const cmd = process.platform === 'win32' ? `start "" "${link}"` : process.platform === 'darwin' ? `open "${link}"` : `xdg-open "${link}"`;
+  exec(cmd, () => {});
+}
+
+server.on('error', async (err) => {
+  if (err.code !== 'EADDRINUSE') throw err;
+  // Probably the hub is already running in another window: just open the page.
+  const running = await fetch(`${link}/api/status`).then((r) => r.ok).catch(() => false);
+  if (running) {
+    console.log(`\n面板已经在运行，已为你打开：${link}`);
+    console.log('（如果想切换到示例模式或真实数据，请先关掉之前的黑色窗口。）\n');
+    openPage();
+  } else {
+    console.log(`\n端口 ${PORT} 被其他程序占用了。可以关掉占用它的程序后重试。\n`);
+  }
+  process.exitCode = 1;
+});
+
 server.listen(PORT, HOST, () => {
-  const link = `http://localhost:${PORT}`;
   console.log(`\nblackboard-study-hub ${DEMO ? '(示例模式) ' : ''}已启动：${link}`);
   console.log('关闭这个窗口即可停止。\n');
-  if (!process.argv.includes('--no-open')) {
-    const cmd = process.platform === 'win32' ? `start "" "${link}"` : process.platform === 'darwin' ? `open "${link}"` : `xdg-open "${link}"`;
-    exec(cmd, () => {});
-  }
+  openPage();
 });

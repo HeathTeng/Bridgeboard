@@ -22,7 +22,7 @@ The hub is built as separate modules so new features can be added over time. Pla
 - **Announcements** from all open courses, newest first.
 - **Grades** per course, with percentages.
 - **Calendar export**: download an `.ics` file and import it into Google Calendar, Outlook or Apple Calendar. Each deadline has reminders 1 day and 3 days before.
-- **Sign in inside the page**: paste a "Copy as cURL" once, no command line.
+- **One-click sign-in**: a pop-up browser window, with your school login remembered and silent renewal.
 - **Demo mode** with made-up data, for trying it without an account.
 
 ## Requirements
@@ -52,16 +52,17 @@ Your browser opens at http://localhost:3100. Try it with fake data first with `n
 
 ### Signing in
 
-1. Sign in to your school's Blackboard in your browser.
-2. Press F12, open **Network**, press F5.
-3. Right-click a `me?expand=…` request, then **Copy → Copy as cURL (bash)**.
-4. Paste it into the box on the dashboard and click 登录.
+Enter your school's Blackboard address and click **连接 Blackboard**. A separate browser window opens: sign in as you normally do. When you're in, the window closes by itself and your dashboard fills in.
 
-The session is shared with blackboard-mcp, so signing in here also signs in your AI client. Pasted sessions can't renew themselves and last a few hours.
+- The window uses its own profile folder (`~/.blackboard-study-hub/browser-profile`), never your everyday browser data.
+- It remembers your school login, so next time connecting is usually automatic. If your school's login page asks "Stay signed in?", choose yes.
+- While the hub runs it keeps the session alive, and if it lapses it signs back in silently in the background.
+- If the pop-up doesn't work, expand "手动粘贴" on the page and paste a "Copy as cURL" instead.
 
 ## Privacy and safety
 
 - The server listens on `127.0.0.1` only and rejects requests from other host names or web pages.
+- The sign-in window's debugging port listens on `127.0.0.1` only and closes with the window.
 - It only **reads** from Blackboard. It cannot submit work or take quizzes.
 - Your session is stored encrypted by blackboard-mcp in `~/.blackboard-mcp/`. Never commit that folder or share a copied cURL.
 - Check your school's IT acceptable-use policy before using automation tools.

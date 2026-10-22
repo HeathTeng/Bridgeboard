@@ -21,20 +21,28 @@
 <div id="banner" class="banner" hidden></div>
 
 <section id="login" class="card" hidden>
-  <h2>登录 Blackboard</h2>
-  <ol>
-    <li>在浏览器里打开并登录你学校的 Blackboard。</li>
-    <li>按 <kbd>F12</kbd> 打开开发者工具，切到 <b>Network（网络）</b>，再按 <kbd>F5</kbd> 刷新。</li>
-    <li>在左边 Name 列表里右键一条 <code>me?expand=…</code> 请求，选择 <b>Copy → Copy as cURL (bash)</b>。</li>
-    <li>粘贴到下面，点“登录”。</li>
-  </ol>
-  <label>学校 Blackboard 网址（可不填，会自动识别）
-    <input id="baseUrl" type="url" placeholder="https://xxx.blackboard.com">
+  <h2>连接你的 Blackboard</h2>
+  <label>学校 Blackboard 网址
+    <input id="baseUrl" type="url" placeholder="例如 https://xxx.blackboard.com" autocomplete="url">
   </label>
-  <textarea id="curl" rows="6" spellcheck="false" placeholder="在这里粘贴 Copy as cURL (bash) 的内容"></textarea>
-  <p class="muted small">这段内容相当于你的登录凭证，只会发给你电脑上的这个程序，再由它直接连到学校。不要把它发给任何人。</p>
-  <button id="doLogin" type="button" class="primary">登录</button>
-  <p id="loginMsg" class="small"></p>
+  <p class="muted small">在浏览器里打开 Blackboard 时地址栏显示的网址，只需要到 .com 为止。</p>
+  <button id="connect" type="button" class="primary big">连接 Blackboard</button>
+  <p id="connectMsg" class="small"></p>
+  <p class="muted small">点击后会弹出一个单独的浏览器窗口，在里面像平时一样登录学校账号。登录完成后窗口会自动关闭。这个窗口不会使用或改动你平时浏览器里的数据。</p>
+
+  <details class="fallback">
+    <summary>弹出窗口用不了？改用手动粘贴</summary>
+    <ol>
+      <li>在浏览器里打开并登录你学校的 Blackboard。</li>
+      <li>按 <kbd>F12</kbd> 打开开发者工具，切到 <b>Network（网络）</b>，再按 <kbd>F5</kbd> 刷新。</li>
+      <li>在左边 Name 列表里右键一条 <code>me?expand=…</code> 请求，选择 <b>Copy → Copy as cURL (bash)</b>。</li>
+      <li>粘贴到下面，点“登录”。</li>
+    </ol>
+    <textarea id="curl" rows="6" spellcheck="false" placeholder="在这里粘贴 Copy as cURL (bash) 的内容"></textarea>
+    <p class="muted small">这段内容相当于你的登录凭证，只会发给你电脑上的这个程序，再由它直接连到学校。不要把它发给任何人。</p>
+    <button id="doLogin" type="button">登录</button>
+    <p id="loginMsg" class="small"></p>
+  </details>
 </section>
 
 <main id="main" hidden>
