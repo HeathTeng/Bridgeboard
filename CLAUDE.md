@@ -5,7 +5,7 @@ A local web dashboard for Blackboard Learn Ultra, aimed at international student
 ## Layout
 
 - `server.js`: zero-dependency Node HTTP server on 127.0.0.1:3100. API routes plus static files from `public/`.
-- `lib/bb.js`: loads blackboard-mcp's built library (`../blackboard-mcp/dist/index.js` or `BB_MCP_PATH`) and shapes data for the page. Also keep-alive and silent renewal.
+- `lib/bb.js`: loads blackboard-mcp's library (`BB_MCP_PATH`, else the bundled `vendor/blackboard-mcp.js`, else `../blackboard-mcp/dist/index.js`) and shapes data for the page. Also keep-alive and silent renewal.
 - `lib/edge-login.js`: one-click sign-in. Opens Edge/Chrome with its own profile (`~/.blackboard-study-hub/browser-profile`), reads cookies over CDP on 127.0.0.1, closes the window.
 - `lib/ics.js`: deadline calendar export. `lib/demo.js`: fake data for `--demo`.
 - `public/`: plain HTML/CSS/JS, Chinese UI, no build step.
@@ -23,7 +23,7 @@ A local web dashboard for Blackboard Learn Ultra, aimed at international student
 
 ## Roadmap
 
-Stage 1 (now), in order: pop-up Edge sign-in (done, needs real-school test) → course file downloader (choose files, choose folder such as a USB drive, organised by course, skip existing, optional text-for-AI export) → bundle blackboard-mcp into the project → portable Windows zip via GitHub Actions Releases → first-run guide with a always-available troubleshooting (FAQ) page → README "three steps to start".
+Stage 1 (now), in order: pop-up Edge sign-in (done, needs real-school test) → bundle blackboard-mcp into vendor/ (done; rebuild with `npm run vendor`, keep vendor/THIRD-PARTY-NOTICES.txt in sync) → course file downloader (choose files, choose folder such as a USB drive, organised by course, skip existing, optional text-for-AI export) → portable Windows zip via GitHub Actions Releases → first-run guide with a always-available troubleshooting (FAQ) page → README "three steps to start".
 
 Stage 2: UI redesign and modules (weekly digest, study packs), AI Q&A with the student's own API key, then a public launch.
 

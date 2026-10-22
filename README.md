@@ -14,33 +14,17 @@
 打开 [nodejs.org](https://nodejs.org)，下载左边的 **LTS** 版本，一路点"下一步"安装。
 
 **2. 下载本项目**
-在本页面上方点绿色的 **Code** 按钮，选 **Download ZIP**，然后把压缩包解压到一个文件夹，比如 `D:\BLACKBOARD` 或你的 U 盘。
+在本页面上方点绿色的 **Code** 按钮，选 **Download ZIP**，然后把压缩包解压到一个文件夹，比如 `D:\BLACKBOARD` 或你的 U 盘。解压出来的文件夹可能叫 `blackboard-study-hub-main`，名字不影响使用。
 
-**3. 准备 blackboard-mcp（暂时需要，下一个版本会内置，这一步就不用了）**
-打开 [blackboard-mcp](https://github.com/felipedias-ie/blackboard-mcp)，同样点 **Code → Download ZIP**，解压到同一个文件夹，并把解压出来的文件夹改名为 `blackboard-mcp`。然后进入这个文件夹，在地址栏里输入 `powershell` 并回车，**一行一行**粘贴运行：
-
-```
-npm install
-npx tsc -p tsconfig.build.json
-```
-
-做完后文件夹里应该是这样：
-
-```
-D:\BLACKBOARD\
-├── blackboard-mcp\
-└── blackboard-study-hub\    （第 2 步解压出来的，叫 blackboard-study-hub-main 也没关系）
-```
-
-**4. 双击 `start.bat`**
+**3. 双击 `start.bat`**
 在 `blackboard-study-hub` 文件夹里双击 `start.bat`。会出现一个黑色窗口（**不要关掉它**，关掉面板就停了），浏览器会自动打开面板。如果 Windows 提示"已保护你的电脑"，点"更多信息"，再点"仍要运行"。
 
-**5. 连接 Blackboard**
+**4. 连接 Blackboard**
 填入你们学校的 Blackboard 网址（浏览器地址栏里到 `.com` 为止的部分），点 **连接 Blackboard**。
 
 ![连接 Blackboard](docs/step-connect.png)
 
-**6. 在弹出的窗口里登录学校账号**
+**5. 在弹出的窗口里登录学校账号**
 像平时一样输入学号和密码。如果学校问 **"保持登录状态？"（Stay signed in?），一定要选"是"**，这样以后打开基本不用再登录。登录完成后窗口会自己关闭，面板显示你的截止日期、公告和成绩。
 
 以后每次使用，只要双击 `start.bat` 就行。想先看看效果，可以双击 `demo.bat`，用的是虚构的示例数据，不需要登录。
@@ -71,23 +55,14 @@ The hub is built as separate modules so new features can be added over time. Pla
 ## Requirements
 
 - Node.js 22.5 or newer
-- A built copy of [blackboard-mcp](https://github.com/felipedias-ie/blackboard-mcp) in a folder next to this one
 
-```
-your-folder/
-├── blackboard-mcp/   # git clone + npm install + npx tsc -p tsconfig.build.json
-└── blackboard-study-hub/   # this project
-```
-
-Or point `BB_MCP_PATH` at `blackboard-mcp/dist/index.js`.
+blackboard-mcp comes bundled in `vendor/`, so nothing else is needed. To use your own build instead, point `BB_MCP_PATH` at `blackboard-mcp/dist/index.js`, or put a built checkout in a `blackboard-mcp` folder next to this one and run `npm run vendor` to re-bundle it.
 
 ## Quick start (command line)
 
 Windows users who don't use the terminal: follow the Chinese step-by-step guide above.
 
 ```bash
-git clone https://github.com/felipedias-ie/blackboard-mcp.git
-cd blackboard-mcp && npm install && npx tsc -p tsconfig.build.json && cd ..
 git clone https://github.com/heathteng/blackboard-study-hub.git
 cd blackboard-study-hub
 npm start          # or double-click start.bat on Windows
@@ -122,7 +97,7 @@ npm test
 ## Credits
 
 - **Author:** [Heath Teng (@HeathTeng)](https://github.com/HeathTeng), who designed and maintains this project, built with help from Claude Code.
-- **Built on:** [blackboard-mcp](https://github.com/felipedias-ie/blackboard-mcp) by [Felipe Dias (@felipedias-ie)](https://github.com/felipedias-ie), MIT licensed. Its Blackboard client library does the sign-in and data fetching; thank you, Felipe. `vendor/blackboard-mcp.js` is a bundled build of blackboard-mcp v0.6.0 at commit [`fb05792`](https://github.com/felipedias-ie/blackboard-mcp/commit/fb057928ae200364ac3cda48d10779d33f5a4bb7) with its dependencies, made with `npm run vendor`; its license is in `vendor/LICENSE-blackboard-mcp`.
+- **Built on:** [blackboard-mcp](https://github.com/felipedias-ie/blackboard-mcp) by [Felipe Dias (@felipedias-ie)](https://github.com/felipedias-ie), MIT licensed. Its Blackboard client library does the sign-in and data fetching; thank you, Felipe. `vendor/blackboard-mcp.js` is a bundled build of blackboard-mcp v0.6.0 at commit [`fb05792`](https://github.com/felipedias-ie/blackboard-mcp/commit/fb057928ae200364ac3cda48d10779d33f5a4bb7) with its dependencies, made with `npm run vendor`; its license is in `vendor/LICENSE-blackboard-mcp`, and the licenses of the packages bundled with it are in `vendor/THIRD-PARTY-NOTICES.txt`.
 
 **作者：** 滕泽浩（[@HeathTeng](https://github.com/HeathTeng)），负责项目设计与维护，开发过程中使用了 Claude Code。
 **致谢：** 本项目基于 Felipe Dias（[@felipedias-ie](https://github.com/felipedias-ie)）的开源项目 [blackboard-mcp](https://github.com/felipedias-ie/blackboard-mcp)（MIT 许可证）。
