@@ -1,4 +1,5 @@
 import { DEFAULTS, STATUSES, durations, statusLabel, statusOf, timeLeft } from './status.js';
+import { assignmentRows, sortRows } from './checklist-rows.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -94,7 +95,266 @@ $('resetTimeline').addEventListener('click', () => {
 });
 
 // Keep the colours and "还剩…" labels current while the page stays open.
-setInterval(() => { if (todoItems.length) renderTodo(); }, 60_000);
+setInterval(() => {
+  if (todoItems.length) renderTodo();
+  renderAssignments();
+  // Not while the student is typing in their own list.
+  if (!document.activeElement?.closest('#clOwn')) renderOwn();
+}, 60_000);
+
+// ---- 清单 ----
+
+let checklist = { items: [], marks: {} };
+let signedIn = false;
+let todoLoaded = false;
+let pendingRemoval; // a delete waiting out its undo window
+const hiddenIds = new Set(); // own items hidden while their delete can still be undone
+const doneOpen = {}; // which 已完成 groups the student has opened
+
+const json = (method, body) => ({ method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+const short = (text) => ([...text].length > 20 ? `${[...text].slice(0, 20).join('')}…` : text);
+
+function toLocalInput(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+const fromLocalInput = (value) => (value ? new Date(value).toISOString() : null);
+
+function flash(text) {
+  $('clMsg').textContent = text;
+  clearTimeout(flash.timer);
+  flash.timer = setTimeout(() => { $('clMsg').textContent = ''; }, 5000);
+}
+
+/** Same colour and time-left label as the deadlines; only for unfinished work with a due date. */
+function badge(row, now) {
+  if (!row.due || row.done) return null;
+  const status = statusOf({ due: row.due, opened: row.opened }, now, timeline);
+  return el('span', { class: `badge st-${status}` }, el('span', { class: 'dot' }), `${statusLabel(status, timeline)} · ${timeLeft({ due: row.due }, now)}`);
+}
+
+function roundBox(checked, title, onChange, disabled = false) {
+  const box = el('input', { type: 'checkbox', class: 'round', title, 'aria-label': title });
+  box.checked = checked;
+  box.disabled = disabled;
+  box.addEventListener('change', () => onChange(box.checked));
+  return box;
+}
+
+function doneGroup(key, rows, ...extra) {
+  const group = el('details', { class: 'cl-done' }, el('summary', {}, `已完成（${rows.length}）`), rows, extra);
+  group.open = Boolean(doneOpen[key]);
+  group.addEventListener('toggle', () => { doneOpen[key] = group.open; });
+  return group;
+}
+
+function assignmentRow(t, now) {
+  const byBlackboard = t.done && !t.manual;
+  const box = roundBox(
+    t.done,
+    byBlackboard ? 'Blackboard 显示已提交，这里不能取消' : '只是在这台电脑上做个记号，不会在 Blackboard 上提交',
+    (done) => setMark(t, done),
+    byBlackboard,
+  );
+  const title = /^https:\/\//.test(t.link ?? '')
+    ? el('a', { href: t.link, target: '_blank', rel: 'noopener noreferrer', title: '在 Blackboard 里打开' }, t.title)
+    : t.title;
+  return el('div', { class: `cl-row${t.done ? ' is-done' : ''}` }, box,
+    el('div', { class: 'cl-body' },
+      el('div', { class: 'cl-text' }, title),
+      el('div', { class: 'meta' }, `${t.course} · ${fmt.format(new Date(t.due))} `, badge(t, now)),
+      t.manual ? el('div', { class: 'cl-note' }, '已手动标记完成（不会在 Blackboard 上提交）') : null,
+      byBlackboard ? el('div', { class: 'cl-note' }, 'Blackboard 显示已提交') : null,
+    ));
+}
+
+function renderAssignments() {
+  const box = $('clAssignments');
+  if (!signedIn) return box.replaceChildren(el('p', { class: 'muted small' }, '重新连接 Blackboard 后会显示作业。'));
+  if (!todoLoaded) return box.replaceChildren(el('p', { class: 'muted small' }, '正在读取作业…'));
+  const now = Date.now();
+  const { open, done } = sortRows(assignmentRows(todoItems, checklist.marks, now), (r) => r.due);
+  box.replaceChildren(...[
+    open.length
+      ? el('div', {}, open.map((t) => assignmentRow(t, now)))
+      : el('p', { class: 'muted small' }, done.length ? '已开放的作业都完成了 🎉' : '目前没有已开放的作业 🎉', el('br'), '还没开放的作业，开放后会自动出现在这里。'),
+    done.length ? doneGroup('assignments', done.map((t) => assignmentRow(t, now))) : null,
+  ].filter(Boolean));
+}
+
+async function setMark(t, done) {
+  try {
+    await api(`/api/checklist/marks/${encodeURIComponent(t.key)}`, json('PUT', { done }));
+    if (done) checklist.marks[t.key] = { at: new Date().toISOString() };
+    else delete checklist.marks[t.key];
+    flash(done ? '已移到下面的「已完成」。这只是本机记号，不会在 Blackboard 上提交。' : '已取消完成标记。');
+  } catch (err) {
+    flash(`没有保存：${err.message}`);
+  }
+  renderAssignments();
+}
+
+function ownRow(x, now) {
+  const text = el('span', { class: 'cl-text editable', title: '点文字可以修改', tabindex: '0', role: 'button' }, x.text);
+  text.addEventListener('click', () => startEdit(x, text));
+  text.addEventListener('keydown', (e) => { if (e.key === 'Enter') startEdit(x, text); });
+
+  const dueInput = el('input', { type: 'datetime-local', 'aria-label': '截止时间' });
+  dueInput.value = toLocalInput(x.due);
+  dueInput.addEventListener('change', () => { if (dueInput.value) patchItem(x.id, { due: fromLocalInput(dueInput.value) }, '截止时间已保存。'); });
+  const clearDue = el('button', { type: 'button', class: 'link' }, '去掉截止时间');
+  clearDue.addEventListener('click', () => patchItem(x.id, { due: null }, '已去掉截止时间。'));
+  const dueEditor = el('div', { class: 'cl-due-edit', hidden: '' }, dueInput, x.due ? clearDue : null);
+
+  const dueBtn = el('button', { type: 'button', class: 'link' }, x.due ? '改截止时间' : '加截止时间');
+  dueBtn.addEventListener('click', () => {
+    dueEditor.hidden = !dueEditor.hidden;
+    if (!dueEditor.hidden) dueInput.focus();
+  });
+  const del = el('button', { type: 'button', class: 'link danger' }, '删除');
+  del.addEventListener('click', () => removeLater([x.id], `已删除"${short(x.text)}"`,
+    (keepalive) => api(`/api/checklist/items/${x.id}`, { method: 'DELETE', keepalive })));
+
+  return el('div', { class: `cl-row${x.done ? ' is-done' : ''}` },
+    roundBox(x.done, x.done ? '取消完成' : '标记完成', (done) => patchItem(x.id, { done }, done ? '已移到下面的「已完成」。' : '')),
+    el('div', { class: 'cl-body' }, text,
+      x.due ? el('div', { class: 'meta' }, `${fmt.format(new Date(x.due))} `, badge(x, now)) : null,
+      el('div', { class: 'cl-actions' }, x.done ? null : dueBtn, del),
+      dueEditor));
+}
+
+function renderOwn() {
+  const box = $('clOwn');
+  const now = Date.now();
+  const { open, done } = sortRows(checklist.items.filter((x) => !hiddenIds.has(x.id)));
+  const clear = el('button', { type: 'button', class: 'link danger' }, '清除已完成');
+  clear.addEventListener('click', () => {
+    const ids = done.map((x) => x.id);
+    removeLater(ids, `已清除 ${ids.length} 条已完成的事项`,
+      (keepalive) => api('/api/checklist/clear-done', { ...json('POST', { ids }), keepalive }));
+  });
+  box.replaceChildren(...[
+    open.length
+      ? el('div', {}, open.map((x) => ownRow(x, now)))
+      : el('p', { class: 'muted small' }, '还没有自己的待办。在上面的框里写一句，按回车或点"添加"就行。'),
+    done.length ? doneGroup('own', done.map((x) => ownRow(x, now)), el('p', {}, clear)) : null,
+  ].filter(Boolean));
+}
+
+function startEdit(x, span) {
+  const input = el('input', { type: 'text', maxlength: '200', class: 'cl-edit', 'aria-label': '修改待办' });
+  input.value = x.text;
+  let finished = false;
+  const finish = (save) => {
+    if (finished) return;
+    finished = true;
+    const value = input.value.trim();
+    if (save && value && value !== x.text) return patchItem(x.id, { text: value }, '已保存修改。');
+    if (save && !value) flash('内容不能为空，没有修改。想删掉这条，请点"删除"。');
+    renderOwn();
+  };
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+    if (e.key === 'Escape') finish(false);
+  });
+  // Clicking somewhere else saves too, so a change is not lost.
+  input.addEventListener('blur', () => finish(true));
+  span.replaceWith(input);
+  input.focus();
+}
+
+async function patchItem(id, patch, okText) {
+  try {
+    const item = await api(`/api/checklist/items/${id}`, json('PATCH', patch));
+    checklist.items = checklist.items.map((x) => (x.id === id ? item : x));
+    if (okText) flash(okText);
+    renderOwn();
+  } catch (err) {
+    flash(`没有保存：${err.message}`);
+    await loadChecklist();
+  }
+}
+
+/** Hides the items now and only deletes them once the undo window has passed. */
+function removeLater(ids, text, send) {
+  flushRemoval();
+  ids.forEach((id) => hiddenIds.add(id));
+  renderOwn();
+  pendingRemoval = { ids, send, timer: setTimeout(() => flushRemoval(), 6000) };
+  $('undoText').textContent = text;
+  $('undoBar').hidden = false;
+}
+
+function flushRemoval(keepalive = false) {
+  const p = pendingRemoval;
+  if (!p) return;
+  pendingRemoval = undefined;
+  clearTimeout(p.timer);
+  $('undoBar').hidden = true;
+  p.send(keepalive)
+    .then(() => { checklist.items = checklist.items.filter((x) => !p.ids.includes(x.id)); })
+    .catch((err) => flash(`没有删除成功：${err.message}`))
+    .finally(() => {
+      p.ids.forEach((id) => hiddenIds.delete(id));
+      renderOwn();
+    });
+}
+
+$('undoBtn').addEventListener('click', () => {
+  const p = pendingRemoval;
+  if (!p) return;
+  pendingRemoval = undefined;
+  clearTimeout(p.timer);
+  $('undoBar').hidden = true;
+  p.ids.forEach((id) => hiddenIds.delete(id));
+  renderOwn();
+  flash('已恢复。');
+});
+
+// Leaving the page during the undo window still carries out the delete.
+window.addEventListener('pagehide', () => flushRemoval(true));
+
+$('addForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const text = $('addText').value.trim();
+  if (!text) return $('addText').focus();
+  try {
+    const item = await api('/api/checklist/items', json('POST', { text, due: fromLocalInput($('addDue').value) }));
+    checklist.items.push(item);
+    $('addText').value = '';
+    $('addDue').value = '';
+    $('addMsg').textContent = '';
+    renderOwn();
+    $('addText').focus();
+  } catch (err) {
+    $('addMsg').textContent = err.message;
+  }
+});
+
+$('addText').addEventListener('input', () => {
+  const left = 200 - [...$('addText').value].length;
+  $('addMsg').textContent = left <= 20 ? `还能输入 ${left} 个字。` : '';
+});
+
+async function loadChecklist() {
+  try {
+    checklist = await api('/api/checklist');
+  } catch (err) {
+    flash(`清单没有读取成功：${err.message}`);
+  }
+  renderOwn();
+  renderAssignments();
+}
+
+/** Signed out: only the checklist stays, since the student's own list is local. */
+function showSignedOut() {
+  signedIn = false;
+  $('main').hidden = false;
+  $('main').classList.add('signed-out');
+  renderAssignments();
+}
 
 function renderAnnouncements(list) {
   const box = $('announcements');
@@ -375,7 +635,7 @@ async function load(refresh = false) {
     if (!status.signedIn) {
       $('who').textContent = '未登录，或登录已过期';
       $('login').hidden = false;
-      $('main').hidden = true;
+      showSignedOut();
       showBanner('');
       return;
     }
@@ -383,9 +643,14 @@ async function load(refresh = false) {
     const mins = status.secondsLeft ? Math.round(status.secondsLeft / 60) : null;
     $('who').textContent = `${status.name}${status.demo ? '（示例数据）' : ''}${mins ? ` · 登录还剩约 ${mins} 分钟` : ''}`;
     $('main').hidden = false;
+    $('main').classList.remove('signed-out');
+    signedIn = true;
+    renderAssignments();
     showBanner('正在读取 Blackboard 数据…');
     const data = await api(`/api/overview${refresh ? '?refresh' : ''}`);
     renderTodo(data.todo);
+    todoLoaded = true;
+    renderAssignments();
     renderAnnouncements(data.announcements);
     renderGrades(data.grades);
     renderCourseFiles(data.courses, refresh);
@@ -393,7 +658,7 @@ async function load(refresh = false) {
   } catch (err) {
     if (err.code === 'NOT_AUTHENTICATED' || err.code === 'SESSION_EXPIRED' || err.code === 'NOT_CONFIGURED') {
       $('login').hidden = false;
-      $('main').hidden = true;
+      showSignedOut();
       showBanner('登录已过期，请重新登录。');
     } else {
       showBanner(`出错了：${err.message}`);
@@ -454,4 +719,5 @@ $('doLogin').addEventListener('click', async () => {
 
 api('/api/config').then((c) => { if (c.baseUrl && !$('baseUrl').value) $('baseUrl').value = c.baseUrl; }).catch(() => {});
 loadSettings();
+loadChecklist();
 load();

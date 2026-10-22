@@ -6,17 +6,23 @@ import { extname, join } from 'node:path';
 import { exec, execFile } from 'node:child_process';
 import * as bb from './lib/bb.js';
 import { toIcs } from './lib/ics.js';
-import { demoDownload, demoFiles, demoOverview, demoStatus } from './lib/demo.js';
+import { demoChecklist, demoDownload, demoFiles, demoOverview, demoStatus } from './lib/demo.js';
 import { alreadyThere, planPaths } from './lib/downloader.js';
 import { checkDownloadDir, checkDurations, loadSettings, saveSettings } from './lib/settings.js';
 import { durations } from './lib/status.js';
+import { ChecklistStore } from './lib/checklist.js';
 
 const DEMO = process.argv.includes('--demo');
 const PORT = Number(process.env.PORT ?? 3100);
 const HOST = '127.0.0.1';
 const PUBLIC = join(import.meta.dirname, 'public');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml' };
+// Rules the page and the server share, served from lib/.
+const SHARED = new Set(['status.js', 'checklist-rows.js']);
 const ALLOWED_HOSTS = new Set([`127.0.0.1:${PORT}`, `localhost:${PORT}`]);
+
+// The checklist is local data; demo mode keeps it in memory and writes nothing.
+const checklist = DEMO ? new ChecklistStore(null, demoChecklist()) : new ChecklistStore();
 
 // Demo mode keeps the deadline timeline in memory instead of settings.json.
 let demoDurations = durations();
@@ -240,6 +246,15 @@ function send(res, status, body, type = 'application/json; charset=utf-8', extra
   res.end(typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body));
 }
 
+async function readJson(req) {
+  try {
+    return JSON.parse((await readBody(req, 64 * 1024)) || '{}') ?? {};
+  } catch (err) {
+    if (err.status) throw err;
+    throw Object.assign(new Error('收到的数据格式不对，请刷新页面再试。'), { status: 400 });
+  }
+}
+
 async function readBody(req, limit = 256 * 1024) {
   let size = 0;
   const chunks = [];
@@ -369,11 +384,13 @@ const server = createServer(async (req, res) => {
       execFile(opener, [dir], () => {});
       return send(res, 200, { ok: true });
     }
+    // Awaited so its errors reach the catch below instead of crashing the server.
+    if (url.pathname.startsWith('/api/checklist')) return await checklistRoute(req, res, url);
     if (req.method === 'GET') {
       const file = url.pathname === '/' ? 'index.html' : url.pathname.slice(1);
       if (!/^[\w.-]+$/.test(file)) return send(res, 404, 'Not found', 'text/plain');
       // The status rules are shared with the server, so the page loads them from lib/.
-      const dir = file === 'status.js' ? join(import.meta.dirname, 'lib') : PUBLIC;
+      const dir = SHARED.has(file) ? join(import.meta.dirname, 'lib') : PUBLIC;
       const body = await readFile(join(dir, file)).catch(() => null);
       if (!body) return send(res, 404, 'Not found', 'text/plain');
       return send(res, 200, body, TYPES[extname(file)] ?? 'application/octet-stream');
@@ -383,6 +400,27 @@ const server = createServer(async (req, res) => {
     send(res, err.status ?? 500, { error: err.message, code: err.code, hint: err.hint });
   }
 });
+
+/** The checklist routes. Local file only: none of them touches Blackboard. */
+async function checklistRoute(req, res, url) {
+  const { pathname } = url;
+  const m = req.method;
+  if (pathname === '/api/checklist' && m === 'GET') return send(res, 200, checklist.list());
+  if (pathname === '/api/checklist/items' && m === 'POST') return send(res, 201, checklist.add(await readJson(req)));
+  if (pathname === '/api/checklist/clear-done' && m === 'POST') return send(res, 200, checklist.clearDone((await readJson(req)).ids));
+  const item = /^\/api\/checklist\/items\/([\w-]{1,64})$/.exec(pathname);
+  if (item && m === 'PATCH') return send(res, 200, checklist.update(item[1], await readJson(req)));
+  if (item && m === 'DELETE') return send(res, 200, checklist.remove(item[1]));
+  const mark = /^\/api\/checklist\/marks\/([^/]+)$/.exec(pathname);
+  if (mark && m === 'PUT') {
+    let key = '';
+    try {
+      key = decodeURIComponent(mark[1]);
+    } catch {}
+    return send(res, 200, checklist.mark(key, (await readJson(req)).done));
+  }
+  return send(res, 404, { error: '找不到这条事项，可能已经被删除了。请刷新页面。' });
+}
 
 const link = `http://localhost:${PORT}`;
 

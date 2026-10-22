@@ -35,6 +35,15 @@
 
 截止日期上方有一个时间轴：往左拖左边的手柄，调整开放多久以内算"新开放"（当天，或 6 到 72 小时）；往右拖右边的手柄，调整离截止多久以内算"临期"（1 到 72 小时）。颜色会立刻更新，下次打开还在；点 **恢复默认** 可以改回来。
 
+### 清单
+
+**清单** 回答"我还要做什么"：
+
+- **作业清单**：已经开放的作业会自动出现在这里，在 Blackboard 上提交后会自动打勾。用别的方式交了作业，也可以自己打勾；这只是在你电脑上做个记号，**不会在 Blackboard 上提交**。
+- **我的清单**：自己写待办，比如"复习第 3 章"。写好按回车或点 **添加**；可以加截止时间，到时会和作业一样显示颜色和剩余时间。点文字可以修改；删错了，几秒内点 **撤销** 就能恢复。
+
+清单只保存在这台电脑上，换电脑看不到。
+
 ### 下载课程文件
 
 在面板最下面的 **课程文件** 里，可以把课件一次性下载到你选的文件夹（比如 U 盘），方便交给 AI 工具或离线复习。
@@ -91,6 +100,7 @@ Students can't use Blackboard's official API without approval from their school'
 - **Five-colour deadlines**: overdue, due soon, newly opened, open and submitted, each with a text label and time left. Drag the timeline above the list to choose how long counts as "new" and "due soon"; it is saved for next time. Each title opens the assignment in Blackboard.
 - **Announcements** from all open courses, newest first.
 - **Grades** per course, with percentages.
+- **Checklist**: opened assignments appear by themselves and tick when Blackboard shows them submitted (a manual tick is only a local mark); below, the student's own to-dos with optional due dates, edit in place, and undo after delete. Saved locally only, and still available while signed out.
 - **Calendar export**: download an `.ics` file and import it into Google Calendar, Outlook or Apple Calendar. Each deadline has reminders 1 day and 3 days before, and a link back to the assignment.
 - **Course file downloader**: pick files course by course and save them to any folder (a USB drive works), organised by course and Blackboard folder. Files already there are skipped, public Google Docs/Slides/Sheets links are saved as PDF, and an optional `.txt` text export of each PDF, Word and PowerPoint file is ready to hand to an AI tool.
 - **One-click sign-in**: a pop-up browser window, with your school login remembered and silent renewal.

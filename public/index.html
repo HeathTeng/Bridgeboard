@@ -65,6 +65,21 @@
     <p class="muted small todo-hint">点作业标题可以直接打开 Blackboard 的作业页面（Turnitin 这类会打开课程大纲）。</p>
     <div id="todo"></div>
   </section>
+  <section class="card" id="checklistCard">
+    <h2>清单</h2>
+    <p class="muted small">作业会自动出现在上面；下面可以写你自己的待办，只保存在这台电脑上。</p>
+    <h3 class="cl-head">作业清单</h3>
+    <div id="clAssignments"></div>
+    <h3 class="cl-head">我的清单</h3>
+    <form id="addForm" class="cl-add" autocomplete="off">
+      <input id="addText" type="text" maxlength="200" placeholder="写一条待办，比如：复习第 3 章" aria-label="新的待办">
+      <button type="submit" class="primary">添加</button>
+      <label class="cl-due-label">截止时间（可选）<input id="addDue" type="datetime-local"></label>
+    </form>
+    <p id="addMsg" class="small fail"></p>
+    <div id="clOwn"></div>
+    <p id="clMsg" class="small muted" aria-live="polite"></p>
+  </section>
   <section class="card">
     <h2>最新公告</h2>
     <div id="announcements"></div>
@@ -97,6 +112,7 @@
 </main>
 
 <footer class="muted small">数据只在你的电脑上处理，基于开源项目 <a href="https://github.com/felipedias-ie/blackboard-mcp" target="_blank" rel="noopener">blackboard-mcp</a>。</footer>
+<div id="undoBar" class="undo-bar" role="status" hidden><span id="undoText"></span> · <button id="undoBtn" type="button" class="link">撤销</button></div>
 <script type="module" src="app.js"></script>
 </body>
 </html>

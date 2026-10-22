@@ -48,6 +48,39 @@ main { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)
 .tl-now { font-size: 12px; font-weight: 600; padding-left: 6px; border-left: 2px solid var(--text); }
 .tl-help { margin: 8px 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--muted); }
 .todo-hint { margin: 0 0 10px; }
+/* 清单 */
+#main.signed-out > .card:not(#checklistCard) { display: none; }
+.cl-head { margin: 14px 0 6px; font-size: 14px; }
+.cl-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-top: 1px solid var(--line); }
+.cl-row:first-child { border-top: 0; }
+.cl-body { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.cl-text { font-weight: 600; }
+.cl-text a { color: inherit; }
+.cl-text.editable { cursor: text; }
+.is-done .cl-text { text-decoration: line-through; color: var(--muted); font-weight: 400; }
+.cl-note { font-size: 12px; color: var(--green); }
+.cl-actions { display: flex; gap: 14px; opacity: 0; }
+.cl-actions button.link { font-size: 12px; }
+.cl-row:hover .cl-actions, .cl-row:focus-within .cl-actions { opacity: 1; }
+@media (hover: none) { .cl-actions { opacity: 1; } }
+input[type=checkbox].round { appearance: none; width: 20px; height: 20px; flex: none; margin: 2px 0 0; padding: 0; border: 2px solid var(--muted);
+  border-radius: 50%; background: var(--card); cursor: pointer; }
+input[type=checkbox].round:checked { background: var(--green); border-color: var(--green); box-shadow: inset 0 0 0 3px var(--card); }
+input[type=checkbox].round:disabled { cursor: not-allowed; }
+.badge { white-space: nowrap; color: var(--st); }
+.badge .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--mark); margin-right: 4px; }
+.cl-add { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.cl-add #addText, .cl-edit { flex: 1 1 200px; margin: 0; font-family: inherit; font-size: 14px; }
+.cl-due-label { margin: 0; font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; flex-basis: 100%; }
+.cl-due-label input, .cl-due-edit input { width: auto; margin: 0; font-family: inherit; }
+.cl-due-edit { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 4px; }
+.cl-due-edit[hidden] { display: none; }
+.cl-done { margin-top: 8px; }
+.cl-done summary { color: var(--muted); font-size: 13px; padding: 4px 0; }
+.danger { color: var(--red); }
+.undo-bar { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 10; max-width: calc(100% - 32px);
+  background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, .25); font-size: 14px; }
+.undo-bar button.link { color: inherit; font-weight: 600; font-size: 14px; }
 button.link { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; font-size: 13px; }
 .item { padding: 8px 0; border-top: 1px solid var(--line); }
 .item:first-of-type { border-top: 0; }
