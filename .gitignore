@@ -3,3 +3,4 @@ node_modules/
 *.har
 *.ics
 .DS_Store
+dist/

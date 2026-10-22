@@ -11,7 +11,8 @@ A local web dashboard for Blackboard Learn Ultra, aimed at international student
 - Course file downloader: `lib/downloader.js` (target paths, Windows length limit, skip-existing; pure, tested), `lib/office-text.js` (.docx/.pptx text via zlib, since the library only extracts PDF), `lib/settings.js` (`~/.blackboard-study-hub/settings.json`, download folder checks). Listing and the one-at-a-time download loop are `courseFiles` / `downloadAll` in `lib/bb.js`; the page sends file ids only, never URLs. Spec: `docs/dev/step3-downloader.md`.
 - `public/`: plain HTML/CSS/JS, Chinese UI, no build step.
 - `test/`: `node --test`. Run `npm test` before every commit.
-- `start.bat` / `demo.bat`: double-click launchers for Windows.
+- `start.bat` / `demo.bat`: double-click launchers for Windows. They use `runtime/node.exe` when present (portable zip), else `node` on PATH.
+- `scripts/build-portable.sh` + `.github/workflows/release.yml`: pushing a `v*` tag builds the Windows portable zip (app + node.exe, SHA-256 checked) and publishes it as a GitHub Release.
 
 ## Rules
 
@@ -24,7 +25,7 @@ A local web dashboard for Blackboard Learn Ultra, aimed at international student
 
 ## Roadmap
 
-Stage 1 (now), in order: pop-up Edge sign-in (done, needs real-school test) → bundle blackboard-mcp into vendor/ (done; rebuild with `npm run vendor`, keep vendor/THIRD-PARTY-NOTICES.txt in sync) → course file downloader (done, tested on a real account; not yet: attachments and files embedded in page bodies) → portable Windows zip via GitHub Actions Releases → first-run guide with a always-available troubleshooting (FAQ) page → README "three steps to start".
+Stage 1 (now), in order: pop-up Edge sign-in (done, needs real-school test) → bundle blackboard-mcp into vendor/ (done; rebuild with `npm run vendor`, keep vendor/THIRD-PARTY-NOTICES.txt in sync) → course file downloader (done, tested on a real account; not yet: attachments and files embedded in page bodies) → portable Windows zip via GitHub Actions Releases (done) → first-run guide with a always-available troubleshooting (FAQ) page → README "three steps to start".
 
 Stage 2: UI redesign and modules (weekly digest, study packs), AI Q&A with the student's own API key, then a public launch.
 

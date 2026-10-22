@@ -1,0 +1,38 @@
+# Builds the Windows portable zip and attaches it to a GitHub Release.
+# Push a tag like v0.2.0 to publish, or run it by hand from the Actions tab.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag to publish, e.g. v0.2.0'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  portable:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+      - name: Build the portable zip
+        run: scripts/build-portable.sh "${{ github.event.inputs.version || github.ref_name }}"
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ github.event.inputs.version || github.ref_name }}
+        run: |
+          notes="Windows 便携版：下载 blackboard-study-hub-$VERSION-windows.zip，解压后双击 start.bat 即可使用，不需要安装 Node.js。详细步骤见 README。"
+          if gh release view "$VERSION" >/dev/null 2>&1; then
+            gh release upload "$VERSION" dist/*.zip --clobber
+          else
+            gh release create "$VERSION" dist/*.zip --title "$VERSION" --notes "$notes" --target "$GITHUB_SHA"
+          fi

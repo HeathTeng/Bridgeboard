@@ -10,14 +10,14 @@
 
 不需要懂代码，按顺序做一次就好。
 
-**1. 安装 Node.js（只需一次）**
-打开 [nodejs.org](https://nodejs.org)，下载左边的 **LTS** 版本，一路点"下一步"安装。
+**1. 下载便携版**
+打开 [最新版本下载页](https://github.com/HeathTeng/blackboard-study-hub/releases/latest)，在 **Assets** 下面点 `blackboard-study-hub-版本号-windows.zip` 下载。里面已经带好了运行环境，**不用另外安装任何东西**。
 
-**2. 下载本项目**
-在本页面上方点绿色的 **Code** 按钮，选 **Download ZIP**，然后把压缩包解压到一个文件夹，比如 `D:\BLACKBOARD` 或你的 U 盘。解压出来的文件夹可能叫 `blackboard-study-hub-main`，名字不影响使用。
+**2. 解压**
+右键压缩包，选「全部解压缩」，解压到一个文件夹，比如 `D:\BLACKBOARD` 或你的 U 盘。**一定要先解压**，直接在压缩包里双击是用不了的。
 
 **3. 双击 `start.bat`**
-在 `blackboard-study-hub` 文件夹里双击 `start.bat`。会出现一个黑色窗口（**不要关掉它**，关掉面板就停了），浏览器会自动打开面板。如果 Windows 提示"已保护你的电脑"，点"更多信息"，再点"仍要运行"。
+在解压出来的 `blackboard-study-hub` 文件夹里双击 `start.bat`。会出现一个黑色窗口（**不要关掉它**，关掉面板就停了），浏览器会自动打开面板。如果 Windows 提示"已保护你的电脑"，点"更多信息"，再点"仍要运行"。
 
 **4. 连接 Blackboard**
 填入你们学校的 Blackboard 网址（浏览器地址栏里到 `.com` 为止的部分），点 **连接 Blackboard**。
@@ -44,6 +44,8 @@
 
 遇到问题请看 **[常见问题](docs/FAQ.md)**。
 
+> 已经装了 Node.js 22.5 以上版本的话，也可以在本页面点绿色的 **Code → Download ZIP** 下载源码版，解压后同样双击 `start.bat` 使用。
+
 ---
 
 ## Why
@@ -57,7 +59,7 @@ Students can't use Blackboard's official API without approval from their school'
 - [x] One-click sign-in through a pop-up browser window, with silent renewal
 - [x] blackboard-mcp bundled in, nothing else to download
 - [x] Course file downloader: pick files and a folder (a USB drive works), organised by course, with text exports for AI tools
-- [ ] Portable zip: download, unzip, double-click, no Node.js install
+- [x] Portable zip: download, unzip, double-click, no Node.js install
 - [ ] First-run guide, with an FAQ page you can open any time
 - [ ] Final README with step-by-step screenshots
 
@@ -71,7 +73,7 @@ Students can't use Blackboard's official API without approval from their school'
 - [x] 弹窗一键登录，过期后自动续期
 - [x] 内置 blackboard-mcp，不用另外下载
 - [x] 课程文件下载器：勾选文件、选择保存位置（可以是 U 盘），按课程整理，可导出给 AI 用的文字版
-- [ ] 便携压缩包：下载、解压、双击即用，不用装 Node.js
+- [x] 便携压缩包：下载、解压、双击即用，不用装 Node.js
 - [ ] 新手引导，常见问题随时可查
 - [ ] README 配图版使用说明定稿
 
@@ -96,9 +98,11 @@ Students can't use Blackboard's official API without approval from their school'
 
 blackboard-mcp comes bundled in `vendor/`, so nothing else is needed. To use your own build instead, point `BB_MCP_PATH` at `blackboard-mcp/dist/index.js`, or put a built checkout in a `blackboard-mcp` folder next to this one and run `npm run vendor` to re-bundle it.
 
-## Quick start (command line)
+## Quick start
 
-Windows users who don't use the terminal: follow the Chinese step-by-step guide above.
+**Windows:** download the portable zip from [Releases](https://github.com/HeathTeng/blackboard-study-hub/releases/latest), unzip it and double-click `start.bat`. Node.js is included.
+
+**Command line** (any OS, Node.js 22.5+):
 
 ```bash
 git clone https://github.com/heathteng/blackboard-study-hub.git
@@ -131,6 +135,8 @@ Enter your school's Blackboard address and click **连接 Blackboard**. A separa
 ```bash
 npm test
 ```
+
+To publish a release, push a version tag (for example `git tag v0.2.0 && git push origin v0.2.0`). The Release workflow runs the tests, builds the Windows portable zip with `scripts/build-portable.sh` (the app plus Node.js's `node.exe`, checked against nodejs.org's SHA-256 list) and attaches it to a GitHub Release.
 
 ## Credits
 
