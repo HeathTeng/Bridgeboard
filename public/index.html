@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blackboard 学习面板</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1>Blackboard 学习面板</h1>
+    <p id="who" class="muted">正在连接…</p>
+  </div>
+  <div class="actions">
+    <button id="refresh" type="button">刷新</button>
+    <a id="ics" class="button" href="/calendar.ics" download>导出到日历 (.ics)</a>
+  </div>
+</header>
+
+<div id="banner" class="banner" hidden></div>
+
+<section id="login" class="card" hidden>
+  <h2>登录 Blackboard</h2>
+  <ol>
+    <li>在浏览器里打开并登录你学校的 Blackboard。</li>
+    <li>按 <kbd>F12</kbd> 打开开发者工具，切到 <b>Network（网络）</b>，再按 <kbd>F5</kbd> 刷新。</li>
+    <li>在左边 Name 列表里右键一条 <code>me?expand=…</code> 请求，选择 <b>Copy → Copy as cURL (bash)</b>。</li>
+    <li>粘贴到下面，点“登录”。</li>
+  </ol>
+  <label>学校 Blackboard 网址（可不填，会自动识别）
+    <input id="baseUrl" type="url" placeholder="https://xxx.blackboard.com">
+  </label>
+  <textarea id="curl" rows="6" spellcheck="false" placeholder="在这里粘贴 Copy as cURL (bash) 的内容"></textarea>
+  <p class="muted small">这段内容相当于你的登录凭证，只会发给你电脑上的这个程序，再由它直接连到学校。不要把它发给任何人。</p>
+  <button id="doLogin" type="button" class="primary">登录</button>
+  <p id="loginMsg" class="small"></p>
+</section>
+
+<main id="main" hidden>
+  <section class="card">
+    <h2>截止日期</h2>
+    <div id="todo"></div>
+  </section>
+  <section class="card">
+    <h2>最新公告</h2>
+    <div id="announcements"></div>
+  </section>
+  <section class="card wide">
+    <h2>成绩</h2>
+    <div id="grades"></div>
+  </section>
+</main>
+
+<footer class="muted small">数据只在你的电脑上处理，基于开源项目 <a href="https://github.com/felipedias-ie/blackboard-mcp" target="_blank" rel="noopener">blackboard-mcp</a>。</footer>
+<script src="app.js"></script>
+</body>
+</html>
