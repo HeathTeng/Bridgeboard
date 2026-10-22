@@ -10,6 +10,7 @@ import { demoChecklist, demoDownload, demoFiles, demoMessages, demoOverview, dem
 import { alreadyThere, planPaths } from './lib/downloader.js';
 import { checkDownloadDir, checkDurations, loadSettings, saveSettings } from './lib/settings.js';
 import { durations } from './lib/status.js';
+import { checkDisplay, displayOf } from './lib/display.js';
 import { ChecklistStore } from './lib/checklist.js';
 
 const DEMO = process.argv.includes('--demo');
@@ -18,7 +19,7 @@ const HOST = '127.0.0.1';
 const PUBLIC = join(import.meta.dirname, 'public');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml' };
 // Rules the page and the server share, served from lib/.
-const SHARED = new Set(['status.js', 'checklist-rows.js', 'message-view.js']);
+const SHARED = new Set(['status.js', 'checklist-rows.js', 'message-view.js', 'display.js']);
 const ALLOWED_HOSTS = new Set([`127.0.0.1:${PORT}`, `localhost:${PORT}`]);
 
 // The checklist is local data; demo mode keeps it in memory and writes nothing.
@@ -26,6 +27,7 @@ const checklist = DEMO ? new ChecklistStore(null, demoChecklist()) : new Checkli
 
 // Demo mode keeps the deadline timeline in memory instead of settings.json.
 let demoDurations = durations();
+let demoDisplay = displayOf();
 
 // Blackboard is slow across many courses; reuse a result for a few minutes.
 let cache;
@@ -353,13 +355,23 @@ const server = createServer(async (req, res) => {
       });
     }
     if (url.pathname === '/api/settings' && req.method === 'GET') {
-      if (DEMO) return send(res, 200, { downloadDir: 'E:\\课程资料', canPick: false, demo: true, ...demoDurations });
+      if (DEMO) return send(res, 200, { downloadDir: 'E:\\课程资料', canPick: false, demo: true, ...demoDurations, display: demoDisplay });
       const saved = loadSettings();
-      return send(res, 200, { downloadDir: saved.downloadDir ?? '', canPick: process.platform === 'win32', ...durations(saved) });
+      return send(res, 200, {
+        downloadDir: saved.downloadDir ?? '',
+        canPick: process.platform === 'win32',
+        ...durations(saved),
+        display: displayOf(saved.display),
+      });
     }
     if (url.pathname === '/api/settings' && req.method === 'POST') {
       const body = JSON.parse(await readBody(req));
-      // The deadline timeline is saved on its own, and works in demo mode too.
+      // Display settings and the deadline timeline are saved on their own, and work in demo mode too.
+      if ('display' in body) {
+        const display = checkDisplay(body.display);
+        if (DEMO) return send(res, 200, { display: (demoDisplay = display) });
+        return send(res, 200, { display: displayOf(saveSettings({ display }).display) });
+      }
       if ('newHours' in body || 'dueSoonHours' in body) {
         const picked = checkDurations(body);
         if (DEMO) return send(res, 200, (demoDurations = picked));

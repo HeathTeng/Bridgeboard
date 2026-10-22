@@ -29,6 +29,17 @@
 
 以后每次使用，只要双击 `start.bat` 就行。想先看看效果，可以双击 `demo.bat`，用的是虚构的示例数据，不需要登录。
 
+### 页面导航和显示设置
+
+页面顶部有一条导航栏：截止日期、清单、课程消息、公告、成绩、课程文件。点一下就跳到那个区域，旁边的小数字是临期和逾期的作业、没做完的清单事项、未读消息。往下滚以后，右下角有 **回到顶部** 按钮。
+
+右上角的 **显示设置** 可以：
+
+- 关掉用不到的区域（至少要留一个）；
+- 把课程名改成 **简短**，比如只显示 "Marketing"。鼠标停在课程名上能看到完整名称；两门课缩短后重名时，会自动加上讲座或项目来区分。
+
+改动会自动保存，下次打开还在；点 **恢复默认** 可以改回来。
+
 ### 截止日期的五种颜色
 
 每个截止事项都按紧急程度标上颜色和文字：🔴 已逾期、🟠 临期（默认 12 小时内截止）、🔵 新开放（默认当天开放）、🟡 进行中、🟢 已提交。点作业标题会在新标签页打开 Blackboard 里的作业页面。
@@ -125,6 +136,8 @@ Students can't use Blackboard's official API without approval from their school'
 - **Calendar export**: download an `.ics` file and import it into Google Calendar, Outlook or Apple Calendar. Each deadline has reminders 1 day and 3 days before, and a link back to the assignment.
 - **Course file downloader**: pick files course by course and save them to any folder (a USB drive works), organised by course and Blackboard folder. Files already there are skipped, public Google Docs/Slides/Sheets links are saved as PDF, and an optional `.txt` text export of each PDF, Word and PowerPoint file is ready to hand to an AI tool.
 - **One-click sign-in**: a pop-up browser window, with your school login remembered and silent renewal.
+- **Section navigation and display settings**: a sticky bar to jump between sections with counts (urgent deadlines, open checklist items, unread messages), 回到顶部, switches to hide sections, and short course names that stay unique. Saved locally.
+- **Beginner safety nets**: plain-Chinese errors with a button for the next step, friendly empty states, and a clear banner if the black window is closed.
 - **Demo mode** with made-up data, for trying it without an account.
 
 ## Requirements

@@ -1,33 +1,29 @@
 import { DEFAULTS, STATUSES, durations, statusLabel, statusOf, timeLeft } from './status.js';
 import { assignmentRows, sortRows } from './checklist-rows.js';
 import { courseOptions, filterThreads, relativeTime } from './message-view.js';
+import { $, SERVER_LOST, actionLine, api, el, fmt, friendlyText, isSignedOutError, sleep, watchServer } from './ui.js';
+import {
+  buildNav, courseEl, courseText, initDisplayPanel, initToTop, onDisplayChange, scrollToHash, setCount, setCourseNames,
+  setDisplay, setSignedIn,
+} from './layout.js';
 
-const $ = (id) => document.getElementById(id);
-
-function el(tag, attrs = {}, ...children) {
-  const node = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (k === 'class') node.className = v;
-    else if (k === 'style') node.style.cssText = v;
-    else node.setAttribute(k, v);
-  }
-  for (const c of children.flat()) if (c != null) node.append(c);
-  return node;
-}
-
-const fmt = new Intl.DateTimeFormat('zh-CN', { month: 'numeric', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' });
-
-async function api(path, options) {
-  const res = await fetch(path, options);
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw Object.assign(new Error(data.error || res.statusText), data);
-  return data;
-}
-
-function showBanner(text) {
-  $('banner').textContent = text;
+/** The banner under the header, optionally with buttons for the next step. */
+function showBanner(text, actions = []) {
+  $('banner').replaceChildren(...(text ? actionLine(text, actions, 'banner-line').childNodes : []));
   $('banner').hidden = !text;
 }
+
+/** Puts an error line with buttons into an element that is itself a <p>. */
+function fillAction(target, text, actions) {
+  target.replaceChildren(...actionLine(text, actions).childNodes);
+}
+
+function showLogin() {
+  $('login').hidden = false;
+  $('login').scrollIntoView({ block: 'start' });
+  $('baseUrl').focus({ preventScroll: true });
+}
+const reconnect = { label: '重新连接', onClick: showLogin };
 
 // ---- 截止日期 ----
 
@@ -38,9 +34,11 @@ function renderTodo(todo = todoItems) {
   todoItems = todo;
   const box = $('todo');
   box.replaceChildren();
-  if (!todo.length) return box.append(el('p', { class: 'muted' }, '近期没有截止事项。'));
   const now = Date.now();
   const withStatus = todo.map((t) => ({ ...t, status: statusOf(t, now, timeline) }));
+  const urgent = withStatus.filter((t) => t.status === 'overdue' || t.status === 'dueSoon').length;
+  setCount('deadlines', urgent, '已逾期和临期的作业');
+  if (!todo.length) return box.append(el('p', { class: 'muted' }, '近期没有截止事项 🎉 新作业出现后会显示在这里。'));
   for (const key of STATUSES) {
     const items = withStatus.filter((t) => t.status === key);
     if (!items.length) continue;
@@ -50,7 +48,7 @@ function renderTodo(todo = todoItems) {
         el('div', { class: 'title' }, /^https:\/\//.test(t.link ?? '')
           ? el('a', { href: t.link, target: '_blank', rel: 'noopener noreferrer', title: '在 Blackboard 里打开' }, t.title)
           : t.title),
-        el('div', { class: 'meta' }, `${t.course} · ${fmt.format(new Date(t.due))} · ${timeLeft(t, now)}`),
+        el('div', { class: 'meta' }, courseEl(t.course), ` · ${fmt.format(new Date(t.due))} · ${timeLeft(t, now)}`),
       )),
     ));
   }
@@ -120,8 +118,10 @@ function timeSpan(iso) {
 }
 
 function renderMessages() {
-  const box = $('messages');
-  $('msgTitle').textContent = messageData?.unread && signedIn ? `课程消息（${messageData.unread} 条未读）` : '课程消息';
+  const box = $('msgList');
+  const unread = signedIn ? messageData?.unread ?? 0 : 0;
+  $('msgTitle').textContent = unread ? `课程消息（${unread} 条未读）` : '课程消息';
+  setCount('messages', unread, '未读消息');
   $('msgControls').hidden = !signedIn || !messageData?.threads.length;
   if (!signedIn) return box.replaceChildren(note('重新连接 Blackboard 后会显示消息。'));
   if (!messageData) return box.replaceChildren(note('正在读取消息…'));
@@ -130,7 +130,7 @@ function renderMessages() {
 
   const options = courseOptions(threads);
   if (!options.some((c) => c.id === msgFilter.courseId)) msgFilter.courseId = '';
-  $('msgCourse').replaceChildren(el('option', { value: '' }, '全部课程'), ...options.map((c) => el('option', { value: c.id }, c.name)));
+  $('msgCourse').replaceChildren(el('option', { value: '' }, '全部课程'), ...options.map((c) => el('option', { value: c.id, title: c.name }, courseText(c.name))));
   $('msgCourse').value = msgFilter.courseId;
   for (const b of document.querySelectorAll('#msgControls .chip')) {
     b.setAttribute('aria-pressed', String((b.dataset.filter === 'unread') === msgFilter.unreadOnly));
@@ -150,7 +150,7 @@ function threadRow(t) {
         el('span', { class: 'msg-with' }, t.with),
         timeSpan(t.time),
         el('span', { class: 'chev' })),
-      el('div', { class: 'meta' }, `${t.course} · 最新：${t.from || '—'} · 共 ${t.total} 条`),
+      el('div', { class: 'meta' }, courseEl(t.course), ` · 最新：${t.from || '—'} · 共 ${t.total} 条`),
       el('div', { class: 'msg-preview' }, t.preview)),
     body);
   row.addEventListener('toggle', () => {
@@ -173,7 +173,8 @@ async function showThread(t, body) {
       const data = await api(`/api/messages/${encodeURIComponent(t.courseId)}/${encodeURIComponent(t.id)}`);
       threadCache.set(key, data.messages);
     } catch (err) {
-      return body.replaceChildren(el('p', { class: 'fail small' }, `没有读取成功：${err.message}。可以收起再点开重试。`));
+      return body.replaceChildren(actionLine(`这段对话没有读取成功：${err.message}`,
+        isSignedOutError(err) ? [reconnect] : [{ label: '重试', onClick: () => showThread(t, body) }]));
     }
   }
   const link = /^https:\/\//.test(t.link ?? '')
@@ -210,7 +211,8 @@ async function loadMessages(refresh) {
   } catch (err) {
     messageData = null;
     $('msgControls').hidden = true;
-    return $('messages').replaceChildren(el('p', { class: 'fail small' }, `消息没有读取成功：${err.message}。可以点右上角的「刷新」再试。`));
+    return $('msgList').replaceChildren(actionLine(`消息没有读取成功：${err.message}`,
+      isSignedOutError(err) ? [reconnect] : [{ label: '重试', onClick: () => loadMessages(true) }]));
   }
   renderMessages();
 }
@@ -232,6 +234,11 @@ let checklist = { items: [], marks: {} };
 let signedIn = false;
 let todoLoaded = false;
 let pendingRemoval; // a delete waiting out its undo window
+const openCounts = { assignments: 0, own: 0 }; // for the nav badge
+
+function updateChecklistCount() {
+  setCount('checklist', openCounts.assignments + openCounts.own, '还没完成的事项');
+}
 const hiddenIds = new Set(); // own items hidden while their delete can still be undone
 const doneOpen = {}; // which 已完成 groups the student has opened
 
@@ -288,7 +295,7 @@ function assignmentRow(t, now) {
   return el('div', { class: `cl-row${t.done ? ' is-done' : ''}` }, box,
     el('div', { class: 'cl-body' },
       el('div', { class: 'cl-text' }, title),
-      el('div', { class: 'meta' }, `${t.course} · ${fmt.format(new Date(t.due))} `, badge(t, now)),
+      el('div', { class: 'meta' }, courseEl(t.course), ` · ${fmt.format(new Date(t.due))} `, badge(t, now)),
       t.manual ? el('div', { class: 'cl-note' }, '已手动标记完成（不会在 Blackboard 上提交）') : null,
       byBlackboard ? el('div', { class: 'cl-note' }, 'Blackboard 显示已提交') : null,
     ));
@@ -300,6 +307,8 @@ function renderAssignments() {
   if (!todoLoaded) return box.replaceChildren(el('p', { class: 'muted small' }, '正在读取作业…'));
   const now = Date.now();
   const { open, done } = sortRows(assignmentRows(todoItems, checklist.marks, now), (r) => r.due);
+  openCounts.assignments = open.length;
+  updateChecklistCount();
   box.replaceChildren(...[
     open.length
       ? el('div', {}, open.map((t) => assignmentRow(t, now)))
@@ -353,6 +362,8 @@ function renderOwn() {
   const box = $('clOwn');
   const now = Date.now();
   const { open, done } = sortRows(checklist.items.filter((x) => !hiddenIds.has(x.id)));
+  openCounts.own = open.length;
+  updateChecklistCount();
   const clear = el('button', { type: 'button', class: 'link danger' }, '清除已完成');
   clear.addEventListener('click', () => {
     const ids = done.map((x) => x.id);
@@ -466,7 +477,8 @@ async function loadChecklist() {
   try {
     checklist = await api('/api/checklist');
   } catch (err) {
-    flash(`清单没有读取成功：${err.message}`);
+    renderAssignments();
+    return $('clOwn').replaceChildren(actionLine(`清单没有读取成功：${err.message}`, [{ label: '重试', onClick: loadChecklist }]));
   }
   renderOwn();
   renderAssignments();
@@ -476,34 +488,37 @@ async function loadChecklist() {
 function showSignedOut() {
   signedIn = false;
   $('main').hidden = false;
+  $('sectionNav').hidden = false;
   $('main').classList.add('signed-out');
+  setSignedIn(false);
+  setCount('deadlines', 0);
   renderAssignments();
   renderMessages();
 }
 
 function renderAnnouncements(list) {
-  const box = $('announcements');
+  const box = $('annList');
   box.replaceChildren();
-  if (!list.length) return box.append(el('p', { class: 'muted' }, '没有公告。'));
+  if (!list.length) return box.append(el('p', { class: 'muted' }, '最近没有公告。老师发布公告后会出现在这里。'));
   for (const a of list.slice(0, 12)) {
     box.append(el('div', { class: 'item' },
       el('details', {},
         el('summary', {}, el('span', { class: 'title' }, a.title)),
         el('div', { class: 'body' }, a.body || '（无正文）'),
       ),
-      el('div', { class: 'meta' }, `${a.course}${a.date ? ` · ${fmt.format(new Date(a.date))}` : ''}`),
+      el('div', { class: 'meta' }, courseEl(a.course), a.date ? ` · ${fmt.format(new Date(a.date))}` : ''),
     ));
   }
 }
 
 function renderGrades(courses) {
-  const box = $('grades');
+  const box = $('gradeList');
   box.replaceChildren();
   const withItems = courses.filter((c) => c.items.length);
-  if (!withItems.length) return box.append(el('p', { class: 'muted' }, '还没有成绩。'));
+  if (!withItems.length) return box.append(el('p', { class: 'muted' }, '还没有成绩。老师公布成绩后会出现在这里。'));
   for (const c of withItems) {
     box.append(el('div', { class: 'group' },
-      el('h3', {}, c.course),
+      el('h3', {}, courseEl(c.course)),
       el('table', {},
         el('tr', {}, el('th', {}, '项目'), el('th', {}, '分数'), el('th', {}, '百分比')),
         c.items.map((g) => el('tr', {},
@@ -552,7 +567,8 @@ async function loadCourseFiles(course, body) {
     renderFileTable(course, body, data.files);
     return data.files;
   } catch (err) {
-    body.replaceChildren(el('p', { class: 'fail small' }, `读取失败：${err.message}`));
+    body.replaceChildren(actionLine(`这门课的文件没有读取成功：${err.message}`,
+      isSignedOutError(err) ? [reconnect] : [{ label: '重试', onClick: () => loadCourseFiles(course, body) }]));
     return [];
   }
 }
@@ -594,12 +610,12 @@ function renderCourseFiles(courses, refresh) {
   $('selectAll').checked = false;
   const box = $('courseFiles');
   box.replaceChildren();
-  if (!courses.length) return box.append(el('p', { class: 'muted' }, '没有课程。'));
+  if (!courses.length) return box.append(el('p', { class: 'muted' }, '没有找到课程。可以点右上角的「刷新」再试一次。'));
   for (const course of courses) {
     const check = el('input', { type: 'checkbox', 'data-course': course.id, title: '选中这门课的全部文件' });
     const body = el('div', {});
     const details = el('details', { class: 'course' },
-      el('summary', {}, check, course.name, course.open ? null : el('span', { class: 'tag' }, '已结课'),
+      el('summary', {}, check, courseEl(course.name), course.open ? null : el('span', { class: 'tag' }, '已结课'),
         el('span', { class: 'meta', 'data-meta': course.id }, '点击展开')),
       body,
     );
@@ -640,6 +656,7 @@ async function loadSettings() {
   settings = await api('/api/settings').catch(() => ({}));
   timeline = durations(settings);
   showTimeline();
+  if (settings.display) setDisplay(settings.display);
   if (todoItems.length) renderTodo();
   $('downloadDir').value = settings.downloadDir ?? '';
   $('pickDir').hidden = !settings.canPick;
@@ -702,7 +719,7 @@ function resetDownloadedMarks() {
 function showResult(job) {
   const r = job.result;
   const box = $('dlResult');
-  if (job.state === 'error') return box.replaceChildren(el('p', { class: 'fail' }, `下载出错：${job.message}`));
+  if (job.state === 'error') return box.replaceChildren(el('p', { class: 'fail' }, `下载出错：${friendlyText(job.message, job.code)}`));
   const failed = r.failed.length;
   box.replaceChildren(...[
     el('p', {}, `${r.stopped ? '已停止。' : '完成。'}新下载 ${r.downloaded} 个，跳过 ${r.skipped} 个（已存在），失败 ${failed} 个。`),
@@ -713,7 +730,11 @@ function showResult(job) {
 
 $('startDownload').addEventListener('click', async () => {
   if (!selected.size) return ($('dlProgress').textContent = '请先展开课程，勾选要下载的文件。');
-  if (!settings.demo && !settings.downloadDir) return ($('dlProgress').textContent = '请先选择保存位置。');
+  if (!settings.demo && !settings.downloadDir) {
+    return fillAction($('dlProgress'), '请先选择保存位置。', settings.canPick
+      ? [{ label: '选择文件夹', onClick: () => $('pickDir').click() }]
+      : [{ label: '填写保存位置', onClick: () => $('downloadDir').focus() }]);
+  }
   const items = [...selected].map((k) => { const [courseId, id] = k.split('|'); return { courseId, id }; });
   $('startDownload').disabled = true;
   $('stopDownload').hidden = false;
@@ -768,8 +789,10 @@ async function load(refresh = false) {
     const mins = status.secondsLeft ? Math.round(status.secondsLeft / 60) : null;
     $('who').textContent = `${status.name}${status.demo ? '（示例数据）' : ''}${mins ? ` · 登录还剩约 ${mins} 分钟` : ''}`;
     $('main').hidden = false;
+    $('sectionNav').hidden = false;
     $('main').classList.remove('signed-out');
     signedIn = true;
+    setSignedIn(true);
     renderAssignments();
     // Messages load alongside the overview, so a slow course does not hold up the rest.
     messageData = null;
@@ -777,29 +800,34 @@ async function load(refresh = false) {
     loadMessages(refresh);
     showBanner('正在读取 Blackboard 数据…');
     const data = await api(`/api/overview${refresh ? '?refresh' : ''}`);
+    setCourseNames(data.courses.map((c) => c.name));
     renderTodo(data.todo);
     todoLoaded = true;
     renderAssignments();
     renderAnnouncements(data.announcements);
     renderGrades(data.grades);
     renderCourseFiles(data.courses, refresh);
+    // Course names are known now: redraw messages with short names if chosen.
+    if (messageData) renderMessages();
     showBanner('');
+    if (firstLoad) scrollToHash();
+    firstLoad = false;
   } catch (err) {
-    if (err.code === 'NOT_AUTHENTICATED' || err.code === 'SESSION_EXPIRED' || err.code === 'NOT_CONFIGURED') {
+    if (isSignedOutError(err)) {
       $('login').hidden = false;
       showSignedOut();
-      showBanner('登录已过期，请重新登录。');
-    } else {
-      showBanner(`出错了：${err.message}`);
+      showBanner('登录已过期，请重新连接 Blackboard。', [reconnect]);
+    } else if (err.code !== 'SERVER_DOWN') {
+      showBanner(`数据没有读取成功：${err.message}`, [{ label: '重试', onClick: () => load(true) }]);
     }
   } finally {
     $('refresh').disabled = false;
   }
 }
 
-$('refresh').addEventListener('click', () => load(true));
+let firstLoad = true;
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+$('refresh').addEventListener('click', () => load(true));
 
 $('connect').addEventListener('click', async () => {
   const url = $('baseUrl').value.trim();
@@ -816,7 +844,7 @@ $('connect').addEventListener('click', async () => {
       await sleep(1000);
       job = await api('/api/connect');
     }
-    $('connectMsg').textContent = job.state === 'done' ? job.message : `没有连接成功：${job.message}`;
+    $('connectMsg').textContent = job.state === 'done' ? job.message : `没有连接成功：${friendlyText(job.message, job.code)}`;
     if (job.state === 'done') await load(true);
   } catch (err) {
     $('connectMsg').textContent = `没有连接成功：${err.message}`;
@@ -840,11 +868,36 @@ $('doLogin').addEventListener('click', async () => {
     $('loginMsg').textContent = `登录成功：${s.name}`;
     await load(true);
   } catch (err) {
-    $('loginMsg').textContent = `登录失败：${err.message}${err.hint ? `（${err.hint}）` : ''}`;
+    const hint = /[\u3400-\u9fff]/.test(err.hint ?? '') ? `（${err.hint}）` : '';
+    $('loginMsg').textContent = `登录失败：${err.message}${hint}`;
   } finally {
     $('doLogin').disabled = false;
   }
 });
+
+buildNav();
+initToTop();
+initDisplayPanel(async (display) => {
+  const saved = await api('/api/settings', json('POST', { display }));
+  return { display: saved.display, demo: settings.demo };
+});
+// The dropdown of course names is plain text, so redraw it when the name style changes.
+onDisplayChange(() => { if (messageData) renderMessages(); });
+
+watchServer(
+  () => {
+    $('serverDown').textContent = SERVER_LOST;
+    $('serverDown').hidden = false;
+  },
+  () => {
+    $('serverDown').hidden = true;
+    showBanner('面板已恢复运行。');
+    setTimeout(() => { if ($('banner').textContent === '面板已恢复运行。') showBanner(''); }, 4000);
+    loadSettings();
+    loadChecklist();
+    load();
+  },
+);
 
 api('/api/config').then((c) => { if (c.baseUrl && !$('baseUrl').value) $('baseUrl').value = c.baseUrl; }).catch(() => {});
 loadSettings();

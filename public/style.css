@@ -49,7 +49,7 @@ main { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)
 .tl-help { margin: 8px 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--muted); }
 .todo-hint { margin: 0 0 10px; }
 /* 清单 */
-#main.signed-out > .card:not(#checklistCard):not(#messagesCard) { display: none; }
+#main.signed-out > .section:not([data-keep-signed-out]) { display: none; }
 .cl-head { margin: 14px 0 6px; font-size: 14px; }
 .cl-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-top: 1px solid var(--line); }
 .cl-row:first-child { border-top: 0; }
@@ -111,6 +111,47 @@ input[type=checkbox].round:disabled { cursor: not-allowed; }
 .msg-text.clamped { display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
 .msg-foot { margin-top: 6px; }
 .msg-foot .button { display: inline-block; font-size: 13px; padding: 5px 12px; }
+/* Sections, navigation and display settings */
+.section.user-hidden { display: none !important; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+.section { scroll-margin-top: 64px; }
+.section-nav { position: sticky; top: 0; z-index: 5; display: flex; gap: 4px; align-items: center; overflow-x: auto;
+  margin: 0 -16px 16px; padding: 8px 16px; background: var(--bg); border-bottom: 1px solid var(--line); scrollbar-width: thin; }
+.section-nav a { flex: none; padding: 6px 12px; border-radius: 999px; color: var(--text); text-decoration: none; font-size: 14px; white-space: nowrap; }
+.section-nav a:hover { background: var(--card); }
+.section-nav a[aria-current="true"] { background: var(--accent); color: #fff; }
+.nav-count { display: inline-block; min-width: 18px; margin-left: 6px; padding: 0 5px; border-radius: 9px; font-size: 12px; line-height: 18px;
+  text-align: center; background: var(--red); color: #fff; }
+.section-nav a[aria-current="true"] .nav-count { background: #fff; color: var(--accent); }
+.nav-hidden { flex: none; margin-left: auto; font-size: 13px; white-space: nowrap; }
+.page-header { position: relative; }
+.display-panel { position: absolute; right: 0; top: 100%; z-index: 20; width: min(380px, calc(100vw - 32px)); margin-top: 6px; padding: 14px 16px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, .18); }
+.display-panel h2 { margin-bottom: 4px; }
+.display-panel fieldset { border: 0; margin: 10px 0 0; padding: 0; }
+.display-panel legend { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+.switches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 12px; }
+.switch, .radio { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 14px; cursor: pointer; }
+.switch input, .radio input { width: auto; margin: 0; accent-color: var(--accent); }
+.display-panel .actions { margin-top: 12px; }
+/* Course names: CSS picks short or full; an opened <details> shows the full name. */
+.cn-short { display: none; }
+body.short-names .cn-short { display: inline; }
+body.short-names .cn-short + .cn-full { display: none; }
+body.short-names details[open] > summary .cn-short { display: none; }
+body.short-names details[open] > summary .cn-short + .cn-full { display: inline; }
+/* Every hint starts with the same lightbulb. */
+.tip::before { content: "💡 "; }
+.banner-error { background: #fde8e7; color: #8a1c14; font-weight: 600; }
+@media (prefers-color-scheme: dark) { .banner-error { background: #3d1714; color: #ffb4ac; } }
+.action-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.banner .action-line, .banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.banner[hidden] { display: none; }
+.inline-action { padding: 4px 12px; font-size: 13px; }
+footer .keep-open { color: var(--text); margin: 0 0 4px; }
+footer p { margin: 4px 0; }
+.to-top { position: fixed; right: 16px; bottom: 20px; z-index: 9; padding: 8px 14px; border-radius: 999px; box-shadow: 0 4px 12px rgba(0, 0, 0, .18); }
 button.link { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; font-size: 13px; }
 .item { padding: 8px 0; border-top: 1px solid var(--line); }
 .item:first-of-type { border-top: 0; }

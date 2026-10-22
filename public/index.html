@@ -7,17 +7,40 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header>
+<header class="page-header">
   <div>
-    <h1>Blackboard 学习面板</h1>
+    <h1 tabindex="-1">Blackboard 学习面板</h1>
     <p id="who" class="muted">正在连接…</p>
   </div>
   <div class="actions">
     <button id="refresh" type="button">刷新</button>
     <a id="ics" class="button" href="/calendar.ics" download>导出到日历 (.ics)</a>
+    <button id="displayBtn" type="button" aria-expanded="false" aria-controls="displayPanel">显示设置</button>
+  </div>
+  <div id="displayPanel" class="display-panel" role="dialog" aria-label="显示设置" hidden>
+    <h2>显示设置</h2>
+    <p class="tip muted small">改动会自动保存，下次打开还在。</p>
+    <fieldset>
+      <legend>显示哪些区域</legend>
+      <div id="displaySections" class="switches"></div>
+    </fieldset>
+    <fieldset>
+      <legend>课程名</legend>
+      <label class="radio"><input type="radio" name="courseNames" value="full"> 完整（例：FT MSc - Marketing - Autumn 2026 Term）</label>
+      <label class="radio"><input type="radio" name="courseNames" value="short"> 简短（例：Marketing）</label>
+      <p class="tip muted small">简短时，鼠标停在课程名上能看到完整名称；展开的内容里也会显示完整名称。</p>
+    </fieldset>
+    <div class="actions">
+      <button id="displayReset" type="button">恢复默认</button>
+      <button id="displayDone" type="button" class="primary">完成</button>
+    </div>
+    <p id="displayMsg" class="small" aria-live="polite"></p>
   </div>
 </header>
 
+<nav id="sectionNav" class="section-nav" aria-label="分区导航" hidden></nav>
+
+<div id="serverDown" class="banner banner-error" role="alert" hidden></div>
 <div id="banner" class="banner" hidden></div>
 
 <section id="login" class="card" hidden>
@@ -25,10 +48,10 @@
   <label>学校 Blackboard 网址
     <input id="baseUrl" type="url" placeholder="例如 https://xxx.blackboard.com" autocomplete="url">
   </label>
-  <p class="muted small">在浏览器里打开 Blackboard 时地址栏显示的网址，只需要到 .com 为止。</p>
+  <p class="tip muted small">在浏览器里打开 Blackboard 时地址栏显示的网址，只需要到 .com 为止。</p>
   <button id="connect" type="button" class="primary big">连接 Blackboard</button>
   <p id="connectMsg" class="small"></p>
-  <p class="muted small">点击后会弹出一个单独的浏览器窗口，在里面像平时一样登录学校账号。登录完成后窗口会自动关闭。这个窗口不会使用或改动你平时浏览器里的数据。</p>
+  <p class="tip muted small">点击后会弹出一个单独的浏览器窗口，在里面像平时一样登录学校账号。登录完成后窗口会自动关闭。这个窗口不会使用或改动你平时浏览器里的数据。</p>
 
   <details class="fallback">
     <summary>弹出窗口用不了？改用手动粘贴</summary>
@@ -39,14 +62,14 @@
       <li>粘贴到下面，点“登录”。</li>
     </ol>
     <textarea id="curl" rows="6" spellcheck="false" placeholder="在这里粘贴 Copy as cURL (bash) 的内容"></textarea>
-    <p class="muted small">这段内容相当于你的登录凭证，只会发给你电脑上的这个程序，再由它直接连到学校。不要把它发给任何人。</p>
+    <p class="tip muted small">这段内容相当于你的登录凭证，只会发给你电脑上的这个程序，再由它直接连到学校。不要把它发给任何人。</p>
     <button id="doLogin" type="button">登录</button>
     <p id="loginMsg" class="small"></p>
   </details>
 </section>
 
 <main id="main" hidden>
-  <section class="card">
+  <section id="deadlines" class="card section">
     <h2>截止日期</h2>
     <div class="timeline">
       <div class="tl-track">
@@ -56,18 +79,18 @@
         <input id="soonRange" type="range" min="1" max="72" step="1" aria-label="离截止多久以内算临期">
         <span class="tl-side">临期<br><b id="soonLabel">12 小时</b></span>
       </div>
-      <div class="tl-help small">
+      <div class="tl-help tip small">
         往左拖：开放多久以内算"新开放"（蓝色）。往右拖：离截止多久以内算"临期"（橙色）。
         选中手柄后，也可以用键盘的左右方向键微调。
         <button id="resetTimeline" type="button" class="link">恢复默认</button> <span id="tlMsg"></span>
       </div>
     </div>
-    <p class="muted small todo-hint">点作业标题可以直接打开 Blackboard 的作业页面（Turnitin 这类会打开课程大纲）。</p>
+    <p class="tip muted small todo-hint">点作业标题可以直接打开 Blackboard 的作业页面（Turnitin 这类会打开课程大纲）。</p>
     <div id="todo"></div>
   </section>
-  <section class="card" id="checklistCard">
+  <section id="checklist" class="card section">
     <h2>清单</h2>
-    <p class="muted small">作业会自动出现在上面；下面可以写你自己的待办，只保存在这台电脑上。</p>
+    <p class="tip muted small">作业会自动出现在上面；下面可以写你自己的待办，只保存在这台电脑上。</p>
     <h3 class="cl-head">作业清单</h3>
     <div id="clAssignments"></div>
     <h3 class="cl-head">我的清单</h3>
@@ -80,9 +103,9 @@
     <div id="clOwn"></div>
     <p id="clMsg" class="small muted" aria-live="polite"></p>
   </section>
-  <section class="card" id="messagesCard">
+  <section id="messages" class="card section">
     <h2 id="msgTitle">课程消息</h2>
-    <p class="muted small">这里汇总老师和同学在 Blackboard 课程里发给你的消息，只在这台电脑上显示。只包括进行中的课程；想看最新消息，点右上角的「刷新」。</p>
+    <p class="tip muted small">这里汇总老师和同学在 Blackboard 课程里发给你的消息，只在这台电脑上显示。只包括进行中的课程；想看最新消息，点右上角的「刷新」。</p>
     <div id="msgControls" class="msg-controls" hidden>
       <span class="chips" role="group" aria-label="筛选">
         <button type="button" class="chip" data-filter="all" aria-pressed="true">全部</button>
@@ -90,19 +113,19 @@
       </span>
       <select id="msgCourse" aria-label="按课程筛选"><option value="">全部课程</option></select>
     </div>
-    <div id="messages"></div>
+    <div id="msgList"></div>
   </section>
-  <section class="card">
+  <section id="announcements" class="card section">
     <h2>最新公告</h2>
-    <div id="announcements"></div>
+    <div id="annList"></div>
   </section>
-  <section class="card wide">
+  <section id="grades" class="card section wide">
     <h2>成绩</h2>
-    <div id="grades"></div>
+    <div id="gradeList"></div>
   </section>
-  <section class="card wide" id="filesCard">
+  <section id="files" class="card section wide">
     <h2>课程文件</h2>
-    <p class="muted small">勾选课件，一次下载到你选的文件夹（比如 U 盘），按课程和 Blackboard 里的文件夹分好类。已经下载过的会自动跳过。</p>
+    <p class="tip muted small">勾选课件，一次下载到你选的文件夹（比如 U 盘），按课程和 Blackboard 里的文件夹分好类。已经下载过的会自动跳过。</p>
     <label for="downloadDir">保存位置</label>
     <div class="dest">
       <input id="downloadDir" type="text" placeholder="还没有选择，例如 E:\课程资料" spellcheck="false">
@@ -123,7 +146,11 @@
   </section>
 </main>
 
-<footer class="muted small">数据只在你的电脑上处理，基于开源项目 <a href="https://github.com/felipedias-ie/blackboard-mcp" target="_blank" rel="noopener">blackboard-mcp</a>。</footer>
+<footer class="muted small">
+  <p class="tip keep-open">使用时请保持那个黑色窗口开着，关掉它面板就停止了。</p>
+  <p>数据只在你的电脑上处理，基于开源项目 <a href="https://github.com/felipedias-ie/blackboard-mcp" target="_blank" rel="noopener">blackboard-mcp</a>。</p>
+</footer>
+<button id="toTop" class="to-top" type="button" aria-label="回到顶部" hidden>↑ 回到顶部</button>
 <div id="undoBar" class="undo-bar" role="status" hidden><span id="undoText"></span> · <button id="undoBtn" type="button" class="link">撤销</button></div>
 <script type="module" src="app.js"></script>
 </body>
