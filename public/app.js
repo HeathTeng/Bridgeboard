@@ -1,6 +1,7 @@
 import { DEFAULTS, STATUSES, durations, statusLabel, statusOf, timeLeft } from './status.js';
 import { assignmentRows, sortRows } from './checklist-rows.js';
 import { courseOptions, filterThreads, relativeTime } from './message-view.js';
+import { initPush, reloadPush, setDueSoonHours } from './push.js';
 import { $, SERVER_LOST, actionLine, api, el, fmt, friendlyText, isSignedOutError, sleep, watchServer } from './ui.js';
 import {
   buildNav, courseEl, courseText, initDisplayPanel, initToTop, onDisplayChange, scrollToHash, setCount, setCourseNames,
@@ -59,6 +60,7 @@ function showTimeline() {
   $('soonRange').value = timeline.dueSoonHours;
   $('newLabel').textContent = timeline.newHours ? `${timeline.newHours} 小时` : '当天';
   $('soonLabel').textContent = `${timeline.dueSoonHours} 小时`;
+  setDueSoonHours(timeline.dueSoonHours);
 }
 
 function readTimeline() {
@@ -895,6 +897,7 @@ watchServer(
     setTimeout(() => { if ($('banner').textContent === '面板已恢复运行。') showBanner(''); }, 4000);
     loadSettings();
     loadChecklist();
+    reloadPush();
     load();
   },
 );
@@ -902,4 +905,5 @@ watchServer(
 api('/api/config').then((c) => { if (c.baseUrl && !$('baseUrl').value) $('baseUrl').value = c.baseUrl; }).catch(() => {});
 loadSettings();
 loadChecklist();
+initPush();
 load();

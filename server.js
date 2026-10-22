@@ -12,8 +12,14 @@ import { checkDownloadDir, checkDurations, loadSettings, saveSettings } from './
 import { durations } from './lib/status.js';
 import { checkDisplay, displayOf } from './lib/display.js';
 import { ChecklistStore } from './lib/checklist.js';
+import { PushService } from './lib/push-service.js';
+import { SENT_FILE } from './lib/push.js';
+import { autostartStatus, setAutostart, supported as autostartSupported } from './lib/autostart.js';
 
 const DEMO = process.argv.includes('--demo');
+// Started by 开机自动启动: minimised, no browser window.
+const BACKGROUND = process.argv.includes('--background');
+const APP_DIR = import.meta.dirname;
 const PORT = Number(process.env.PORT ?? 3100);
 const HOST = '127.0.0.1';
 const PUBLIC = join(import.meta.dirname, 'public');
@@ -65,6 +71,46 @@ async function getMessages(force) {
   const data = await withSession(() => bb.messageThreads());
   messagesCache = { at: Date.now(), data };
   return data;
+}
+
+// Phone alerts. Demo mode keeps the settings in memory and never sends.
+let demoPush;
+const push = new PushService({
+  demo: DEMO,
+  load: () => (DEMO ? demoPush : loadSettings().push),
+  save: (p) => (DEMO ? (demoPush = p) : saveSettings({ push: p })),
+  timeline: () => (DEMO ? demoDurations : durations(loadSettings())),
+  getOverview: () => getOverview(false),
+  getMessages: () => getMessages(false),
+  sentFile: DEMO ? null : SENT_FILE,
+});
+
+function pushView(view = push.view()) {
+  const autostart = DEMO ? { supported: autostartSupported(), on: false } : autostartStatus(APP_DIR);
+  return { ...view, autostart };
+}
+
+/** The phone-alert routes. Only the test and the checker send anything, and only when switched on. */
+async function pushRoute(req, res, url) {
+  const route = `${req.method} ${url.pathname}`;
+  if (route === 'GET /api/push') return send(res, 200, pushView());
+  if (route === 'POST /api/push') return send(res, 200, pushView(push.update(await readJson(req))));
+  if (route === 'POST /api/push/test') return send(res, 200, pushView(await push.test(await readJson(req))));
+  if (route === 'POST /api/push/trial') return send(res, 200, { ...(await push.trial(await readJson(req))), demo: DEMO });
+  if (route === 'GET /api/push/topic') return send(res, 200, push.topic());
+  if (route === 'POST /api/push/topic') return send(res, 200, pushView(push.changeTopic()));
+  if (route === 'POST /api/push/check') {
+    if (!push.push().enabled) return send(res, 400, { error: '请先打开手机提醒。' });
+    await push.check();
+    return send(res, 200, pushView());
+  }
+  if (route === 'POST /api/push/autostart') {
+    if (DEMO) return send(res, 400, { error: '示例模式不会改开机启动。' });
+    const { on } = await readJson(req);
+    setAutostart(on === true, APP_DIR);
+    return send(res, 200, pushView());
+  }
+  return send(res, 404, { error: 'not found' });
 }
 
 // Walking a course's content tree takes many requests; cache each course too.
@@ -290,6 +336,10 @@ const server = createServer(async (req, res) => {
 
   const url = new URL(req.url, `http://${req.headers.host}`);
   try {
+    if (url.pathname === '/api/ping') {
+      return send(res, 200, { app: 'blackboard-study-hub', demo: DEMO });
+    }
+    if (url.pathname === '/api/push' || url.pathname.startsWith('/api/push/')) return await pushRoute(req, res, url);
     if (url.pathname === '/api/status') {
       return send(res, 200, DEMO ? demoStatus : await bb.status());
     }
@@ -456,19 +506,26 @@ async function checklistRoute(req, res, url) {
 const link = `http://localhost:${PORT}`;
 
 function openPage() {
-  if (process.argv.includes('--no-open')) return;
+  if (process.argv.includes('--no-open') || BACKGROUND) return;
   const cmd = process.platform === 'win32' ? `start "" "${link}"` : process.platform === 'darwin' ? `open "${link}"` : `xdg-open "${link}"`;
   exec(cmd, () => {});
 }
 
 server.on('error', async (err) => {
   if (err.code !== 'EADDRINUSE') throw err;
-  // Probably the hub is already running in another window: just open the page.
-  const running = await fetch(`${link}/api/status`).then((r) => r.ok).catch(() => false);
-  if (running) {
-    console.log(`\n面板已经在运行，已为你打开：${link}`);
-    console.log('（如果想切换到示例模式或真实数据，请先关掉之前的黑色窗口。）\n');
+  // Probably the hub is already running (e.g. started with Windows): just open the page.
+  const running = await fetch(`${link}/api/ping`, { signal: AbortSignal.timeout(5000) })
+    .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null);
+  if (running?.app === 'blackboard-study-hub' && running.demo === DEMO) {
+    // Exit code 0 lets start.bat close this extra window by itself.
+    if (!BACKGROUND) console.log(`\n面板已经在运行，已为你打开：${link}\n`);
     openPage();
+    return;
+  }
+  if (running?.app === 'blackboard-study-hub') {
+    console.log(`\n面板已经在以${running.demo ? '示例模式' : '真实数据'}运行：${link}`);
+    console.log('想切换的话，请先关掉之前的黑色窗口（开机自动启动的那个最小化在任务栏里），再重新双击。\n');
   } else {
     console.log(`\n端口 ${PORT} 被其他程序占用了。可以关掉占用它的程序后重试。\n`);
   }
@@ -478,5 +535,7 @@ server.on('error', async (err) => {
 server.listen(PORT, HOST, () => {
   console.log(`\nblackboard-study-hub ${DEMO ? '(示例模式) ' : ''}已启动：${link}`);
   console.log('关闭这个窗口即可停止。\n');
+  if (BACKGROUND) console.log('这是开机自动启动的后台窗口，手机提醒会照常检查。要看面板，双击 start.bat 或在浏览器打开上面的网址。\n');
   openPage();
+  push.start();
 });

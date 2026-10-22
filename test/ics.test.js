@@ -22,3 +22,21 @@ test('folds long lines without splitting characters', () => {
   for (const line of ics.split('\r\n')) assert.ok(Buffer.byteLength(line) <= 76, line);
   assert.ok(!ics.includes('�'));
 });
+
+test('each pending deadline reminds 12 and 5 hours before first, then 1 and 3 days', () => {
+  const ics = toIcs([
+    { title: 'Report', course: 'X', due: '2026-10-25T15:59:00.000Z' },
+    { title: 'Handed in', course: 'X', due: '2026-10-25T15:59:00.000Z', submitted: true },
+  ]).replace(/\r\n /g, '');
+  assert.equal(ics.match(/BEGIN:VALARM/g).length, 4);
+  assert.deepEqual(ics.match(/TRIGGER:[^\r]+/g), ['TRIGGER:-PT720M', 'TRIGGER:-PT300M', 'TRIGGER:-PT1440M', 'TRIGGER:-PT4320M']);
+  assert.match(ics, /DESCRIPTION:还剩 12 小时截止：Report/);
+  assert.match(ics, /DESCRIPTION:还剩 5 小时截止：Report/);
+  assert.match(ics, /DESCRIPTION:还剩 1 天截止：Report/);
+  assert.equal(ics.match(/BEGIN:VALARM/g).length, ics.match(/END:VALARM/g).length);
+});
+
+test('semicolons, commas and backslashes in titles are escaped', () => {
+  const ics = toIcs([{ title: 'Part 1; Part 2, a\\b', course: 'X', due: '2026-10-25T15:59:00.000Z' }]);
+  assert.ok(ics.includes(String.raw`SUMMARY:截止：Part 1\; Part 2\, a\\b`));
+});

@@ -72,6 +72,18 @@
 
 ![下载课程文件](docs/step-download.png)
 
+### 手机提醒（可选）
+
+作业快到期时，可以让手机响一下。苹果手机用 **Bark**，安卓手机用 **ntfy**，都是免费 App。在面板最下面的 **手机提醒** 里：
+
+1. 选你的手机，按页面上的步骤装好 App。苹果手机把 Bark 里的链接粘贴进来；安卓手机在 ntfy 里订阅页面上显示的名字。
+2. 点 **发一条测试**，手机收到「测试成功 ✅」后，打开最上面的 **打开手机提醒**。
+3. 选什么时候提醒：变橙色时、剩几小时还没交时（**强提醒**，静音也会响，音量 5 到 10 可选，可以先 **试听**）、还没交就在剩 2 小时和 1 小时再提醒、逾期时、有新课程消息时。也可以设安静时段，或者隐藏作业名。
+
+想在电脑关机时也收到提醒，可以点右上角的 **导出到日历**，导入手机日历：每项作业会在截止前 12 小时和 5 小时提醒（导入 iPhone 的方法见常见问题）。
+
+提醒默认是关着的。打开后，作业名、课程名、截止时间和 Blackboard 链接会经过 Bark / ntfy 的服务器发到你的手机。只有电脑开着、黑色窗口也开着时才会提醒；可以打开 **开机自动启动**，开电脑后面板会自动在后台运行。
+
 遇到问题请看 **[常见问题](docs/FAQ.md)**。
 
 > 已经装了 Node.js 22.5 以上版本的话，也可以在本页面点绿色的 **Code → Download ZIP** 下载源码版，解压后同样双击 `start.bat` 使用。
@@ -96,8 +108,8 @@ Students can't use Blackboard's official API without approval from their school'
 - [x] Five-colour deadlines with an adjustable timeline, and one-click links to each assignment in Blackboard
 - [x] Checklist: assignments add themselves when they open; your own to-dos below
 - [x] Course messages from every course in one place
-- [ ] Section navigation, a back-to-top button, and display settings (hide sections you don't use, short or full course names)
-- [ ] Strong phone reminders through Bark (iPhone) or ntfy (Android), opt-in
+- [x] Section navigation, a back-to-top button, and display settings (hide sections you don't use, short or full course names)
+- [x] Strong phone reminders through Bark (iPhone) or ntfy (Android), opt-in
 - [ ] A new UI design
 - [ ] A first-run guide with an FAQ you can open any time, then the public launch
 
@@ -117,8 +129,8 @@ Students can't use Blackboard's official API without approval from their school'
 - [x] 五色截止日期提醒，时间轴可拖动调整，点作业直达 Blackboard
 - [x] 清单：作业开放后自动加入，下面写自己的待办
 - [x] 课程消息：所有课程的消息集中在一处
-- [ ] 分区导航、回到顶部、显示设置（隐藏用不到的区域，课程名简短/完整切换）
-- [ ] 手机强提醒：Bark（iPhone）或 ntfy（安卓），可选开启
+- [x] 分区导航、回到顶部、显示设置（隐藏用不到的区域，课程名简短/完整切换）
+- [x] 手机强提醒：Bark（iPhone）或 ntfy（安卓），可选开启
 - [ ] 全新界面设计
 - [ ] 新手引导（常见问题随时可查），然后正式发布
 
@@ -133,10 +145,11 @@ Students can't use Blackboard's official API without approval from their school'
 - **Grades** per course, with percentages.
 - **Checklist**: opened assignments appear by themselves and tick when Blackboard shows them submitted (a manual tick is only a local mark); below, the student's own to-dos with optional due dates, edit in place, and undo after delete. Saved locally only, and still available while signed out.
 - **Course messages**: message threads from every open course in one list, newest first, with unread counts, filters by unread and course, and the full thread readable in place as plain text. Read-only: replying happens in Blackboard.
-- **Calendar export**: download an `.ics` file and import it into Google Calendar, Outlook or Apple Calendar. Each deadline has reminders 1 day and 3 days before, and a link back to the assignment.
+- **Calendar export**: download an `.ics` file and import it into Google Calendar, Outlook or Apple Calendar. Each deadline reminds you 12 hours, 5 hours, 1 day and 3 days before (the 12- and 5-hour ones first, for phone calendars that keep two), so a phone calendar reminds you even with the computer off. Each event links back to the assignment.
 - **Course file downloader**: pick files course by course and save them to any folder (a USB drive works), organised by course and Blackboard folder. Files already there are skipped, public Google Docs/Slides/Sheets links are saved as PDF, and an optional `.txt` text export of each PDF, Word and PowerPoint file is ready to hand to an AI tool.
 - **One-click sign-in**: a pop-up browser window, with your school login remembered and silent renewal.
 - **Section navigation and display settings**: a sticky bar to jump between sections with counts (urgent deadlines, open checklist items, unread messages), 回到顶部, switches to hide sections, and short course names that stay unique. Saved locally.
+- **Phone alerts (opt-in)** through Bark (iPhone) or ntfy (Android): once when a deadline turns orange, a strong alert N hours before (rings on silent with the alarm sound at volume 5-10, with a 试听 button) and again at 2 and 1 hours left if still not handed in, once when overdue, and optionally for new course messages. Quiet hours, hidden assignment names, at most one alert per rule per assignment, a sent log so restarts never repeat, and an optional Windows start-up launcher. Off by default; a test alert must reach the phone before it can be switched on.
 - **Beginner safety nets**: plain-Chinese errors with a button for the next step, friendly empty states, and a clear banner if the black window is closed.
 - **Demo mode** with made-up data, for trying it without an account.
 
@@ -175,6 +188,7 @@ Enter your school's Blackboard address and click **连接 Blackboard**. A separa
 - The server listens on `127.0.0.1` only and rejects requests from other host names or web pages.
 - The sign-in window's debugging port listens on `127.0.0.1` only and closes with the window.
 - It only **reads** from Blackboard. It cannot submit work or take quizzes.
+- Nothing leaves your computer except **phone alerts**, and only if you turn them on: assignment and course names, due times and Blackboard links go to your phone through the Bark (`api.day.app`) or ntfy (`ntfy.sh`) server, or a self-hosted https server you enter. Turn on 隐藏作业名 to send no names or links. Cookies and message text are never sent. Your Bark key or ntfy topic stays in `~/.blackboard-study-hub/settings.json`.
 - Your session is stored encrypted by blackboard-mcp in `~/.blackboard-mcp/`. Never commit that folder or share a copied cURL.
 - Check your school's IT acceptable-use policy before using automation tools.
 

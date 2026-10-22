@@ -191,3 +191,23 @@ label.check { margin: 10px 0; }
 .dl-actions { margin-top: 8px; }
 .fail { color: var(--red); }
 @media (max-width: 560px) { .dest { flex-wrap: wrap; } .files .size { width: 70px; } }
+/* 手机提醒 */
+.ok { color: var(--green); }
+.push-main { font-size: 16px; font-weight: 600; margin: 12px 0 4px; }
+.push-privacy { margin: 4px 0 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.push-status { margin: 8px 0; }
+.push-status p { margin: 4px 0; }
+.push-step { border: 1px solid var(--line); border-radius: 10px; margin: 14px 0 0; padding: 10px 14px 12px; }
+.push-step legend { font-weight: 600; padding: 0 6px; }
+.push-hint { margin: -2px 0 8px 28px; }
+.steps { margin: 6px 0; padding-left: 22px; }
+.steps li { margin: 4px 0; }
+.topic-row code.topic { flex: 1; min-width: 0; padding: 6px 8px; font-size: 14px; overflow-wrap: anywhere; }
+.switch select, .switch input[type=time] { width: auto; margin: 0 2px; padding: 2px 4px; font: inherit; }
+.push-volume { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 0; font-size: 14px; }
+.push-volume label { margin: 0; }
+.push-volume button { padding: 4px 12px; font-size: 13px; }
+.push-volume select { width: auto; margin: 0; padding: 2px 4px; font: inherit; }
+.ics-wrap { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.ics-tip { font-size: 12px; max-width: 16em; }
+.page-header .actions { align-items: flex-start; }
