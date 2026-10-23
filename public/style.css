@@ -169,30 +169,60 @@ main.tops-2 > .section.top { grid-column: span 3; }
 .todo-hint { margin: 0 0 10px; }
 /* 清单 */
 #main.signed-out > .section:not([data-keep-signed-out]) { display: none; }
-.cl-head { margin: 14px 0 6px; font-size: 14px; }
-.cl-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-top: 1px solid var(--line); }
+/*
+ * Like iPhone 提醒事项: round boxes, one thing per line, thin lines between
+ * rows, the due time small and grey at the right (with the same colour
+ * capsule as the deadlines), and a last 「＋」 row that turns into a box.
+ */
+.cl-head { margin: 16px 0 4px; font-size: 14px; }
+.cl-row { display: flex; gap: 10px; align-items: flex-start; padding: 9px 2px; border-top: 1px solid var(--line); }
 .cl-row:first-child { border-top: 0; }
 .cl-body { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.cl-body .meta { font-size: 12.5px; color: var(--muted); }
 .cl-text { font-weight: 600; }
 .cl-text a { color: inherit; }
-.cl-text.editable { cursor: text; }
+.cl-text a:hover { color: var(--accent); }
+/* Own items: a text cursor and a pale highlight say the words can be changed. */
+.cl-text.editable { cursor: text; border-radius: 8px; transition: background-color .15s ease, box-shadow .15s ease; }
+.cl-text.editable:hover, .cl-text.editable:focus-visible { outline: none; background: var(--accent-soft); box-shadow: 0 0 0 4px var(--accent-soft); }
 .is-done .cl-text { text-decoration: line-through; color: var(--muted); font-weight: 400; }
 .cl-note { font-size: 12px; color: var(--green); }
-.cl-actions { display: flex; gap: 14px; opacity: 0; }
-.cl-actions button.link { font-size: 12px; }
-.cl-row:hover .cl-actions, .cl-row:focus-within .cl-actions { opacity: 1; }
-@media (hover: none) { .cl-actions { opacity: 1; } }
+.cl-side { display: flex; flex: none; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px 8px; max-width: 55%; min-height: 24px; }
+.cl-due { font-size: 12px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cl-side .pill { font-size: 12px; line-height: 22px; padding: 0 9px; }
+.cl-del { font-size: 12px; }
+/* The small calendar button: a line icon in the muted colour (a CSS mask, so it follows every theme). */
+.cl-cal { display: inline-grid; place-items: center; flex: none; width: 28px; height: 28px; padding: 0; margin: -2px 0;
+  border-color: transparent; background: transparent; color: var(--muted); }
+.cl-cal::before { content: ""; width: 16px; height: 16px; background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round'%3E%3Crect x='2' y='3' width='12' height='11' rx='2.5'/%3E%3Cpath d='M2 7h12M5.5 1.5v3M10.5 1.5v3'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round'%3E%3Crect x='2' y='3' width='12' height='11' rx='2.5'/%3E%3Cpath d='M2 7h12M5.5 1.5v3M10.5 1.5v3'/%3E%3C/svg%3E") center / contain no-repeat; }
+.cl-cal:hover, .cl-cal[aria-expanded="true"] { color: var(--accent); border-color: var(--line); background: var(--row); }
+/* 加截止时间 and 删除 come up on hover or keyboard focus; always there on touch screens and narrow windows. */
+.cl-row .cl-cal-add, .cl-row .cl-del { opacity: 0; transition: opacity .15s ease; }
+.cl-row:hover .cl-cal-add, .cl-row:focus-within .cl-cal-add, .cl-row:hover .cl-del, .cl-row:focus-within .cl-del { opacity: 1; }
+@media (hover: none) { .cl-row .cl-cal-add, .cl-row .cl-del { opacity: 1; } }
 input[type=checkbox].round { appearance: none; width: 20px; height: 20px; flex: none; margin: 2px 0 0; padding: 0; border: 2px solid var(--muted);
   border-radius: 50%; background: var(--field); cursor: pointer; transition: transform .15s ease; }
 input[type=checkbox].round:active { transform: scale(.88); }
 input[type=checkbox].round:checked { background: var(--green); border-color: var(--green); box-shadow: inset 0 0 0 3px var(--solid); }
 input[type=checkbox].round:disabled { cursor: not-allowed; }
-.cl-add { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.cl-add #addText, .cl-edit { flex: 1 1 200px; margin: 0; font-family: inherit; font-size: 14px; }
-.cl-due-label { margin: 0; font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; flex-basis: 100%; }
-.cl-due-label input, .cl-due-edit input { width: auto; margin: 0; font-family: inherit; }
+.cl-empty { margin: 6px 2px; }
+/* The 「＋」 row: green words, the whole row is the button; a thin line above it once the list has items. */
+#clOwn:has(.cl-row) + .cl-add-row { border-top: 1px solid var(--line); }
+.cl-add-open { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 2px; border: 0; border-radius: 12px;
+  background: none; color: var(--accent); font-weight: 600; text-align: left; }
+.cl-add-open:hover { background: var(--accent-soft); }
+.cl-add-open:active { transform: scale(.99); }
+.cl-add-row .plus { width: 20px; flex: none; text-align: center; font-size: 18px; line-height: 1; color: var(--accent); }
+.cl-add { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; padding: 7px 2px; }
+.cl-add #addText, .cl-edit { flex: 1 1 160px; min-width: 0; margin: 0; font-family: inherit; font-size: 14px; }
+.cl-add .cl-due-edit, .cl-add-tip { flex-basis: 100%; margin: 0 0 0 30px; }
+.cl-add .cl-due-edit { font-size: 13px; color: var(--muted); }
+.cl-due-edit input { width: auto; max-width: 100%; margin: 0; font-family: inherit; }
 .cl-due-edit { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 4px; }
 .cl-due-edit[hidden] { display: none; }
+.cl-add-row > p.fail:not(:empty) { margin-left: 30px; }
 .cl-done { margin-top: 8px; }
 .cl-done summary { color: var(--muted); font-size: 13px; padding: 4px 0; }
 .danger { color: var(--red); }
@@ -233,11 +263,31 @@ input[type=checkbox].round:disabled { cursor: not-allowed; }
 html { scroll-behavior: smooth; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 .section { scroll-margin-top: 76px; }
-/* The nav: a floating glass pill bar; the section in view is a filled accent pill. Scrolls sideways when narrow. */
-.section-nav { position: sticky; top: 8px; z-index: 5; display: flex; gap: 4px; align-items: center; overflow-x: auto;
-  margin: 0 0 16px; padding: 5px; border-radius: 999px; background: var(--glass); border: 1px solid var(--glass-line); box-shadow: var(--shadow);
-  -webkit-backdrop-filter: blur(18px) saturate(1.2); backdrop-filter: blur(18px) saturate(1.2); scrollbar-width: none; }
-.section-nav::-webkit-scrollbar { display: none; }
+/*
+ * The nav: a floating glass pill bar; the section in view is a filled accent pill.
+ * When it does not fit (a narrow screen), the inner track scrolls sideways,
+ * round ‹ › buttons sit over its ends (each hidden once that end is reached)
+ * and the words under them fade out, so it is clear there is more.
+ */
+.section-nav { position: sticky; top: 8px; z-index: 5; margin: 0 0 16px; padding: 5px; border-radius: 999px;
+  background: var(--glass); border: 1px solid var(--glass-line); box-shadow: var(--shadow);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2); backdrop-filter: blur(18px) saturate(1.2); }
+.nav-track { display: flex; gap: 4px; align-items: center; overflow-x: auto; scrollbar-width: none; border-radius: 999px;
+  --fade-left: linear-gradient(to right, #000, #000); --fade-right: linear-gradient(to right, #000, #000);
+  -webkit-mask-image: var(--fade-left), var(--fade-right); mask-image: var(--fade-left), var(--fade-right);
+  -webkit-mask-composite: source-in; mask-composite: intersect; }
+.nav-track::-webkit-scrollbar { display: none; }
+.section-nav.more-left .nav-track { --fade-left: linear-gradient(to right, transparent 30px, #000 76px); }
+.section-nav.more-right .nav-track { --fade-right: linear-gradient(to left, transparent 30px, #000 76px); }
+.nav-arrow { position: absolute; top: 50%; z-index: 1; display: grid; place-items: center; width: 34px; height: 34px; padding: 0 0 3px;
+  transform: translateY(-50%); border-radius: 50%; border: 1px solid var(--line); background: var(--solid); color: var(--accent);
+  box-shadow: var(--shadow); font: 600 24px/1 "Segoe UI", system-ui, sans-serif; }
+.nav-arrow.prev { left: 4px; }
+.nav-arrow.next { right: 4px; }
+.nav-arrow:hover { border-color: var(--accent-deco); }
+.nav-arrow:active { transform: translateY(-50%) scale(.92); }
+.nav-arrow:focus-visible { outline: 2px solid var(--accent-deco); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .nav-arrow:active { transform: translateY(-50%); } }
 .section-nav a { flex: none; padding: 6px 14px; border-radius: 999px; color: var(--text); text-decoration: none; font-size: 14px; white-space: nowrap; }
 .section-nav a:hover { background: var(--accent-soft); }
 .section-nav a[aria-current="true"] { background: var(--accent); color: var(--on-accent); font-weight: 600; }
@@ -450,3 +500,32 @@ label.check { margin: 10px 0; }
 .gl { font-size: .82em; font-weight: 400; white-space: nowrap; color: var(--accent); letter-spacing: 0; user-select: none; -webkit-user-select: none; }
 body.no-gloss .gl { display: none; }
 .cn, .dl-body, .cl-body, .item .title, td { overflow-wrap: anywhere; }
+
+/*
+ * Phone width (600 px and below). The panel still runs on the computer; this
+ * only prepares the styles. One column, 16 px at each side, the title-card
+ * buttons under the title, every line wraps, nothing scrolls the page sideways.
+ */
+@media (max-width: 600px) {
+  body { padding: 16px 16px 72px; }
+  .page-header { flex-direction: column; align-items: stretch; padding: 16px 18px; }
+  .page-header > .actions { align-items: flex-start; width: 100%; }
+  .action-buttons { justify-content: flex-start; }
+  .ics-tip { text-align: left; }
+  .card { padding: 16px; }
+  .today { padding: 14px 16px; }
+  /* The red reminder: 不再提示 moves under the words, so neither is cut off. */
+  .keep-open-wrap { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 9px 16px 10px; border-radius: 14px;
+    background: var(--error-bg); border: 1px solid color-mix(in srgb, var(--error-text) 22%, transparent); }
+  .keep-open-wrap .keep-open-bar { padding: 0; border: 0; background: none; }
+  .keep-open-off { position: static; transform: none; }
+  .keep-open-off:active { transform: scale(.96); }
+  /* Checklist: the due time, capsule and buttons go under the words, and stay visible (no hover on a phone). */
+  .cl-row { flex-wrap: wrap; }
+  .cl-side { flex-basis: 100%; max-width: none; justify-content: flex-start; padding-left: 30px; min-height: 0; }
+  .cl-row .cl-cal-add, .cl-row .cl-del { opacity: 1; }
+  .dl-row { flex-wrap: wrap; }
+  .grade-avg { margin-left: 0; }
+  .undo-bar { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (max-width: 600px) and (prefers-reduced-motion: reduce) { .keep-open-off:active { transform: none; } }

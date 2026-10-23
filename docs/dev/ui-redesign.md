@@ -123,3 +123,7 @@ Add each of these to `docs/FAQ.md` under the right category, as the FAQ rule in 
 
 - Has `bridgeboard.feedback@gmail.com` been registered? (Step 1 needs it to work.)
 - At the end: still want drag-and-drop layout, or are the fold and hide switches enough?
+
+## Note after step 5 (v0.2.13)
+
+手机宽度只是先准备好样式，面板仍在电脑上运行；手机上看清单要等以后的登录功能。

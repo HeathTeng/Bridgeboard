@@ -164,7 +164,7 @@ setInterval(() => {
   if (todoItems.length) renderTodo();
   renderAssignments();
   // Not while the student is typing in their own list.
-  if (!document.activeElement?.closest('#clOwn')) renderOwn();
+  if (!document.activeElement?.closest('#clOwn, #clOwnDone')) renderOwn();
   for (const s of document.querySelectorAll('.rel-time')) s.textContent = relativeTime(s.dataset.time || null);
 }, 60_000);
 
@@ -389,11 +389,15 @@ function assignmentRow(t, now) {
   return el('div', { class: `cl-row${t.done ? ' is-done' : ''}` }, box,
     el('div', { class: 'cl-body' },
       el('div', { class: 'cl-text' }, title),
-      el('div', { class: 'meta' }, courseEl(t.course), ` · ${fmt.format(new Date(t.due))} `, badge(t, now)),
+      el('div', { class: 'meta' }, courseEl(t.course)),
       t.manual ? el('div', { class: 'cl-note' }, '已手动标记完成（不会在 Blackboard 上提交）') : null,
       byBlackboard ? el('div', { class: 'cl-note' }, 'Blackboard 显示已提交') : null,
-    ));
+    ),
+    el('div', { class: 'cl-side' }, dueLabel(t.due), badge(t, now)));
 }
+
+/** The due time, small and grey at the right of a row; nothing when there is none. */
+const dueLabel = (due) => (due ? el('span', { class: 'cl-due' }, fmt.format(new Date(due))) : null);
 
 function renderAssignments() {
   const box = $('clAssignments');
@@ -436,25 +440,26 @@ function ownRow(x, now) {
   clearDue.addEventListener('click', () => patchItem(x.id, { due: null }, '已去掉截止时间。'));
   const dueEditor = el('div', { class: 'cl-due-edit', hidden: '' }, dueInput, x.due ? clearDue : null);
 
-  const dueBtn = el('button', { type: 'button', class: 'link' }, x.due ? '改截止时间' : '加截止时间');
+  // A small calendar button next to the due time; without a due time it only shows on hover.
+  const dueTitle = x.due ? '改截止时间' : '加截止时间';
+  const dueBtn = el('button', { type: 'button', class: `cl-cal${x.due ? '' : ' cl-cal-add'}`, title: dueTitle, 'aria-label': dueTitle, 'aria-expanded': 'false' });
   dueBtn.addEventListener('click', () => {
     dueEditor.hidden = !dueEditor.hidden;
+    dueBtn.setAttribute('aria-expanded', String(!dueEditor.hidden));
     if (!dueEditor.hidden) dueInput.focus();
   });
-  const del = el('button', { type: 'button', class: 'link danger' }, '删除');
+  const del = el('button', { type: 'button', class: 'link danger cl-del' }, '删除');
   del.addEventListener('click', () => removeLater([x.id], `已删除"${short(x.text)}"`,
     (keepalive) => api(`/api/checklist/items/${x.id}`, { method: 'DELETE', keepalive })));
 
   return el('div', { class: `cl-row${x.done ? ' is-done' : ''}` },
     roundBox(x.done, x.done ? '取消完成' : '标记完成', (done) => patchItem(x.id, { done }, done ? '已移到下面的「已完成」。' : '')),
-    el('div', { class: 'cl-body' }, text,
-      x.due ? el('div', { class: 'meta' }, `${fmt.format(new Date(x.due))} `, badge(x, now)) : null,
-      el('div', { class: 'cl-actions' }, x.done ? null : dueBtn, del),
-      dueEditor));
+    el('div', { class: 'cl-body' }, text, dueEditor),
+    el('div', { class: 'cl-side' }, dueLabel(x.due), badge(x, now), x.done ? null : dueBtn, del));
 }
 
+/** Open items above the 「＋」 row, the 已完成 group under it. */
 function renderOwn() {
-  const box = $('clOwn');
   const now = Date.now();
   const { open, done } = sortRows(checklist.items.filter((x) => !hiddenIds.has(x.id)));
   openCounts.own = open.length;
@@ -466,12 +471,10 @@ function renderOwn() {
     removeLater(ids, `已清除 ${ids.length} 条已完成的事项`,
       (keepalive) => api('/api/checklist/clear-done', { ...json('POST', { ids }), keepalive }));
   });
-  box.replaceChildren(...[
-    open.length
-      ? el('div', {}, open.map((x) => ownRow(x, now)))
-      : el('p', { class: 'muted small' }, '还没有自己的待办。在上面的框里写一句，按回车或点"添加"就行。'),
-    done.length ? doneGroup('own', done.map((x) => ownRow(x, now)), el('p', {}, clear)) : null,
-  ].filter(Boolean));
+  $('clOwn').replaceChildren(open.length
+    ? el('div', { class: 'cl-list' }, open.map((x) => ownRow(x, now)))
+    : el('p', { class: 'muted small cl-empty' }, done.length ? '自己的待办都做完了。' : '还没有自己的待办。'));
+  $('clOwnDone').replaceChildren(...(done.length ? [doneGroup('own', done.map((x) => ownRow(x, now)), el('p', {}, clear))] : []));
 }
 
 function startEdit(x, span) {
@@ -547,15 +550,53 @@ $('undoBtn').addEventListener('click', () => {
 // Leaving the page during the undo window still carries out the delete.
 window.addEventListener('pagehide', () => flushRemoval(true));
 
+// ---- 「＋ 点这里添加一件事」 ----
+
+function openAdd() {
+  $('addOpen').hidden = true;
+  $('addForm').hidden = false;
+  $('addText').focus();
+}
+
+function closeAdd() {
+  $('addText').value = '';
+  $('addDue').value = '';
+  $('addDueBox').hidden = true;
+  $('addDueBtn').setAttribute('aria-expanded', 'false');
+  $('addMsg').textContent = '';
+  $('addForm').hidden = true;
+  $('addOpen').hidden = false;
+}
+
+$('addOpen').addEventListener('click', openAdd);
+$('addDueBtn').addEventListener('click', () => {
+  $('addDueBox').hidden = !$('addDueBox').hidden;
+  $('addDueBtn').setAttribute('aria-expanded', String(!$('addDueBox').hidden));
+  if (!$('addDueBox').hidden) $('addDue').focus();
+});
+$('addForm').addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  closeAdd();
+  $('addOpen').focus();
+});
+// Clicking somewhere else puts the row back only when nothing was typed, so no words are lost.
+$('addForm').addEventListener('focusout', (e) => {
+  if ($('addForm').contains(e.relatedTarget)) return;
+  if (!$('addText').value.trim() && !$('addDue').value) closeAdd();
+});
+
 $('addForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const text = $('addText').value.trim();
-  if (!text) return $('addText').focus();
+  if (!text) return; // an empty box: Enter does nothing
   try {
     const item = await api('/api/checklist/items', json('POST', { text, due: fromLocalInput($('addDue').value) }));
     checklist.items.push(item);
+    // The box stays open for the next one, like 提醒事项.
     $('addText').value = '';
     $('addDue').value = '';
+    $('addDueBox').hidden = true;
+    $('addDueBtn').setAttribute('aria-expanded', 'false');
     $('addMsg').textContent = '';
     renderOwn();
     $('addText').focus();
@@ -576,6 +617,7 @@ async function loadChecklist() {
     renderAssignments();
     setSummary('checklist', '清单没有读取成功，点开看怎么办');
     flagError('checklist');
+    $('clOwnDone').replaceChildren();
     return $('clOwn').replaceChildren(actionLine(`清单没有读取成功：${err.message}`, [{ label: '重试', onClick: loadChecklist }]));
   }
   clearError('checklist');

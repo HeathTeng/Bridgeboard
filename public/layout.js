@@ -2,7 +2,7 @@
 // 显示设置 panel (with the theme), short or full course names and the 意见反馈
 // link in the footer. Sections and switches come from display.js.
 import { $, api, el } from './ui.js';
-import { DISPLAY_DEFAULTS, SECTIONS, isOpen, shortNames } from './display.js';
+import { DISPLAY_DEFAULTS, SECTIONS, isOpen, navArrows, navReveal, navStep, shortNames } from './display.js';
 import { LOADING } from './section-summary.js';
 import { glossSegments } from './glossary.js';
 
@@ -205,12 +205,38 @@ function syncPastFolds() {
 // ---- Navigation ----
 
 const links = new Map(); // section id -> nav link
+let navTrack; // the part of the nav that scrolls sideways
+let current; // the section marked in the nav
 
 function markCurrent(id) {
   for (const [sid, a] of links) {
     if (sid === id) a.setAttribute('aria-current', 'true');
     else a.removeAttribute('aria-current');
   }
+  if (id !== current) {
+    current = id;
+    revealInNav(links.get(id));
+  }
+}
+
+/**
+ * When the nav does not fit (a narrow screen): round ‹ › buttons at its ends,
+ * each hidden once that end is reached, and the words under them fade out.
+ */
+function updateNavArrows() {
+  if (!navTrack) return;
+  const { prev, next } = navArrows(navTrack);
+  $('navPrev').hidden = !prev;
+  $('navNext').hidden = !next;
+  $('sectionNav').classList.toggle('more-left', prev);
+  $('sectionNav').classList.toggle('more-right', next);
+}
+
+/** Scrolls the nav sideways (not the page) so the marked item is in view, clear of the buttons. */
+function revealInNav(a) {
+  if (!navTrack || !a || navTrack.scrollWidth <= navTrack.clientWidth) return;
+  const by = navReveal(a.getBoundingClientRect(), navTrack.getBoundingClientRect());
+  if (by) navTrack.scrollBy({ left: by, behavior: behavior() });
 }
 
 /**
@@ -273,7 +299,20 @@ export function buildNav() {
   }
   const hiddenNote = el('button', { type: 'button', id: 'navHidden', class: 'link nav-hidden', hidden: '' });
   hiddenNote.addEventListener('click', () => openPanel());
-  nav.replaceChildren(...links.values(), hiddenNote);
+  navTrack = el('div', { class: 'nav-track' }, ...links.values(), hiddenNote);
+  // ‹ › move about one bar width; 减少动态效果 makes it a jump.
+  const arrow = (id, side, label, text, dir) => {
+    const b = el('button', { type: 'button', id, class: `nav-arrow ${side}`, 'aria-label': label, title: label, hidden: '' }, text);
+    b.addEventListener('click', () => navTrack.scrollBy({ left: dir * navStep(navTrack.clientWidth), behavior: behavior() }));
+    return b;
+  };
+  nav.replaceChildren(arrow('navPrev', 'prev', '上一组', '‹', -1), navTrack, arrow('navNext', 'next', '下一组', '›', 1));
+  navTrack.addEventListener('scroll', updateNavArrows, { passive: true });
+  // Also when the bar first shows, the window changes size, or items come and go.
+  new ResizeObserver(() => {
+    updateNavArrows();
+    revealInNav(links.get(current));
+  }).observe(navTrack);
 }
 
 /** The small number next to a nav item; 0 hides it. */
@@ -283,6 +322,7 @@ export function setCount(id, n, title = '') {
   badge.hidden = !n;
   badge.textContent = n ? String(n) : '';
   badge.title = title;
+  updateNavArrows();
 }
 
 export function setSignedIn(value) {
@@ -323,6 +363,7 @@ function applyLayout() {
   document.body.classList.toggle('short-names', display.courseNames === 'short');
   document.body.classList.toggle('no-gloss', !display.gloss);
   updateCurrent();
+  updateNavArrows();
   changeListeners.forEach((fn) => fn());
 }
 

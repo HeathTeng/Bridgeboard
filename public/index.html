@@ -256,13 +256,20 @@
     <h3 class="cl-head">作业清单</h3>
     <div id="clAssignments"></div>
     <h3 class="cl-head">我的清单</h3>
-    <form id="addForm" class="cl-add" autocomplete="off">
-      <input id="addText" type="text" maxlength="200" placeholder="写一条待办，比如：复习第 3 章" aria-label="新的待办">
-      <button type="submit" class="primary">添加</button>
-      <label class="cl-due-label">截止时间（可选）<input id="addDue" type="datetime-local"></label>
-    </form>
-    <p id="addMsg" class="small fail"></p>
     <div id="clOwn"></div>
+    <!-- The last row of the list: 「＋」 turns into a box. Enter adds and keeps the box open for the next one; Esc puts the row back. -->
+    <div id="addRow" class="cl-add-row">
+      <button id="addOpen" type="button" class="cl-add-open"><span class="plus" aria-hidden="true">＋</span>点这里添加一件事</button>
+      <form id="addForm" class="cl-add" autocomplete="off" hidden>
+        <span class="plus" aria-hidden="true">＋</span>
+        <input id="addText" type="text" maxlength="200" placeholder="写一件事，比如：复习第 3 章" aria-label="新的待办" enterkeyhint="done">
+        <button id="addDueBtn" type="button" class="cl-cal" title="加截止时间（可选）" aria-label="加截止时间（可选）" aria-expanded="false" aria-controls="addDueBox"></button>
+        <label id="addDueBox" class="cl-due-edit" hidden>截止时间（可选）<input id="addDue" type="datetime-local"></label>
+        <p class="tip small cl-add-tip">按回车添加，可以接着写下一件；按 Esc 收起。</p>
+      </form>
+      <p id="addMsg" class="small fail"></p>
+    </div>
+    <div id="clOwnDone"></div>
     <p id="clMsg" class="small muted" aria-live="polite"></p>
   </section>
   <section id="messages" class="card section">
