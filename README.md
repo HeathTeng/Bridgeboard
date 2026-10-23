@@ -1,19 +1,26 @@
 # Bridgeboard
 
-Blackboard 学习面板 (formerly blackboard-study-hub)
+**一个页面看全所有课程的截止日期。** 面向留学生的 Blackboard 学习面板：截止日期、清单、课程消息、公告、成绩和课程文件集中在一起，快到期时还能提醒到手机。
 
-**Bridgeboard is an all-in-one Blackboard hub for international students.** See every deadline, announcement and grade across your courses on one page, and sync deadlines to your calendar. It runs on your own computer, so your login never leaves it.
+**Every Blackboard deadline on one page.** A study dashboard for international students: deadlines, checklist, course messages, announcements, grades and course files in one place, with phone alerts before things are due.
 
-**Bridgeboard：面向留学生的 Blackboard 一站式学习平台。** 在一个页面里集中查看所有课程的截止日期、公告和成绩，并把截止日期一键同步到日历，不用再一门一门课点进去找。程序在你自己的电脑上运行，登录信息不会离开你的电脑。
+[**⬇ 下载 Windows 版 / Download for Windows**](https://github.com/HeathTeng/Bridgeboard/releases/latest/download/Bridgeboard-Windows.zip) · 免费 · 解压后双击 `start.bat`，不用安装
 
-![screenshot](docs/screenshot.png)
+<!-- 官网上线后加这一行：更多介绍和安装图解：[getboundly.com](https://getboundly.com) -->
+
+> 🔒 **数据只在你的电脑上。** Bridgeboard 在你自己的电脑上运行，登录信息和课程数据不会发给我们或任何第三方（手机提醒是你自己打开的唯一例外）。它不是学校的官方工具，只读取、不会替你提交任何东西。
+> Runs on your own computer; your login and course data never leave it. Not an official school tool; read-only.
+
+![Bridgeboard 截图](docs/screenshot.png)
+
+Bridgeboard 是 [Boundly](https://getboundly.com) 的产品之一。适用于使用 Blackboard Learn Ultra 的学校。意见反馈：feedback@getboundly.com
 
 ## 新手使用步骤（Windows）
 
 不需要懂代码，按顺序做一次就好。
 
 **1. 下载便携版**
-打开 [最新版本下载页](https://github.com/HeathTeng/blackboard-study-hub/releases/latest)，在 **Assets** 下面点 `Bridgeboard-Windows.zip` 下载（旁边带版本号的 `Bridgeboard-版本号-windows.zip` 是同一个文件，下哪个都行）。里面已经带好了运行环境，**不用另外安装任何东西**。
+打开 [最新版本下载页](https://github.com/HeathTeng/Bridgeboard/releases/latest)，在 **Assets** 下面点 `Bridgeboard-Windows.zip` 下载（旁边带版本号的 `Bridgeboard-版本号-windows.zip` 是同一个文件，下哪个都行）。里面已经带好了运行环境，**不用另外安装任何东西**。
 
 **2. 解压**
 右键压缩包，选「全部解压缩」，解压到一个文件夹，比如 `D:\BLACKBOARD` 或你的 U 盘。**一定要先解压**，直接在压缩包里双击是用不了的。
@@ -165,7 +172,7 @@ blackboard-mcp comes bundled in `vendor/`, so nothing else is needed. To use you
 
 ## Quick start
 
-**Windows:** download the portable zip from [Releases](https://github.com/HeathTeng/blackboard-study-hub/releases/latest), unzip it and double-click `start.bat`. Node.js is included.
+**Windows:** download the portable zip from [Releases](https://github.com/HeathTeng/Bridgeboard/releases/latest), unzip it and double-click `start.bat`. Node.js is included.
 
 **Command line** (any OS, Node.js 22.5+):
 
