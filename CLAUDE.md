@@ -1,3 +1,5 @@
+始终用简体中文回复主人，代码和提交信息仍用英文。
+
 # Bridgeboard: notes for Claude Code
 
 Bridgeboard (formerly blackboard-study-hub; subtitle Blackboard 学习面板) is a local web dashboard for Blackboard Learn Ultra, aimed at international students who are not programmers. The owner (HeathTeng) is new to coding and works mostly through Claude Code: explain changes in plain Chinese, one step at a time, and stop to ask before anything irreversible.
