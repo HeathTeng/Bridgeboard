@@ -45,7 +45,7 @@ Order agreed with the owner (2026-10-22): **functional modules first, then UI de
 - Done: pop-up sign-in with silent renewal; blackboard-mcp bundled in vendor/ (rebuild with `npm run vendor`, keep vendor/THIRD-PARTY-NOTICES.txt in sync); course file downloader (not yet: attachments and files embedded in page bodies); Windows portable zip via the Release workflow; module 1, five-colour deadlines with the adjustable timeline and links to Blackboard; module 2, the checklist; module 7, course messages (read-only; see the open check below); module 3, section navigation, display settings and beginner safety nets; module 4, phone alerts (Bark / ntfy) with the Windows start-up launcher.
 - Next: the remaining functional modules (e.g. weekly digest, study packs, AI Q&A with the student's own API key). Keep their UI plain and consistent with the current page; no visual redesign yet.
 - Open check: 课程消息：等有真实未读消息时，验证在面板里阅读不会让 Blackboard 变成已读；如果会，改成只列出线程。
-- Then: UI redesign, after walking through the whole dashboard with the owner and agreeing on their vision.
+- Now: UI redesign, agreed with the owner on 2026-10-23 (spec: `docs/dev/ui-redesign.md`, five steps, one release each; step 1 is the rename to Bridgeboard).
 - Then: first-run guide with the FAQ as its last page and an always-available help button (spec: `docs/dev/step5-onboarding.md`), then README screenshots, then a public launch.
 - Keep `docs/FAQ.md` current as features change, including the Windows run warnings (click 运行 / 更多信息 → 仍要运行).
 
