@@ -58,8 +58,8 @@ test('clashing short names get the lecture, then the programme, else stay full',
 test('display settings: defaults, validation, at least one section shown', () => {
   assert.deepEqual(displayOf(undefined), DISPLAY_DEFAULTS);
   assert.deepEqual(displayOf({ hidden: ['nope'] }), DISPLAY_DEFAULTS);
-  assert.deepEqual(checkDisplay({ hidden: ['grades', 'grades', 'files'], courseNames: 'short' }), { hidden: ['grades', 'files'], courseNames: 'short', theme: 'system', collapsed: {}, pastOpen: [] });
-  assert.deepEqual(checkDisplay({}), { hidden: [], courseNames: 'full', theme: 'system', collapsed: {}, pastOpen: [] });
+  assert.deepEqual(checkDisplay({ hidden: ['grades', 'grades', 'files'], courseNames: 'short' }), { hidden: ['grades', 'files'], courseNames: 'short', theme: 'system', eye: false, collapsed: {}, pastOpen: [], gloss: true });
+  assert.deepEqual(checkDisplay({}), { hidden: [], courseNames: 'full', theme: 'system', eye: false, collapsed: {}, pastOpen: [], gloss: true });
   const allButOne = SECTIONS.slice(1).map((s) => s.id);
   assert.deepEqual(checkDisplay({ hidden: allButOne }).hidden, allButOne);
   const fails = (d, re) => assert.throws(() => checkDisplay(d), (e) => e.status === 400 && re.test(e.message));
@@ -70,15 +70,28 @@ test('display settings: defaults, validation, at least one section shown', () =>
   fails(null, /格式不对/);
 });
 
-test('display settings: the theme', () => {
+test('display settings: 外观 and a separate 护眼 switch', () => {
   assert.equal(DISPLAY_DEFAULTS.theme, 'system', '跟随电脑 by default');
-  for (const theme of THEMES) assert.equal(checkDisplay({ theme }).theme, theme);
-  assert.deepEqual(THEMES, ['system', 'light', 'dark', 'eye']);
-  for (const theme of ['night', '', 'Dark', 1]) {
-    assert.throws(() => checkDisplay({ theme }), (e) => e.status === 400 && /跟随电脑.*护眼/.test(e.message), String(theme));
+  assert.equal(DISPLAY_DEFAULTS.eye, false, '护眼 off by default');
+  assert.deepEqual(THEMES, ['system', 'light', 'dark']);
+  for (const theme of THEMES) {
+    for (const eye of [true, false]) assert.deepEqual([checkDisplay({ theme, eye }).theme, checkDisplay({ theme, eye }).eye], [theme, eye]);
   }
-  // Settings saved by an older version have no theme: they follow the computer.
-  assert.equal(displayOf({ hidden: ['grades'], courseNames: 'short' }).theme, 'system');
+  for (const theme of ['night', '', 'Dark', 1]) {
+    assert.throws(() => checkDisplay({ theme }), (e) => e.status === 400 && /跟随电脑.*夜间/.test(e.message), String(theme));
+  }
+  for (const eye of ['on', 1, null]) {
+    if (eye === null) continue; // null means "not given": the default
+    assert.throws(() => checkDisplay({ eye }), (e) => e.status === 400 && /护眼.*开.*关/.test(e.message), String(eye));
+  }
+  // Settings saved by an older version have no theme: they follow the computer, 护眼 off.
+  assert.deepEqual([displayOf({ hidden: ['grades'], courseNames: 'short' }).theme, displayOf({}).eye], ['system', false]);
+  // The old 护眼 theme becomes 白天 with 护眼 on.
+  const old = displayOf({ hidden: [], courseNames: 'full', theme: 'eye' });
+  assert.deepEqual([old.theme, old.eye], ['light', true]);
+  assert.deepEqual([checkDisplay({ theme: 'eye' }).theme, checkDisplay({ theme: 'eye' }).eye], ['light', true]);
+  // 恢复默认: 跟随电脑, 护眼 off.
+  assert.deepEqual([checkDisplay({ ...DISPLAY_DEFAULTS }).theme, checkDisplay({ ...DISPLAY_DEFAULTS }).eye], ['system', false]);
   // An unknown saved theme falls back to all the defaults rather than breaking the page.
   assert.deepEqual(displayOf({ theme: 'neon' }), DISPLAY_DEFAULTS);
 });
@@ -125,4 +138,12 @@ test('display settings: folds and 往期课程 are checked and kept', () => {
   assert.deepEqual(displayOf({ theme: 'dark' }).pastOpen, []);
   // 恢复默认 sends the defaults: 往期课程 folded again.
   assert.deepEqual(checkDisplay({ ...DISPLAY_DEFAULTS }).pastOpen, []);
+});
+
+test('display settings: 课程词条中文 on by default', () => {
+  assert.equal(DISPLAY_DEFAULTS.gloss, true);
+  assert.equal(checkDisplay({ gloss: false }).gloss, false);
+  assert.equal(checkDisplay({}).gloss, true);
+  assert.equal(displayOf({ theme: 'dark' }).gloss, true, 'older settings: shown');
+  assert.throws(() => checkDisplay({ gloss: 'no' }), (e) => e.status === 400 && /显示.*不显示/.test(e.message));
 });

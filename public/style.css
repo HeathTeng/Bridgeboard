@@ -1,9 +1,10 @@
 [hidden] { display: none !important; }
 /*
  * Colours: every colour on the page is a token here; components use only tokens.
- * Themes: 白天 (default and data-theme="light"), 夜间 (data-theme="dark", or the
- * computer's dark mode when 跟随电脑 leaves data-theme off), 护眼 (data-theme="eye").
- * The dark block appears twice on purpose: once for 夜间, once for 跟随电脑.
+ * 外观: 白天 (default and data-theme="light"), 夜间 (data-theme="dark", or the
+ * computer's dark mode when 跟随电脑 leaves data-theme off). 护眼 (data-eye) is a
+ * separate switch on top: warm light colours on a light page, warm dark ones
+ * on a dark page. Dark blocks appear twice on purpose: 夜间 and 跟随电脑.
  * Text colours are checked for at least 4.5:1 contrast: --accent is the text-safe
  * green (links, filled buttons), --accent-deco the brighter one for dots and marks.
  * Each status has a text colour (--red …) and a pale capsule fill (--red-bg …).
@@ -17,7 +18,7 @@
   --accent: #297c5c; --accent-deco: #2f8f6a; --accent-soft: rgba(47, 143, 106, .13); --on-accent: #fff; --brand: #2f8f6a;
   --red: #b44238; --red-bg: #fbe6e3; --orange: #a25718; --orange-bg: #fcecdc; --blue: #3667b6; --blue-bg: #e3ecfa;
   --yellow: #846711; --yellow-bg: #f7efd2; --yellow-mark: #d4a92a; --green: #257850; --green-bg: #dff2e7;
-  --warn-bg: #fff1dd; --warn-text: #7a4100; --error-bg: #fbe6e3; --error-text: #8a1c14;
+  --warn-bg: #fff1dd; --warn-text: #7a4100; --error-bg: #fbe6e3; --error-text: #8a1c14; --tip-bg: rgba(31, 61, 51, .06); --warn-line: rgba(122, 65, 0, .2);
   color-scheme: light;
 }
 :root[data-theme="dark"] {
@@ -29,7 +30,7 @@
   --accent: #5cc99c; --accent-deco: #5cc99c; --accent-soft: rgba(92, 201, 156, .16); --on-accent: #08261a; --brand: #2f8f6a;
   --red: #ff8f85; --red-bg: #4a2622; --orange: #ffad73; --orange-bg: #4a3220; --blue: #9dbcff; --blue-bg: #24324f;
   --yellow: #f0cf6a; --yellow-bg: #40381c; --yellow-mark: #f0cf6a; --green: #72d9a6; --green-bg: #1f4433;
-  --warn-bg: #3a2a10; --warn-text: #f5c77e; --error-bg: #4a2622; --error-text: #ffb4ac;
+  --warn-bg: #3a2a10; --warn-text: #f5c77e; --error-bg: #4a2622; --error-text: #ffb4ac; --tip-bg: rgba(255, 255, 255, .055); --warn-line: rgba(245, 199, 126, .28);
   color-scheme: dark;
 }
 @media (prefers-color-scheme: dark) {
@@ -42,22 +43,49 @@
     --accent: #5cc99c; --accent-deco: #5cc99c; --accent-soft: rgba(92, 201, 156, .16); --on-accent: #08261a; --brand: #2f8f6a;
     --red: #ff8f85; --red-bg: #4a2622; --orange: #ffad73; --orange-bg: #4a3220; --blue: #9dbcff; --blue-bg: #24324f;
     --yellow: #f0cf6a; --yellow-bg: #40381c; --yellow-mark: #f0cf6a; --green: #72d9a6; --green-bg: #1f4433;
-    --warn-bg: #3a2a10; --warn-text: #f5c77e; --error-bg: #4a2622; --error-text: #ffb4ac;
+    --warn-bg: #3a2a10; --warn-text: #f5c77e; --error-bg: #4a2622; --error-text: #ffb4ac; --tip-bg: rgba(255, 255, 255, .055); --warn-line: rgba(245, 199, 126, .28);
     color-scheme: dark;
   }
 }
-/* 护眼: warm paper, lower brightness, muted green, warmer and paler light spots. */
-:root[data-theme="eye"] {
+/* 护眼 on a light page (白天, or 跟随电脑 in light mode): warm paper, lower brightness, muted green, warmer light spots. */
+:root[data-eye] {
   --bg: #f3ecdd; --blob-1: #dfe6c6; --blob-2: #efe0bd; --blob-3: #f2d6c0;
-  --hero: #3e4a3a; --on-hero: #f4ecdb; --on-hero-muted: #d3cab2; --hero-btn: rgba(255, 248, 230, .14); --hero-btn-line: rgba(255, 248, 230, .24);
+  --hero: #3e4a3a; --on-hero: #f4ecdb; --on-hero-muted: #ebe3cd; --hero-btn: rgba(255, 248, 230, .14); --hero-btn-line: rgba(255, 248, 230, .24);
   --glass: rgba(250, 245, 235, .6); --glass-line: rgba(255, 252, 244, .75); --row: rgba(250, 245, 235, .6); --solid: #f8f2e6;
   --field: rgba(252, 248, 240, .8); --shadow: 0 12px 32px rgba(70, 55, 30, .08), 0 2px 6px rgba(70, 55, 30, .04);
   --text: #3a3126; --muted: #665845; --line: rgba(58, 49, 38, .12);
   --accent: #3f6f4c; --accent-deco: #5a8560; --accent-soft: rgba(90, 133, 96, .15); --on-accent: #fff; --brand: #4f7a52;
   --red: #a33a2f; --red-bg: #f3d9cf; --orange: #97510f; --orange-bg: #f3e0c6; --blue: #2f5b97; --blue-bg: #dde3ea;
   --yellow: #6e5608; --yellow-bg: #efe3bf; --yellow-mark: #c29a1e; --green: #2f6b3f; --green-bg: #d9e6cf;
-  --warn-bg: #f3e0c6; --warn-text: #6b3d08; --error-bg: #f3d9cf; --error-text: #7f1d14;
+  --warn-bg: #f3e0c6; --warn-text: #6b3d08; --error-bg: #f3d9cf; --error-text: #7f1d14; --tip-bg: rgba(110, 85, 40, .08); --warn-line: rgba(107, 61, 8, .22);
   color-scheme: light;
+}
+/* 护眼 on a dark page (夜间, or 跟随电脑 in dark mode): warm dark brown, less blue light. Twice on purpose, like 夜间. */
+:root[data-eye][data-theme="dark"] {
+  --bg: #1b1712; --blob-1: #33301f; --blob-2: #3a3020; --blob-3: #3f2a20;
+  --hero: #38331f; --on-hero: #efe3cc; --on-hero-muted: #c7b799; --hero-btn: rgba(255, 240, 210, .1); --hero-btn-line: rgba(255, 240, 210, .18);
+  --glass: rgba(44, 37, 28, .62); --glass-line: rgba(255, 240, 210, .07); --row: rgba(56, 47, 35, .55); --solid: #251f18;
+  --field: rgba(18, 14, 10, .6); --shadow: 0 12px 32px rgba(0, 0, 0, .3), 0 2px 6px rgba(0, 0, 0, .2);
+  --text: #ece0c8; --muted: #bba98a; --line: rgba(255, 240, 210, .1);
+  --accent: #b5c98a; --accent-deco: #a3ba78; --accent-soft: rgba(181, 201, 138, .15); --on-accent: #1d1c0e; --brand: #6f8a52;
+  --red: #f0a08c; --red-bg: #4a2a20; --orange: #f0b878; --orange-bg: #47331c; --blue: #b3bcd8; --blue-bg: #31303a;
+  --yellow: #e6cc7a; --yellow-bg: #40371a; --yellow-mark: #e0bf5c; --green: #a9d090; --green-bg: #2c3c22;
+  --warn-bg: #44351a; --warn-text: #f0cb8c; --error-bg: #4a2a20; --error-text: #f6b6a6; --tip-bg: rgba(255, 240, 210, .06); --warn-line: rgba(240, 203, 140, .28);
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-eye]:not([data-theme]) {
+    --bg: #1b1712; --blob-1: #33301f; --blob-2: #3a3020; --blob-3: #3f2a20;
+    --hero: #38331f; --on-hero: #efe3cc; --on-hero-muted: #c7b799; --hero-btn: rgba(255, 240, 210, .1); --hero-btn-line: rgba(255, 240, 210, .18);
+    --glass: rgba(44, 37, 28, .62); --glass-line: rgba(255, 240, 210, .07); --row: rgba(56, 47, 35, .55); --solid: #251f18;
+    --field: rgba(18, 14, 10, .6); --shadow: 0 12px 32px rgba(0, 0, 0, .3), 0 2px 6px rgba(0, 0, 0, .2);
+    --text: #ece0c8; --muted: #bba98a; --line: rgba(255, 240, 210, .1);
+    --accent: #b5c98a; --accent-deco: #a3ba78; --accent-soft: rgba(181, 201, 138, .15); --on-accent: #1d1c0e; --brand: #6f8a52;
+    --red: #f0a08c; --red-bg: #4a2a20; --orange: #f0b878; --orange-bg: #47331c; --blue: #b3bcd8; --blue-bg: #31303a;
+    --yellow: #e6cc7a; --yellow-bg: #40371a; --yellow-mark: #e0bf5c; --green: #a9d090; --green-bg: #2c3c22;
+    --warn-bg: #44351a; --warn-text: #f0cb8c; --error-bg: #4a2a20; --error-text: #f6b6a6; --tip-bg: rgba(255, 240, 210, .06); --warn-line: rgba(240, 203, 140, .28);
+    color-scheme: dark;
+  }
 }
 * { box-sizing: border-box; }
 /* Three faint light spots behind the frosted cards, fixed while the page scrolls. */
@@ -222,8 +250,9 @@ html { scroll-behavior: smooth; }
   background: var(--solid); color: var(--text); border: 1px solid var(--line); border-radius: 26px; box-shadow: var(--shadow); }
 .display-panel h2 { margin-bottom: 4px; }
 .display-panel fieldset { border: 0; margin: 10px 0 0; padding: 0; }
-.display-panel legend { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+.display-panel legend { font-size: 14px; margin-bottom: 4px; }
 .switches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 12px; }
+.switches-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .switch, .radio { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 14px; cursor: pointer; }
 .switch input, .radio input { width: auto; margin: 0; accent-color: var(--accent-deco); }
 .display-panel .actions { margin-top: 12px; }
@@ -234,13 +263,40 @@ body.short-names .cn-short + .cn-full { display: none; }
 body.short-names details[open] > summary .cn-short { display: none; }
 body.short-names details[open] > summary .cn-short + .cn-full { display: inline; }
 /* Every hint starts with the same lightbulb; later the help button and the FAQ link use it too, so the bulb always means help. */
+/*
+ * Two kinds of note, kept apart from the body text:
+ * 💡 .tip   a quiet hint: small pale box, smaller and lighter text.
+ * ⚠️ .alert something a beginner must see (keep the black window open, the
+ *          ntfy name is like a password, cURL is a login, what leaves the
+ *          computer) and every error line: a brighter apricot box.
+ */
+.tip { display: block; margin: 8px 0; padding: 7px 12px; border-radius: 12px; background: var(--tip-bg);
+  color: var(--muted); font-size: 12.5px; line-height: 1.55; }
 .tip::before { content: "💡"; margin-right: .3em; font-style: normal; font-weight: 400; }
+.alert, p.fail:not(:empty) { display: block; margin: 8px 0; padding: 9px 14px; border-radius: 14px; border: 1px solid var(--warn-line);
+  background: var(--warn-bg); color: var(--warn-text); font-size: 13.5px; font-weight: 500; line-height: 1.55; }
+.alert::before, p.fail:not(:empty)::before { content: "⚠️"; margin-right: .35em; font-weight: 400; }
+p.action-line.fail { display: flex; }
+.alert b { color: inherit; }
+/* Setting titles stay in the body colour and bold, apart from the hint boxes under them. */
+.display-panel legend, .push-step legend { color: var(--text); font-weight: 700; }
 .banner-error { background: var(--error-bg); color: var(--error-text); font-weight: 600; }
 .action-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .banner .action-line, .banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .banner[hidden] { display: none; }
 .inline-action { padding: 4px 12px; font-size: 13px; }
-footer .keep-open { color: var(--text); margin: 0 0 4px; }
+/* The one always-visible reminder under the title card: pale red, deep red text, calm (no blinking, no icon). */
+/* 不再提示 sits inside the bar on the right; the text keeps clear of it, so it is never cut off, even when the text wraps. */
+.keep-open-wrap { position: relative; margin: 0 0 16px; }
+:root[data-keep-open-off] .keep-open-wrap { display: none; }
+.keep-open-wrap .keep-open-bar { padding-right: 112px; }
+.keep-open-off { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); padding: 3px 12px; font-size: 13px; white-space: nowrap;
+  background: transparent; border-color: color-mix(in srgb, var(--error-text) 35%, transparent); color: var(--error-text); }
+.keep-open-off:hover { border-color: var(--error-text); }
+.keep-open-off:active { transform: translateY(-50%) scale(.96); }
+@media (prefers-reduced-motion: reduce) { .keep-open-off:active { transform: translateY(-50%); } }
+.keep-open-bar { margin: 0; padding: 9px 16px; border-radius: 14px; background: var(--error-bg); color: var(--error-text);
+  border: 1px solid color-mix(in srgb, var(--error-text) 22%, transparent); font-size: 14px; font-weight: 600; line-height: 1.55; }
 footer p { margin: 4px 0; }
 footer .privacy { color: var(--text); }
 .lock { width: 14px; height: 14px; vertical-align: -2px; margin-right: 4px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
@@ -300,11 +356,10 @@ label.check { margin: 10px 0; }
 /* 手机提醒 */
 .ok { color: var(--green); }
 .push-main { font-size: 16px; font-weight: 600; margin: 12px 0 4px; }
-.push-privacy { margin: 4px 0 8px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 18px; background: var(--row); }
 .push-status { margin: 8px 0; }
 .push-status p { margin: 4px 0; }
 .push-step { border: 1px solid var(--line); border-radius: 18px; margin: 14px 0 0; padding: 10px 14px 12px; }
-.push-step legend { font-weight: 600; padding: 0 6px; }
+.push-step legend { padding: 0 6px; }
 .push-hint { margin: -2px 0 8px 28px; }
 .steps { margin: 6px 0; padding-left: 22px; }
 .steps li { margin: 4px 0; }
@@ -314,9 +369,17 @@ label.check { margin: 10px 0; }
 .push-volume label { margin: 0; }
 .push-volume button { padding: 4px 12px; font-size: 13px; }
 .push-volume select { width: auto; margin: 0; padding: 2px 4px; font: inherit; }
-.ics-wrap { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
-.ics-tip { font-size: 12px; max-width: 16em; }
-.page-header .actions { align-items: flex-start; }
+/* The three title-card buttons in one even row; the calendar hint is a line of its own under them. */
+.page-header > .actions { flex-direction: column; align-items: flex-end; gap: 6px; }
+.action-buttons { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.ics-tip { margin: 0; font-size: 12px; text-align: right; }
+/* Hints inside the dark title card use its see-through white instead. */
+.page-header > .actions .tip { background: var(--hero-btn); color: var(--on-hero-muted); padding: 4px 10px; }
+@media (max-width: 700px) {
+  .page-header > .actions { align-items: flex-start; width: 100%; }
+  .action-buttons { justify-content: flex-start; }
+  .ics-tip { text-align: left; }
+}
 /* Inside the dark title card: light text and see-through white round buttons. The 显示设置 panel inside it is a normal card. */
 .page-header > div > .muted, .page-header > .actions .muted { color: var(--on-hero-muted); }
 .page-header > .actions button, .page-header > .actions .button { background: var(--hero-btn); border-color: var(--hero-btn-line); color: var(--on-hero); }
@@ -357,7 +420,7 @@ label.check { margin: 10px 0; }
 .section.top .dest { flex-wrap: wrap; }
 /* 💡 怎么用？ opens a small box under it; 显示全部 shows the rest of a long list. */
 .howto-btn { margin: 0 0 8px; padding: 3px 12px; font-size: 13px; color: var(--muted); }
-.howto { margin: 0 0 10px; padding: 10px 14px; border-radius: 18px; background: var(--row); border: 1px solid var(--line); }
+.howto { margin: 0 0 10px; }
 .show-all { display: block; margin: 10px auto 0; padding: 5px 16px; font-size: 13px; color: var(--accent); }
 /* 往期课程 at the bottom of a per-course section. */
 .past-fold { margin-top: 12px; }
@@ -379,3 +442,11 @@ label.check { margin: 10px 0; }
 /* An error inside a section: a small warning mark on its nav item. */
 .section-nav a.has-error::after { content: "⚠"; margin-left: 4px; color: var(--orange); }
 @media (prefers-reduced-motion: reduce) { .sec-toggle:active { transform: none; } }
+/*
+ * 课程词条中文: a small, lighter Chinese word after a known English term. The
+ * English keeps its size and weight; the gloss wraps with the text instead of
+ * widening a column, is left out when copying, and hides under 不显示.
+ */
+.gl { font-size: .82em; font-weight: 400; white-space: nowrap; color: var(--accent); letter-spacing: 0; user-select: none; -webkit-user-select: none; }
+body.no-gloss .gl { display: none; }
+.cn, .dl-body, .cl-body, .item .title, td { overflow-wrap: anywhere; }

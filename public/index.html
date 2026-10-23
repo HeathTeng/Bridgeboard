@@ -16,25 +16,32 @@
     <p id="who" class="muted">正在连接…</p>
   </div>
   <div class="actions">
-    <button id="refresh" type="button">刷新</button>
-    <span class="ics-wrap">
+    <div class="action-buttons">
+      <button id="refresh" type="button">刷新</button>
       <a id="ics" class="button" href="/calendar.ics" download>导出到日历 (.ics)</a>
-      <span class="tip muted small ics-tip">导入手机日历后，电脑关机也会提醒。</span>
-    </span>
-    <button id="displayBtn" type="button" aria-expanded="false" aria-controls="displayPanel">显示设置</button>
+      <button id="displayBtn" type="button" aria-expanded="false" aria-controls="displayPanel">显示设置</button>
+    </div>
+    <p class="tip muted small ics-tip">导出到日历：导入手机日历后，电脑关机也会提醒。</p>
   </div>
   <div id="displayPanel" class="display-panel" role="dialog" aria-label="显示设置" hidden>
     <h2>显示设置</h2>
     <p class="tip muted small">改动会自动保存，下次打开还在。</p>
     <fieldset>
-      <legend>主题</legend>
-      <div class="switches">
+      <legend>外观</legend>
+      <div class="switches switches-3">
         <label class="radio"><input type="radio" name="theme" value="system"> 跟随电脑</label>
         <label class="radio"><input type="radio" name="theme" value="light"> 白天</label>
         <label class="radio"><input type="radio" name="theme" value="dark"> 夜间</label>
-        <label class="radio"><input type="radio" name="theme" value="eye"> 护眼</label>
       </div>
-      <p class="tip muted small">跟随电脑：电脑是深色模式时页面也变暗。护眼：暖黄色、亮度更低，适合晚上看。</p>
+      <p class="tip muted small">跟随电脑：电脑是深色模式时页面也变暗，浅色模式时变亮。</p>
+    </fieldset>
+    <fieldset>
+      <legend>护眼</legend>
+      <div class="switches">
+        <label class="radio"><input type="radio" name="eye" value="on"> 开</label>
+        <label class="radio"><input type="radio" name="eye" value="off"> 关</label>
+      </div>
+      <p class="tip muted small">打开后颜色变暖、蓝光更少。白天和夜间都能用：白天是暖黄的纸色，夜间是暖色的深底。</p>
     </fieldset>
     <fieldset>
       <legend>显示哪些区域</legend>
@@ -46,6 +53,14 @@
       <label class="radio"><input type="radio" name="courseNames" value="short"> 简短（例：Marketing）</label>
       <p class="tip muted small">简短时，鼠标停在课程名上能看到完整名称；展开的内容里也会显示完整名称。</p>
     </fieldset>
+    <fieldset>
+      <legend>课程词条中文</legend>
+      <div class="switches">
+        <label class="radio"><input type="radio" name="gloss" value="on"> 显示</label>
+        <label class="radio"><input type="radio" name="gloss" value="off"> 不显示</label>
+      </div>
+      <p class="tip muted small">在认得的英文词后面加一个小号中文，例如 Management · 管理学。英文原文不变，复制时也不会带上中文。</p>
+    </fieldset>
     <div class="actions">
       <button id="displayReset" type="button">恢复默认</button>
       <button id="displayDone" type="button" class="primary">完成</button>
@@ -53,6 +68,12 @@
     <p id="displayMsg" class="small" aria-live="polite"></p>
   </div>
 </header>
+
+<!-- Shown signed in or not, until 不再提示 (remembered in this browser, see keep-open.js): closing the black window stops everything. -->
+<div id="keepOpen" class="keep-open-wrap">
+  <p class="keep-open-bar" role="note">使用时请保持黑色窗口开着，关掉它面板和手机提醒都会停止。</p>
+  <button id="keepOpenOff" type="button" class="keep-open-off">不再提示</button>
+</div>
 
 <section id="today" class="card today" aria-label="今天要注意" hidden>
   <h2>今天要注意</h2>
@@ -83,7 +104,7 @@
       <li>粘贴到下面，点“登录”。</li>
     </ol>
     <textarea id="curl" rows="6" spellcheck="false" placeholder="在这里粘贴 Copy as cURL (bash) 的内容"></textarea>
-    <p class="tip muted small">这段内容相当于你的登录凭证，只会发给你电脑上的这个程序，再由它直接连到学校。不要把它发给任何人。</p>
+    <p class="alert">这段内容相当于你的登录凭证，只会发给你电脑上的这个程序，再由它直接连到学校。不要把它发给任何人。</p>
     <button id="doLogin" type="button">登录</button>
     <p id="loginMsg" class="small"></p>
   </details>
@@ -147,8 +168,8 @@
     <h2>手机提醒</h2>
     <p class="howto tip small" hidden>作业快到期时，让手机响一下。手机只负责收提醒，点开提醒会打开 Blackboard 的作业网页；面板本身还是在这台电脑上运行。</p>
     <label class="switch push-main"><input id="pushOn" type="checkbox"> <span>打开手机提醒</span></label>
-    <p class="tip small push-privacy">打开后，作业名、课程名、截止时间和 Blackboard 链接会经过 Bark / ntfy 的服务器发到你的手机。不想发作业名，可以打开「隐藏作业名」。</p>
-    <p class="tip muted small">只有这台电脑开着、没有睡眠、黑色窗口也开着时，才会发提醒。保险起见，也可以用右上角的「导出到日历」把截止日期放进手机日历。</p>
+    <p class="alert push-privacy">打开后，作业名、课程名、截止时间和 Blackboard 链接会经过 Bark / ntfy 的服务器发到你的手机。不想发作业名，可以打开「隐藏作业名」。</p>
+    <p class="alert">只有这台电脑开着、没有睡眠、黑色窗口也开着时，才会发提醒。保险起见，也可以用右上角的「导出到日历」把截止日期放进手机日历。</p>
     <div id="pushStatus" class="push-status small" aria-live="polite"></div>
     <p id="pushMsg" class="small" aria-live="polite"></p>
 
@@ -181,7 +202,7 @@
           <button id="topicCopy" type="button">复制</button>
           <button id="topicNew" type="button">换一个</button>
         </div>
-        <p class="tip small">这个名字就像密码，别人知道了也能收到你的提醒，不要发给别人。不小心发出去了，就点「换一个」，再在手机上订阅新名字。</p>
+        <p class="alert">这个名字就像密码，别人知道了也能收到你的提醒，不要发给别人。不小心发出去了，就点「换一个」，再在手机上订阅新名字。</p>
         <details class="fallback">
           <summary>高级：自建服务器</summary>
           <label>ntfy 服务器地址（只支持 https，不知道是什么就留空）
@@ -267,7 +288,6 @@
 </main>
 
 <footer class="muted small">
-  <p class="tip keep-open">使用时请保持那个黑色窗口开着，关掉它面板就停止了。</p>
   <p class="privacy"><svg class="lock" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>你的数据只保存在这台电脑上，我们收不到。</p>
   <p class="feedback">
     <a id="feedbackLink" href="mailto:feedback@getboundly.com">意见反馈</a>

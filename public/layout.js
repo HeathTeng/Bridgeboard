@@ -4,6 +4,7 @@
 import { $, api, el } from './ui.js';
 import { DISPLAY_DEFAULTS, SECTIONS, isOpen, shortNames } from './display.js';
 import { LOADING } from './section-summary.js';
+import { glossSegments } from './glossary.js';
 
 let display = { ...DISPLAY_DEFAULTS };
 let signedIn = false;
@@ -32,14 +33,25 @@ export function courseText(full) {
 }
 
 /**
+ * English text with a small Chinese gloss after each known term
+ * ("Management · 管理学"). The English is unchanged; the gloss is real text
+ * (screen readers read it) that CSS can hide (课程词条中文：不显示) and that
+ * is left out when the student copies the name.
+ */
+export function glossed(text, opts) {
+  // Flat, because el() only flattens one level of children.
+  return glossSegments(text, opts).flatMap((s) => (s.zh ? [s.text, el('span', { class: 'gl' }, ` · ${s.zh}`)] : [s.text]));
+}
+
+/**
  * Both names in the page; CSS shows one. The full name is always in the
  * tooltip, and an opened <details> shows it in its summary.
  */
 export function courseEl(full) {
   const short = shortMap.get(full) ?? full;
   return el('span', { class: 'cn', title: full },
-    short !== full ? el('span', { class: 'cn-short' }, short) : null,
-    el('span', { class: 'cn-full' }, full));
+    short !== full ? el('span', { class: 'cn-short' }, glossed(short, { course: true })) : null,
+    el('span', { class: 'cn-full' }, glossed(full, { course: true })));
 }
 
 // ---- Folding sections ----
@@ -278,14 +290,20 @@ export function setSignedIn(value) {
   applyLayout();
 }
 
-/** 跟随电脑 leaves data-theme off, so the CSS follows the computer's light or dark mode. */
-function applyTheme(theme) {
+/**
+ * 外观 and 护眼 on <html>. 跟随电脑 leaves data-theme off, so the CSS follows the
+ * computer's light or dark mode; 护眼 (data-eye) works on top of either.
+ */
+function applyTheme({ theme, eye }) {
   const root = document.documentElement;
   if (theme && theme !== 'system') root.dataset.theme = theme;
   else delete root.dataset.theme;
+  if (eye) root.dataset.eye = '';
+  else delete root.dataset.eye;
   // theme.js reads this copy before the page is drawn on the next visit.
   try {
     localStorage.setItem('bridgeboard-theme', theme || 'system');
+    localStorage.setItem('bridgeboard-eye', eye ? 'on' : 'off');
   } catch {
     // No storage: the theme still comes from settings.json, just a moment later.
   }
@@ -303,6 +321,7 @@ function applyLayout() {
   $('navHidden').hidden = !n;
   $('navHidden').textContent = n ? `已隐藏 ${n} 个 · 显示设置` : '';
   document.body.classList.toggle('short-names', display.courseNames === 'short');
+  document.body.classList.toggle('no-gloss', !display.gloss);
   updateCurrent();
   changeListeners.forEach((fn) => fn());
 }
@@ -389,13 +408,15 @@ function syncPanel() {
   for (const box of document.querySelectorAll('#displaySections input')) box.checked = !display.hidden.includes(box.value);
   for (const r of document.querySelectorAll('input[name="courseNames"]')) r.checked = r.value === display.courseNames;
   for (const r of document.querySelectorAll('input[name="theme"]')) r.checked = r.value === display.theme;
+  for (const r of document.querySelectorAll('input[name="eye"]')) r.checked = (r.value === 'on') === display.eye;
+  for (const r of document.querySelectorAll('input[name="gloss"]')) r.checked = (r.value === 'on') === display.gloss;
 }
 
 async function change(next, okText = '已保存，下次打开还在。') {
   const before = display;
   display = next;
   applyLayout();
-  applyTheme(display.theme);
+  applyTheme(display);
   try {
     const saved = await saveDisplay(next);
     display = saved.display ?? next;
@@ -403,7 +424,7 @@ async function change(next, okText = '已保存，下次打开还在。') {
   } catch (err) {
     display = before;
     applyLayout();
-    applyTheme(display.theme);
+    applyTheme(display);
     panelMsg(`没有保存：${err.message}`);
   }
   syncPanel();
@@ -430,6 +451,12 @@ export function initDisplayPanel(save) {
   for (const r of document.querySelectorAll('input[name="theme"]')) {
     r.addEventListener('change', () => change({ ...display, theme: r.value }));
   }
+  for (const r of document.querySelectorAll('input[name="eye"]')) {
+    r.addEventListener('change', () => change({ ...display, eye: r.value === 'on' }));
+  }
+  for (const r of document.querySelectorAll('input[name="gloss"]')) {
+    r.addEventListener('change', () => change({ ...display, gloss: r.value === 'on' }));
+  }
   $('displayReset').addEventListener('click', async () => {
     await change({ ...DISPLAY_DEFAULTS }, '已恢复默认。');
     applyFolds();
@@ -451,5 +478,5 @@ export function setDisplay(d) {
   applyFolds();
   syncPastFolds();
   // Only here and in change(): before the settings arrive, theme.js's choice stays.
-  applyTheme(display.theme);
+  applyTheme(display);
 }

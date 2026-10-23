@@ -7,9 +7,10 @@ import {
   messagesSummary, todayChips,
 } from './section-summary.js';
 import { initPush, reloadPush, setDueSoonHours } from './push.js';
+import { initKeepOpen } from './keep-open.js';
 import { $, SERVER_LOST, actionLine, api, el, fmt, friendlyText, isSignedOutError, sleep, watchServer } from './ui.js';
 import {
-  buildNav, clearError, courseEl, courseText, flagError, goToSection, initDisplayPanel, initFeedback, initToTop, onDisplayChange, pastFold,
+  buildNav, clearError, courseEl, courseText, flagError, glossed, goToSection, initDisplayPanel, initFeedback, initToTop, onDisplayChange, pastFold,
   scrollToHash, setCount, setCourseNames, setDisplay, setSignedIn, setSummary,
 } from './layout.js';
 
@@ -97,8 +98,8 @@ function renderTodo(todo = todoItems) {
       items.map((t) => el('div', { class: 'item dl-row' },
         el('div', { class: 'dl-body' },
           el('div', { class: 'title' }, /^https:\/\//.test(t.link ?? '')
-            ? el('a', { href: t.link, target: '_blank', rel: 'noopener noreferrer', title: '在 Blackboard 里打开' }, t.title)
-            : t.title),
+            ? el('a', { href: t.link, target: '_blank', rel: 'noopener noreferrer', title: '在 Blackboard 里打开' }, glossed(t.title))
+            : glossed(t.title)),
           el('div', { class: 'meta' }, courseEl(t.course), ` · ${fmt.format(new Date(t.due))}`)),
         el('span', { class: 'pill', title: timeLeft(t, now) }, pillText(t, key, now)),
       )),
@@ -383,8 +384,8 @@ function assignmentRow(t, now) {
     byBlackboard,
   );
   const title = /^https:\/\//.test(t.link ?? '')
-    ? el('a', { href: t.link, target: '_blank', rel: 'noopener noreferrer', title: '在 Blackboard 里打开' }, t.title)
-    : t.title;
+    ? el('a', { href: t.link, target: '_blank', rel: 'noopener noreferrer', title: '在 Blackboard 里打开' }, glossed(t.title))
+    : glossed(t.title);
   return el('div', { class: `cl-row${t.done ? ' is-done' : ''}` }, box,
     el('div', { class: 'cl-body' },
       el('div', { class: 'cl-text' }, title),
@@ -604,7 +605,7 @@ function renderAnnouncements(list) {
   for (const a of list.slice(0, 12)) {
     box.append(el('div', { class: 'item' },
       el('details', {},
-        el('summary', {}, el('span', { class: 'title' }, a.title)),
+        el('summary', {}, el('span', { class: 'title' }, glossed(a.title))),
         el('div', { class: 'body' }, a.body || '（无正文）'),
       ),
       el('div', { class: 'meta' }, courseEl(a.course), a.date ? ` · ${fmt.format(new Date(a.date))}` : ''),
@@ -627,7 +628,7 @@ function gradeCourse(c) {
     el('table', {},
       el('tr', {}, el('th', {}, '项目'), el('th', {}, '分数'), el('th', {}, '百分比')),
       c.items.map((g) => el('tr', {},
-        el('td', {}, g.name),
+        el('td', {}, glossed(g.name)),
         el('td', {}, g.text),
         el('td', {}, g.pct == null ? '—' : [bar(g.pct), `${g.pct}%`]),
       )),
@@ -1025,6 +1026,10 @@ $('doLogin').addEventListener('click', async () => {
 });
 
 buildNav();
+// Reading localStorage itself can throw when the browser blocks site data.
+let storage = null;
+try { storage = window.localStorage; } catch { /* hidden for this visit only */ }
+initKeepOpen({ wrap: $('keepOpen'), button: $('keepOpenOff'), root: document.documentElement, storage });
 initToTop();
 initFeedback();
 initDisplayPanel(async (display) => {
