@@ -54,6 +54,11 @@
   </div>
 </header>
 
+<section id="today" class="card today" aria-label="今天要注意" hidden>
+  <h2>今天要注意</h2>
+  <div id="todayChips" class="today-chips"></div>
+</section>
+
 <nav id="sectionNav" class="section-nav" aria-label="分区导航" hidden></nav>
 
 <div id="serverDown" class="banner banner-error" role="alert" hidden></div>
@@ -94,61 +99,32 @@
       <span class="pill st-open">还有时间</span>
       <span class="pill st-done">已完成</span>
     </p>
-    <div class="timeline">
-      <div class="tl-track">
-        <span class="tl-side">刚开放<br><b id="newLabel">当天</b></span>
-        <input id="newRange" type="range" min="5" max="72" step="1" dir="rtl" aria-label="开放多久以内算新开放">
-        <span class="tl-now">现在</span>
-        <input id="soonRange" type="range" min="1" max="72" step="1" aria-label="离截止多久以内算临期">
-        <span class="tl-side">临期<br><b id="soonLabel">12 小时</b></span>
-      </div>
-      <div class="tl-help tip small">
-        往左拖：开放多久以内算"新开放"（蓝色）。往右拖：离截止多久以内算"临期"（橙色）。
-        选中手柄后，也可以用键盘的左右方向键微调。
-        <button id="resetTimeline" type="button" class="link">恢复默认</button> <span id="tlMsg"></span>
-      </div>
+    <div class="howto tip small" hidden>
+      点作业标题可以直接打开 Blackboard 的作业页面（Turnitin 这类会打开课程大纲）。
+      颜色按离截止还有多久来分；什么时候算「临期」「刚开放」，可以在下面的「调整时间轴」里改。
     </div>
-    <p class="tip muted small todo-hint">点作业标题可以直接打开 Blackboard 的作业页面（Turnitin 这类会打开课程大纲）。</p>
     <div id="todo"></div>
+    <details class="timeline-fold">
+      <summary>调整时间轴</summary>
+      <div class="timeline">
+        <div class="tl-track">
+          <span class="tl-side">刚开放<br><b id="newLabel">当天</b></span>
+          <input id="newRange" type="range" min="5" max="72" step="1" dir="rtl" aria-label="开放多久以内算新开放">
+          <span class="tl-now">现在</span>
+          <input id="soonRange" type="range" min="1" max="72" step="1" aria-label="离截止多久以内算临期">
+          <span class="tl-side">临期<br><b id="soonLabel">12 小时</b></span>
+        </div>
+        <div class="tl-help small">
+          往左拖：开放多久以内算"新开放"（蓝色）。往右拖：离截止多久以内算"临期"（橙色）。
+          选中手柄后，也可以用键盘的左右方向键微调。
+          <button id="resetTimeline" type="button" class="link">恢复默认</button> <span id="tlMsg"></span>
+        </div>
+      </div>
+    </details>
   </section>
-  <section id="checklist" class="card section">
-    <h2>清单</h2>
-    <p class="tip muted small">作业会自动出现在上面；下面可以写你自己的待办。</p>
-    <h3 class="cl-head">作业清单</h3>
-    <div id="clAssignments"></div>
-    <h3 class="cl-head">我的清单</h3>
-    <form id="addForm" class="cl-add" autocomplete="off">
-      <input id="addText" type="text" maxlength="200" placeholder="写一条待办，比如：复习第 3 章" aria-label="新的待办">
-      <button type="submit" class="primary">添加</button>
-      <label class="cl-due-label">截止时间（可选）<input id="addDue" type="datetime-local"></label>
-    </form>
-    <p id="addMsg" class="small fail"></p>
-    <div id="clOwn"></div>
-    <p id="clMsg" class="small muted" aria-live="polite"></p>
-  </section>
-  <section id="messages" class="card section">
-    <h2 id="msgTitle">课程消息</h2>
-    <p class="tip muted small">这里汇总老师和同学在 Blackboard 课程里发给你的消息。只包括进行中的课程；想看最新消息，点右上角的「刷新」。</p>
-    <div id="msgControls" class="msg-controls" hidden>
-      <span class="chips" role="group" aria-label="筛选">
-        <button type="button" class="chip" data-filter="all" aria-pressed="true">全部</button>
-        <button type="button" class="chip" data-filter="unread" aria-pressed="false">未读</button>
-      </span>
-      <select id="msgCourse" aria-label="按课程筛选"><option value="">全部课程</option></select>
-    </div>
-    <div id="msgList"></div>
-  </section>
-  <section id="announcements" class="card section">
-    <h2>最新公告</h2>
-    <div id="annList"></div>
-  </section>
-  <section id="grades" class="card section wide">
-    <h2>成绩</h2>
-    <div id="gradeList"></div>
-  </section>
-  <section id="files" class="card section wide">
+  <section id="files" class="card section">
     <h2>课程文件</h2>
-    <p class="tip muted small">勾选课件，一次下载到你选的文件夹（比如 U 盘），按课程和 Blackboard 里的文件夹分好类。已经下载过的会自动跳过。</p>
+    <p class="howto tip small" hidden>勾选课件，一次下载到你选的文件夹（比如 U 盘），按课程和 Blackboard 里的文件夹分好类。已经下载过的会自动跳过。点课程名可以展开，看这门课有哪些文件。</p>
     <label for="downloadDir">保存位置</label>
     <div class="dest">
       <input id="downloadDir" type="text" placeholder="还没有选择，例如 E:\课程资料" spellcheck="false">
@@ -167,9 +143,9 @@
     <p id="dlProgress" class="small"></p>
     <div id="dlResult"></div>
   </section>
-  <section id="alerts" class="card section wide">
+  <section id="alerts" class="card section">
     <h2>手机提醒</h2>
-    <p class="tip muted small">作业快到期时，让手机响一下。手机只负责收提醒，点开提醒会打开 Blackboard 的作业网页；面板本身还是在这台电脑上运行。</p>
+    <p class="howto tip small" hidden>作业快到期时，让手机响一下。手机只负责收提醒，点开提醒会打开 Blackboard 的作业网页；面板本身还是在这台电脑上运行。</p>
     <label class="switch push-main"><input id="pushOn" type="checkbox"> <span>打开手机提醒</span></label>
     <p class="tip small push-privacy">打开后，作业名、课程名、截止时间和 Blackboard 链接会经过 Bark / ntfy 的服务器发到你的手机。不想发作业名，可以打开「隐藏作业名」。</p>
     <p class="tip muted small">只有这台电脑开着、没有睡眠、黑色窗口也开着时，才会发提醒。保险起见，也可以用右上角的「导出到日历」把截止日期放进手机日历。</p>
@@ -218,38 +194,75 @@
       <p id="pushTestMsg" class="small" aria-live="polite"></p>
     </fieldset>
 
-    <fieldset class="push-step">
-      <legend>第 2 步：什么时候提醒</legend>
-      <label class="switch"><input id="rDueSoon" type="checkbox"> <span>变成橙色（临期）时提醒一次</span></label>
-      <p id="dueSoonHint" class="muted small push-hint"></p>
-      <label class="switch"><input id="rStrong" type="checkbox"> <span>剩 <select id="strongHours" aria-label="剩几小时强提醒"></select> 小时还没交时<b>强提醒</b></span></label>
-      <p class="muted small push-hint">即使手机静音也会响，而且会用响亮的闹钟铃声一直响。第一次收到时，iPhone 会问要不要允许「重要警告」，请点 <b>允许</b>。</p>
-      <div class="push-hint push-volume">
-        <label for="strongVolume">强提醒音量（苹果手机）：</label>
-        <select id="strongVolume"></select>
-        <button id="pushTrial" type="button">试听强提醒</button>
-      </div>
-      <p class="tip muted small push-hint">第一次 iPhone 会问是否允许「重要警告」，请点允许。试听不会影响真实作业的提醒。</p>
-      <p id="trialMsg" class="small push-hint" aria-live="polite"></p>
-      <p class="tip muted small push-hint">这个音量不受手机静音和音量键影响。安卓手机（ntfy）用最高优先级，音量跟手机的通知音量走。</p>
-      <label class="switch"><input id="rRepeat" type="checkbox"> <span>没交就再提醒</span></label>
-      <p id="repeatHint" class="muted small push-hint">强提醒响过以后还没交的话，剩 2 小时和剩 1 小时时各再强提醒一次（只发比上面选的小时数更小的）。</p>
-      <label class="switch"><input id="rOverdue" type="checkbox"> <span>逾期时提醒一次</span></label>
-      <p class="muted small push-hint">只提醒最近 24 小时内逾期的作业，打开提醒时不会把以前逾期的一口气全发过来。</p>
-      <label class="switch"><input id="rMessages" type="checkbox"> <span>老师或同学发来新的课程消息时提醒</span></label>
-      <p class="muted small push-hint">只发是谁、哪门课，不发消息内容。</p>
-      <label class="switch"><input id="hideNames" type="checkbox"> <span>隐藏作业名</span></label>
-      <p class="muted small push-hint">提醒只写「有 1 项作业 5 小时后截止」，不写作业名和课程，也不带链接。</p>
-      <label class="switch"><input id="quietOn" type="checkbox"> <span>安静时段：<input id="quietFrom" type="time" aria-label="安静时段开始"> 到 <input id="quietTo" type="time" aria-label="安静时段结束"></span></label>
-      <p class="muted small push-hint">这段时间里普通提醒先不发，等结束后再发；强提醒照样会响。</p>
-    </fieldset>
+    <div data-more="显示全部设置（第 2 步：什么时候提醒；第 3 步：开机自动启动）" hidden>
+      <fieldset class="push-step">
+        <legend>第 2 步：什么时候提醒</legend>
+        <label class="switch"><input id="rDueSoon" type="checkbox"> <span>变成橙色（临期）时提醒一次</span></label>
+        <p id="dueSoonHint" class="muted small push-hint"></p>
+        <label class="switch"><input id="rStrong" type="checkbox"> <span>剩 <select id="strongHours" aria-label="剩几小时强提醒"></select> 小时还没交时<b>强提醒</b></span></label>
+        <p class="muted small push-hint">即使手机静音也会响，而且会用响亮的闹钟铃声一直响。第一次收到时，iPhone 会问要不要允许「重要警告」，请点 <b>允许</b>。</p>
+        <div class="push-hint push-volume">
+          <label for="strongVolume">强提醒音量（苹果手机）：</label>
+          <select id="strongVolume"></select>
+          <button id="pushTrial" type="button">试听强提醒</button>
+        </div>
+        <p class="tip muted small push-hint">第一次 iPhone 会问是否允许「重要警告」，请点允许。试听不会影响真实作业的提醒。</p>
+        <p id="trialMsg" class="small push-hint" aria-live="polite"></p>
+        <p class="tip muted small push-hint">这个音量不受手机静音和音量键影响。安卓手机（ntfy）用最高优先级，音量跟手机的通知音量走。</p>
+        <label class="switch"><input id="rRepeat" type="checkbox"> <span>没交就再提醒</span></label>
+        <p id="repeatHint" class="muted small push-hint">强提醒响过以后还没交的话，剩 2 小时和剩 1 小时时各再强提醒一次（只发比上面选的小时数更小的）。</p>
+        <label class="switch"><input id="rOverdue" type="checkbox"> <span>逾期时提醒一次</span></label>
+        <p class="muted small push-hint">只提醒最近 24 小时内逾期的作业，打开提醒时不会把以前逾期的一口气全发过来。</p>
+        <label class="switch"><input id="rMessages" type="checkbox"> <span>老师或同学发来新的课程消息时提醒</span></label>
+        <p class="muted small push-hint">只发是谁、哪门课，不发消息内容。</p>
+        <label class="switch"><input id="hideNames" type="checkbox"> <span>隐藏作业名</span></label>
+        <p class="muted small push-hint">提醒只写「有 1 项作业 5 小时后截止」，不写作业名和课程，也不带链接。</p>
+        <label class="switch"><input id="quietOn" type="checkbox"> <span>安静时段：<input id="quietFrom" type="time" aria-label="安静时段开始"> 到 <input id="quietTo" type="time" aria-label="安静时段结束"></span></label>
+        <p class="muted small push-hint">这段时间里普通提醒先不发，等结束后再发；强提醒照样会响。</p>
+      </fieldset>
 
-    <fieldset id="autostartBox" class="push-step" hidden>
-      <legend>第 3 步（可选）：开机自动启动</legend>
-      <label class="switch"><input id="autostartOn" type="checkbox"> <span>开电脑后自动在后台运行面板</span></label>
-      <p class="muted small push-hint">登录 Windows 后，黑色窗口会自动最小化在任务栏里，不会弹出浏览器，提醒照常检查。想看面板时照常双击 start.bat。</p>
-      <div id="autostartMsg"></div>
-    </fieldset>
+      <fieldset id="autostartBox" class="push-step" hidden>
+        <legend>第 3 步（可选）：开机自动启动</legend>
+        <label class="switch"><input id="autostartOn" type="checkbox"> <span>开电脑后自动在后台运行面板</span></label>
+        <p class="muted small push-hint">登录 Windows 后，黑色窗口会自动最小化在任务栏里，不会弹出浏览器，提醒照常检查。想看面板时照常双击 start.bat。</p>
+        <div id="autostartMsg"></div>
+      </fieldset>
+    </div>
+  </section>
+  <section id="checklist" class="card section">
+    <h2>清单</h2>
+    <p class="howto tip small" hidden>Blackboard 上已经开放的作业会自动出现在「作业清单」里，交了以后自动打勾；你也可以自己打勾做个记号，不会在 Blackboard 上提交。「我的清单」可以写你自己的待办。</p>
+    <h3 class="cl-head">作业清单</h3>
+    <div id="clAssignments"></div>
+    <h3 class="cl-head">我的清单</h3>
+    <form id="addForm" class="cl-add" autocomplete="off">
+      <input id="addText" type="text" maxlength="200" placeholder="写一条待办，比如：复习第 3 章" aria-label="新的待办">
+      <button type="submit" class="primary">添加</button>
+      <label class="cl-due-label">截止时间（可选）<input id="addDue" type="datetime-local"></label>
+    </form>
+    <p id="addMsg" class="small fail"></p>
+    <div id="clOwn"></div>
+    <p id="clMsg" class="small muted" aria-live="polite"></p>
+  </section>
+  <section id="messages" class="card section">
+    <h2>课程消息</h2>
+    <p class="howto tip small" hidden>这里汇总老师和同学在 Blackboard 课程里发给你的消息。只包括进行中的课程；想看最新消息，点右上角的「刷新」。要回复，点开对话后选「在 Blackboard 中打开」。</p>
+    <div id="msgControls" class="msg-controls" hidden>
+      <span class="chips" role="group" aria-label="筛选">
+        <button type="button" class="chip" data-filter="all" aria-pressed="true">全部</button>
+        <button type="button" class="chip" data-filter="unread" aria-pressed="false">未读</button>
+      </span>
+      <select id="msgCourse" aria-label="按课程筛选"><option value="">全部课程</option></select>
+    </div>
+    <div id="msgList"></div>
+  </section>
+  <section id="announcements" class="card section">
+    <h2>公告</h2>
+    <div id="annList"></div>
+  </section>
+  <section id="grades" class="card section">
+    <h2>成绩</h2>
+    <div id="gradeList"></div>
   </section>
 </main>
 

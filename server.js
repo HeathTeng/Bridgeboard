@@ -29,7 +29,7 @@ const HOST = '127.0.0.1';
 const PUBLIC = join(import.meta.dirname, 'public');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml' };
 // Rules the page and the server share, served from lib/.
-const SHARED = new Set(['status.js', 'checklist-rows.js', 'message-view.js', 'display.js']);
+const SHARED = new Set(['status.js', 'checklist-rows.js', 'message-view.js', 'display.js', 'terms.js', 'section-summary.js']);
 const ALLOWED_HOSTS = new Set([`127.0.0.1:${PORT}`, `localhost:${PORT}`]);
 
 // The checklist is local data; demo mode keeps it in memory and writes nothing.

@@ -1,12 +1,37 @@
 import { DEFAULTS, STATUSES, durations, pillText, statusLabel, statusOf, timeLeft } from './status.js';
 import { assignmentRows, sortRows } from './checklist-rows.js';
 import { courseOptions, filterThreads, relativeTime } from './message-view.js';
+import { activeCourseIds, pastCourseIds, splitByTerm } from './terms.js';
+import {
+  LOADING, NOTHING_TODAY, SIGNED_OUT, announcementsSummary, checklistSummary, deadlinesSummary, filesSummary, gradesSummary,
+  messagesSummary, todayChips,
+} from './section-summary.js';
 import { initPush, reloadPush, setDueSoonHours } from './push.js';
 import { $, SERVER_LOST, actionLine, api, el, fmt, friendlyText, isSignedOutError, sleep, watchServer } from './ui.js';
 import {
-  buildNav, courseEl, courseText, initDisplayPanel, initFeedback, initToTop, onDisplayChange, scrollToHash, setCount, setCourseNames,
-  setDisplay, setSignedIn,
+  buildNav, clearError, courseEl, courseText, flagError, goToSection, initDisplayPanel, initFeedback, initToTop, onDisplayChange, pastFold,
+  scrollToHash, setCount, setCourseNames, setDisplay, setSignedIn, setSummary,
 } from './layout.js';
+
+// ---- 往期课程 ----
+
+let overviewData = null; // the last /api/overview, for redrawing when messages arrive
+let past = new Set(); // ids of courses from an earlier term
+
+/**
+ * Works out which courses belong to an earlier term. Courses that still
+ * need the student stay up top. Returns whether the answer changed.
+ */
+function updatePast() {
+  if (!overviewData) return false;
+  const active = activeCourseIds({ todo: overviewData.todo, threads: messageData?.threads ?? [], grades: overviewData.grades });
+  const next = pastCourseIds(overviewData.courses, { active });
+  const changed = [...next].sort().join() !== [...past].sort().join();
+  past = next;
+  return changed;
+}
+
+const courseCount = (list, idOf) => new Set(list.map(idOf)).size;
 
 /** The banner under the header, optionally with buttons for the next step. */
 function showBanner(text, actions = []) {
@@ -31,6 +56,23 @@ const reconnect = { label: '重新连接', onClick: showLogin };
 let todoItems = [];
 let timeline = { ...DEFAULTS }; // how long counts as "new" and "due soon"
 
+const TODO_FIRST = 4; // the most urgent items shown before 再显示 N 项
+let todoAll = false; // 再显示 N 项 pressed; not remembered
+
+/** 今天要注意: up to three chips that jump to their section. */
+function renderToday(rows, now) {
+  $('today').hidden = !signedIn || !todoLoaded;
+  if ($('today').hidden) return;
+  const chips = todayChips({ rows, threads: messageData?.threads ?? [], now, courseName: courseText });
+  $('todayChips').replaceChildren(...(chips.length
+    ? chips.map((c) => {
+      const b = el('button', { type: 'button', class: `today-chip st-${c.status}` }, c.text);
+      b.addEventListener('click', () => goToSection(c.section));
+      return b;
+    })
+    : [el('p', { class: 'muted today-none' }, NOTHING_TODAY)]));
+}
+
 function renderTodo(todo = todoItems) {
   todoItems = todo;
   const box = $('todo');
@@ -39,13 +81,19 @@ function renderTodo(todo = todoItems) {
   const withStatus = todo.map((t) => ({ ...t, status: statusOf(t, now, timeline) }));
   const urgent = withStatus.filter((t) => t.status === 'overdue' || t.status === 'dueSoon').length;
   setCount('deadlines', urgent, '已逾期和临期的作业');
+  if (signedIn && todoLoaded) setSummary('deadlines', deadlinesSummary(withStatus, now));
+  renderToday(withStatus, now);
+  if (!todoLoaded) return;
   if (!todo.length) return box.append(el('p', { class: 'muted' }, '近期没有截止事项 🎉 新作业出现后会显示在这里。'));
+  // Most urgent first: by colour, then by due time (the list comes sorted by due time).
+  const ordered = STATUSES.flatMap((key) => withStatus.filter((t) => t.status === key));
+  const shown = todoAll ? ordered : ordered.slice(0, TODO_FIRST);
   for (const key of STATUSES) {
-    const items = withStatus.filter((t) => t.status === key);
+    const items = shown.filter((t) => t.status === key);
     if (!items.length) continue;
     box.append(el('div', { class: `group st-${key}` },
       el('h3', {}, el('span', { class: 'dot', 'aria-hidden': 'true' }), statusLabel(key, timeline),
-        el('span', { class: 'count' }, String(items.length))),
+        el('span', { class: 'count' }, String(ordered.filter((t) => t.status === key).length))),
       items.map((t) => el('div', { class: 'item dl-row' },
         el('div', { class: 'dl-body' },
           el('div', { class: 'title' }, /^https:\/\//.test(t.link ?? '')
@@ -55,6 +103,18 @@ function renderTodo(todo = todoItems) {
         el('span', { class: 'pill', title: timeLeft(t, now) }, pillText(t, key, now)),
       )),
     ));
+  }
+  if (ordered.length > TODO_FIRST) {
+    const rest = ordered.slice(TODO_FIRST);
+    const label = todoAll
+      ? `只显示最紧要的 ${TODO_FIRST} 项`
+      : `再显示 ${rest.length} 项${rest.some((t) => t.status === 'done') ? '（含已完成）' : ''}`;
+    const more = el('button', { type: 'button', class: 'show-all' }, label);
+    more.addEventListener('click', () => {
+      todoAll = !todoAll;
+      renderTodo();
+    });
+    box.append(more);
   }
 }
 
@@ -125,24 +185,38 @@ function timeSpan(iso) {
 function renderMessages() {
   const box = $('msgList');
   const unread = signedIn ? messageData?.unread ?? 0 : 0;
-  $('msgTitle').textContent = unread ? `课程消息（${unread} 条未读）` : '课程消息';
   setCount('messages', unread, '未读消息');
   $('msgControls').hidden = !signedIn || !messageData?.threads.length;
-  if (!signedIn) return box.replaceChildren(note('重新连接 Blackboard 后会显示消息。'));
-  if (!messageData) return box.replaceChildren(note('正在读取消息…'));
+  if (!signedIn) {
+    setSummary('messages', SIGNED_OUT);
+    return box.replaceChildren(note('重新连接 Blackboard 后会显示消息。'));
+  }
+  if (!messageData) {
+    setSummary('messages', LOADING);
+    return box.replaceChildren(note('正在读取消息…'));
+  }
   const { threads } = messageData;
+  setSummary('messages', messagesSummary(threads));
+  if (todoLoaded) renderTodo(); // 今天要注意 counts unread messages
   if (!threads.length) return box.replaceChildren(note('还没有课程消息。老师或同学在 Blackboard 里给你发消息后，会出现在这里。'));
 
-  const options = courseOptions(threads);
-  if (!options.some((c) => c.id === msgFilter.courseId)) msgFilter.courseId = '';
-  $('msgCourse').replaceChildren(el('option', { value: '' }, '全部课程'), ...options.map((c) => el('option', { value: c.id, title: c.name }, courseText(c.name))));
+  // Earlier terms go into their own group at the end of the dropdown.
+  const options = splitByTerm(courseOptions(threads), past);
+  const option = (c) => el('option', { value: c.id, title: c.name }, courseText(c.name));
+  if (![...options.current, ...options.earlier].some((c) => c.id === msgFilter.courseId)) msgFilter.courseId = '';
+  $('msgCourse').replaceChildren(el('option', { value: '' }, '全部课程'), ...options.current.map(option),
+    ...(options.earlier.length ? [el('optgroup', { label: '往期课程' }, options.earlier.map(option))] : []));
   $('msgCourse').value = msgFilter.courseId;
   for (const b of document.querySelectorAll('#msgControls .chip')) {
     b.setAttribute('aria-pressed', String((b.dataset.filter === 'unread') === msgFilter.unreadOnly));
   }
   const shown = filterThreads(threads, msgFilter);
   if (!shown.length) return box.replaceChildren(note(msgFilter.unreadOnly ? '没有未读消息 🎉' : '这门课还没有消息。'));
-  box.replaceChildren(...shown.map(threadRow));
+  const { current, earlier } = splitByTerm(shown, past, (t) => t.courseId);
+  box.replaceChildren(...[
+    ...(current.length ? current.map(threadRow) : [note('本学期的课程还没有消息。')]),
+    earlier.length ? pastFold('messages', courseCount(earlier, (t) => t.courseId), earlier.map(threadRow)) : null,
+  ].filter(Boolean));
 }
 
 function threadRow(t) {
@@ -216,8 +290,16 @@ async function loadMessages(refresh) {
   } catch (err) {
     messageData = null;
     $('msgControls').hidden = true;
+    setSummary('messages', '消息没有读取成功，点开看怎么办');
+    flagError('messages');
     return $('msgList').replaceChildren(actionLine(`消息没有读取成功：${err.message}`,
       isSignedOutError(err) ? [reconnect] : [{ label: '重试', onClick: () => loadMessages(true) }]));
+  }
+  clearError('messages');
+  // An unread message keeps an earlier term's course up top.
+  if (updatePast()) {
+    renderGrades(overviewData.grades);
+    renderCourseFiles(overviewData.courses, refreshFiles);
   }
   renderMessages();
 }
@@ -240,9 +322,12 @@ let signedIn = false;
 let todoLoaded = false;
 let pendingRemoval; // a delete waiting out its undo window
 const openCounts = { assignments: 0, own: 0 }; // for the nav badge
+const totalCounts = { assignments: 0, own: 0 }; // done or not, for the folded line
 
 function updateChecklistCount() {
-  setCount('checklist', openCounts.assignments + openCounts.own, '还没完成的事项');
+  const open = openCounts.assignments + openCounts.own;
+  setCount('checklist', open, '还没完成的事项');
+  setSummary('checklist', checklistSummary(open, totalCounts.assignments + totalCounts.own));
 }
 const hiddenIds = new Set(); // own items hidden while their delete can still be undone
 const doneOpen = {}; // which 已完成 groups the student has opened
@@ -316,6 +401,7 @@ function renderAssignments() {
   const now = Date.now();
   const { open, done } = sortRows(assignmentRows(todoItems, checklist.marks, now), (r) => r.due);
   openCounts.assignments = open.length;
+  totalCounts.assignments = open.length + done.length;
   updateChecklistCount();
   box.replaceChildren(...[
     open.length
@@ -371,6 +457,7 @@ function renderOwn() {
   const now = Date.now();
   const { open, done } = sortRows(checklist.items.filter((x) => !hiddenIds.has(x.id)));
   openCounts.own = open.length;
+  totalCounts.own = open.length + done.length;
   updateChecklistCount();
   const clear = el('button', { type: 'button', class: 'link danger' }, '清除已完成');
   clear.addEventListener('click', () => {
@@ -486,8 +573,11 @@ async function loadChecklist() {
     checklist = await api('/api/checklist');
   } catch (err) {
     renderAssignments();
+    setSummary('checklist', '清单没有读取成功，点开看怎么办');
+    flagError('checklist');
     return $('clOwn').replaceChildren(actionLine(`清单没有读取成功：${err.message}`, [{ label: '重试', onClick: loadChecklist }]));
   }
+  clearError('checklist');
   renderOwn();
   renderAssignments();
 }
@@ -500,6 +590,8 @@ function showSignedOut() {
   $('main').classList.add('signed-out');
   setSignedIn(false);
   setCount('deadlines', 0);
+  $('today').hidden = true;
+  for (const id of ['deadlines', 'files', 'announcements', 'grades']) setSummary(id, SIGNED_OUT);
   renderAssignments();
   renderMessages();
 }
@@ -507,6 +599,7 @@ function showSignedOut() {
 function renderAnnouncements(list) {
   const box = $('annList');
   box.replaceChildren();
+  setSummary('announcements', announcementsSummary(list));
   if (!list.length) return box.append(el('p', { class: 'muted' }, '最近没有公告。老师发布公告后会出现在这里。'));
   for (const a of list.slice(0, 12)) {
     box.append(el('div', { class: 'item' },
@@ -519,24 +612,38 @@ function renderAnnouncements(list) {
   }
 }
 
+const bar = (pct) => el('span', { class: 'bar' }, el('i', { style: `width:${Math.min(100, pct)}%` }));
+
+/** One course: the average on the folded row, every item once opened. */
+function gradeCourse(c) {
+  const pcts = c.items.map((g) => g.pct).filter((p) => p != null);
+  const avg = pcts.length ? Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length) : null;
+  const waiting = c.items.filter((g) => g.text === '等待评分').length;
+  return el('details', { class: 'course grade-course' },
+    el('summary', {},
+      courseEl(c.course),
+      el('span', { class: 'grade-avg' }, avg == null ? el('span', { class: 'muted' }, '还没有分数') : [bar(avg), `平均 ${avg}%`]),
+      waiting ? el('span', { class: 'tag' }, `${waiting} 项等待评分`) : null),
+    el('table', {},
+      el('tr', {}, el('th', {}, '项目'), el('th', {}, '分数'), el('th', {}, '百分比')),
+      c.items.map((g) => el('tr', {},
+        el('td', {}, g.name),
+        el('td', {}, g.text),
+        el('td', {}, g.pct == null ? '—' : [bar(g.pct), `${g.pct}%`]),
+      )),
+    ));
+}
+
 function renderGrades(courses) {
   const box = $('gradeList');
   box.replaceChildren();
   const withItems = courses.filter((c) => c.items.length);
+  const { current, earlier } = splitByTerm(withItems, past, (c) => c.courseId);
+  setSummary('grades', gradesSummary(current));
   if (!withItems.length) return box.append(el('p', { class: 'muted' }, '还没有成绩。老师公布成绩后会出现在这里。'));
-  for (const c of withItems) {
-    box.append(el('div', { class: 'group' },
-      el('h3', {}, courseEl(c.course)),
-      el('table', {},
-        el('tr', {}, el('th', {}, '项目'), el('th', {}, '分数'), el('th', {}, '百分比')),
-        c.items.map((g) => el('tr', {},
-          el('td', {}, g.name),
-          el('td', {}, g.text),
-          el('td', {}, g.pct == null ? '—' : [el('span', { class: 'bar' }, el('i', { style: `width:${Math.min(100, g.pct)}%` })), `${g.pct}%`]),
-        )),
-      ),
-    ));
-  }
+  if (!current.length) box.append(el('p', { class: 'muted' }, '本学期的课程还没有成绩。'));
+  box.append(...current.map(gradeCourse));
+  if (earlier.length) box.append(pastFold('grades', earlier.length, earlier.map(gradeCourse)));
 }
 
 // ---- 课程文件 ----
@@ -575,6 +682,7 @@ async function loadCourseFiles(course, body) {
     renderFileTable(course, body, data.files);
     return data.files;
   } catch (err) {
+    flagError('files');
     body.replaceChildren(actionLine(`这门课的文件没有读取成功：${err.message}`,
       isSignedOutError(err) ? [reconnect] : [{ label: '重试', onClick: () => loadCourseFiles(course, body) }]));
     return [];
@@ -611,6 +719,14 @@ function renderFileTable(course, body, files) {
   syncCourseBox(course.id);
 }
 
+const FILES_FIRST = 4; // courses shown before 显示全部
+let filesAll = false;
+let fileCourses = 0; // this term's courses, for the folded line
+
+function updateFilesSummary() {
+  if (overviewData) setSummary('files', filesSummary(fileCourses, settings.downloadDir));
+}
+
 function renderCourseFiles(courses, refresh) {
   refreshFiles = refresh;
   filesByCourse.clear();
@@ -618,31 +734,49 @@ function renderCourseFiles(courses, refresh) {
   $('selectAll').checked = false;
   const box = $('courseFiles');
   box.replaceChildren();
+  const { current, earlier } = splitByTerm(courses, past);
+  fileCourses = current.length;
+  updateFilesSummary();
   if (!courses.length) return box.append(el('p', { class: 'muted' }, '没有找到课程。可以点右上角的「刷新」再试一次。'));
-  for (const course of courses) {
-    const check = el('input', { type: 'checkbox', 'data-course': course.id, title: '选中这门课的全部文件' });
-    const body = el('div', {});
-    const details = el('details', { class: 'course' },
-      el('summary', {}, check, courseEl(course.name), course.open ? null : el('span', { class: 'tag' }, '已结课'),
-        el('span', { class: 'meta', 'data-meta': course.id }, '点击展开')),
-      body,
-    );
-    // A click on the checkbox should not also fold the course open or shut.
-    check.addEventListener('click', (e) => e.stopPropagation());
-    check.addEventListener('change', async () => {
-      const want = check.checked;
-      details.open = true;
-      const files = await loadCourseFiles(course, body);
-      for (const f of files) {
-        if (want) selected.add(`${course.id}|${f.id}`); else selected.delete(`${course.id}|${f.id}`);
-      }
-      renderFileTable(course, body, files);
-      updateSelectionUi();
+  // A long course list stays short in its column until 显示全部.
+  const rest = filesAll ? [] : current.slice(FILES_FIRST);
+  box.append(...current.slice(0, current.length - rest.length).map(fileCourse));
+  if (rest.length) {
+    const more = el('div', { hidden: '' }, rest.map(fileCourse));
+    const button = el('button', { type: 'button', class: 'show-all' }, `显示全部（还有 ${rest.length} 门课）`);
+    button.addEventListener('click', () => {
+      filesAll = true;
+      more.hidden = false;
+      button.remove();
     });
-    details.addEventListener('toggle', () => { if (details.open) loadCourseFiles(course, body); });
-    box.append(details);
+    box.append(button, more);
   }
+  if (earlier.length) box.append(pastFold('files', earlier.length, earlier.map(fileCourse)));
   updateSelectionUi();
+}
+
+function fileCourse(course) {
+  const check = el('input', { type: 'checkbox', 'data-course': course.id, title: '选中这门课的全部文件' });
+  const body = el('div', {});
+  const details = el('details', { class: 'course' },
+    el('summary', {}, check, courseEl(course.name), course.open ? null : el('span', { class: 'tag' }, '已结课'),
+      el('span', { class: 'meta', 'data-meta': course.id }, '点击展开')),
+    body,
+  );
+  // A click on the checkbox should not also fold the course open or shut.
+  check.addEventListener('click', (e) => e.stopPropagation());
+  check.addEventListener('change', async () => {
+    const want = check.checked;
+    details.open = true;
+    const files = await loadCourseFiles(course, body);
+    for (const f of files) {
+      if (want) selected.add(`${course.id}|${f.id}`); else selected.delete(`${course.id}|${f.id}`);
+    }
+    renderFileTable(course, body, files);
+    updateSelectionUi();
+  });
+  details.addEventListener('toggle', () => { if (details.open) loadCourseFiles(course, body); });
+  return details;
 }
 
 $('selectAll').addEventListener('change', () => {
@@ -651,7 +785,7 @@ $('selectAll').addEventListener('change', () => {
       if ($('selectAll').checked) selected.add(`${courseId}|${f.id}`); else selected.delete(`${courseId}|${f.id}`);
     }
   }
-  for (const details of document.querySelectorAll('#courseFiles details')) {
+  for (const details of document.querySelectorAll('#courseFiles details.course')) {
     const id = details.querySelector('input[data-course]').dataset.course;
     if (filesByCourse.has(id)) for (const b of details.querySelectorAll('.files input')) b.checked = $('selectAll').checked;
   }
@@ -667,6 +801,7 @@ async function loadSettings() {
   if (settings.display) setDisplay(settings.display);
   if (todoItems.length) renderTodo();
   $('downloadDir').value = settings.downloadDir ?? '';
+  updateFilesSummary();
   $('pickDir').hidden = !settings.canPick;
   $('downloadDir').readOnly = Boolean(settings.demo);
   if (settings.demo) $('dirMsg').textContent = '示例模式：不会真的保存文件。';
@@ -686,6 +821,7 @@ $('saveDir').addEventListener('click', async () => {
     $('downloadDir').value = settings.downloadDir;
     $('saveDir').hidden = true;
     $('dirMsg').textContent = '已保存，下次打开会记住。';
+    updateFilesSummary();
     resetDownloadedMarks();
   } catch (err) {
     $('dirMsg').textContent = err.message;
@@ -702,6 +838,7 @@ $('pickDir').addEventListener('click', async () => {
       $('downloadDir').value = r.downloadDir;
       $('saveDir').hidden = true;
       $('dirMsg').textContent = '已选择，下次打开会记住。';
+      updateFilesSummary();
       resetDownloadedMarks();
     } else {
       $('dirMsg').textContent = '没有选择文件夹。';
@@ -715,7 +852,7 @@ $('pickDir').addEventListener('click', async () => {
 
 /** The 已下载 marks depend on the folder, so re-read the courses already open. */
 function resetDownloadedMarks() {
-  for (const details of document.querySelectorAll('#courseFiles details')) {
+  for (const details of document.querySelectorAll('#courseFiles details.course')) {
     const id = details.querySelector('input[data-course]').dataset.course;
     if (!filesByCourse.has(id)) continue;
     filesByCourse.delete(id);
@@ -807,10 +944,13 @@ async function load(refresh = false) {
     renderMessages();
     loadMessages(refresh);
     showBanner('正在读取 Blackboard 数据…');
+    for (const id of ['deadlines', 'files', 'announcements', 'grades']) setSummary(id, LOADING);
     const data = await api(`/api/overview${refresh ? '?refresh' : ''}`);
+    overviewData = data;
+    updatePast();
     setCourseNames(data.courses.map((c) => c.name));
-    renderTodo(data.todo);
     todoLoaded = true;
+    renderTodo(data.todo);
     renderAssignments();
     renderAnnouncements(data.announcements);
     renderGrades(data.grades);
@@ -827,6 +967,7 @@ async function load(refresh = false) {
       showBanner('登录已过期，请重新连接 Blackboard。', [reconnect]);
     } else if (err.code !== 'SERVER_DOWN') {
       showBanner(`数据没有读取成功：${err.message}`, [{ label: '重试', onClick: () => load(true) }]);
+      for (const id of ['deadlines', 'files', 'announcements', 'grades']) setSummary(id, '没有读取成功，看页面上方的提示');
     }
   } finally {
     $('refresh').disabled = false;

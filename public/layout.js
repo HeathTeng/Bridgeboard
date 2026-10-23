@@ -1,8 +1,9 @@
-// Page layout: the section navigation bar, 回到顶部, the 显示设置 panel (with the theme),
-// short or full course names and the 意见反馈 link in the footer.
-// Sections and switches come from display.js.
+// Page layout: folding sections, the section navigation bar, 回到顶部, the
+// 显示设置 panel (with the theme), short or full course names and the 意见反馈
+// link in the footer. Sections and switches come from display.js.
 import { $, api, el } from './ui.js';
-import { DISPLAY_DEFAULTS, SECTIONS, shortNames } from './display.js';
+import { DISPLAY_DEFAULTS, SECTIONS, isOpen, shortNames } from './display.js';
+import { LOADING } from './section-summary.js';
 
 let display = { ...DISPLAY_DEFAULTS };
 let signedIn = false;
@@ -39,6 +40,154 @@ export function courseEl(full) {
   return el('span', { class: 'cn', title: full },
     short !== full ? el('span', { class: 'cn-short' }, short) : null,
     el('span', { class: 'cn-full' }, full));
+}
+
+// ---- Folding sections ----
+
+// Line icons, drawn on a 24 x 24 grid.
+const ICONS = {
+  deadlines: ['M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18', 'M12 7v5l3 2'],
+  files: ['M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'],
+  alerts: ['M6 16v-5a6 6 0 0 1 12 0v5l2 2H4z', 'M10 20a2 2 0 0 0 4 0'],
+  checklist: ['M8 4h8a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4z', 'M8.5 12l2.5 2.5 4.5-5'],
+  messages: ['M5 5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H10l-5 4v-4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z'],
+  announcements: ['M4 10v4h3l7 4V6l-7 4z', 'M17.5 9.5a3.5 3.5 0 0 1 0 5'],
+  grades: ['M5 20V11', 'M12 20V5', 'M19 20v-6'],
+};
+const SVG = 'http://www.w3.org/2000/svg';
+
+function icon(id) {
+  const svg = document.createElementNS(SVG, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('class', 'sec-icon');
+  svg.setAttribute('aria-hidden', 'true');
+  for (const d of ICONS[id] ?? []) {
+    const path = document.createElementNS(SVG, 'path');
+    path.setAttribute('d', d);
+    svg.append(path);
+  }
+  return svg;
+}
+
+const toggles = new Map(); // section id -> its heading button
+let alertsOn = false;
+let alertsKnown = false;
+
+function setOpen(id, open) {
+  const button = toggles.get(id);
+  if (!button) return;
+  button.setAttribute('aria-expanded', String(open));
+  $(`${id}-body`).hidden = !open;
+  $(id).classList.toggle('folded', !open);
+}
+
+/** Opens a section without remembering it, e.g. before jumping to it. */
+export function openSection(id) {
+  setOpen(id, true);
+}
+
+/** An error inside a section: open it and put a warning mark on its nav item. */
+export function flagError(id) {
+  setOpen(id, true);
+  links.get(id)?.classList.add('has-error');
+}
+
+export function clearError(id) {
+  links.get(id)?.classList.remove('has-error');
+}
+
+/** The one line a folded section shows. */
+export function setSummary(id, text) {
+  const line = $(`${id}-sum`);
+  if (line) line.textContent = text;
+}
+
+function applyFolds() {
+  for (const s of SECTIONS) setOpen(s.id, isOpen(display, s.id, { alertsOn }));
+}
+
+/**
+ * Phone alerts start folded once they are on. Only the first answer moves
+ * the section, so switching alerts on does not fold it under the student.
+ */
+export function setAlertsOn(on) {
+  const first = !alertsKnown;
+  alertsKnown = true;
+  alertsOn = on;
+  if (first) setOpen('alerts', isOpen(display, 'alerts', { alertsOn }));
+}
+
+/** Saves a fold without a message in the panel; a failure only loses the memory. */
+function remember(next) {
+  display = next;
+  saveDisplay(next).then((saved) => { display = saved.display ?? next; }).catch(() => {});
+}
+
+/**
+ * Turns each section's <h2> into a full-width button (icon, name, summary,
+ * chevron) and moves the rest into a body that folds. Also adds the
+ * 💡 怎么用？ buttons (.howto) and the 显示全部 buttons ([data-more]).
+ */
+function initSections() {
+  for (const s of SECTIONS) {
+    const section = $(s.id);
+    const h2 = section.querySelector(':scope > h2');
+    const body = el('div', { id: `${s.id}-body`, class: 'sec-body' });
+    body.append(...[...section.childNodes].filter((n) => n !== h2));
+    const button = el('button', { type: 'button', class: 'sec-toggle', 'aria-expanded': 'true', 'aria-controls': body.id },
+      icon(s.id),
+      el('span', { class: 'sec-name' }, h2.textContent.trim()),
+      el('span', { class: 'sec-sum', id: `${s.id}-sum` }, LOADING),
+      el('span', { class: 'sec-chev', 'aria-hidden': 'true' }));
+    button.addEventListener('click', () => {
+      const open = button.getAttribute('aria-expanded') !== 'true';
+      setOpen(s.id, open);
+      remember({ ...display, collapsed: { ...display.collapsed, [s.id]: !open } });
+    });
+    h2.className = 'sec-head';
+    h2.replaceChildren(button);
+    section.classList.toggle('top', Boolean(s.top));
+    section.append(body);
+    toggles.set(s.id, button);
+  }
+  for (const box of document.querySelectorAll('.howto')) {
+    const b = el('button', { type: 'button', class: 'howto-btn', 'aria-expanded': 'false' }, '💡 怎么用？');
+    b.addEventListener('click', () => {
+      box.hidden = !box.hidden;
+      b.setAttribute('aria-expanded', String(!box.hidden));
+    });
+    box.before(b);
+  }
+  for (const box of document.querySelectorAll('[data-more]')) {
+    const b = el('button', { type: 'button', class: 'show-all' }, box.dataset.more);
+    b.addEventListener('click', () => {
+      box.hidden = false;
+      b.remove();
+    });
+    box.before(b);
+  }
+  applyFolds();
+}
+
+/**
+ * The 往期课程（N 门） row at the bottom of a per-course section. Whether it is
+ * open is remembered per section; 恢复默认 folds it again.
+ */
+export function pastFold(sectionId, count, children) {
+  const fold = el('details', { class: 'past-fold', 'data-section': sectionId },
+    el('summary', {}, `往期课程（${count} 门）`),
+    el('p', { class: 'muted small' }, '上学期和更早的课程。还有作业、未读消息或等待评分的课会留在上面。'),
+    children);
+  fold.open = display.pastOpen.includes(sectionId);
+  fold.addEventListener('toggle', () => {
+    if (fold.open === display.pastOpen.includes(sectionId)) return;
+    remember({ ...display, pastOpen: fold.open ? [...display.pastOpen, sectionId] : display.pastOpen.filter((x) => x !== sectionId) });
+  });
+  return fold;
+}
+
+function syncPastFolds() {
+  for (const fold of document.querySelectorAll('.past-fold')) fold.open = display.pastOpen.includes(fold.dataset.section);
 }
 
 // ---- Navigation ----
@@ -86,13 +235,25 @@ const spy = () => {
 window.addEventListener('scroll', spy, { passive: true });
 window.addEventListener('resize', spy);
 
+/** Opens a section and scrolls to it, as a nav click does. */
+export function goToSection(id) {
+  openSection(id);
+  pinned = id;
+  markCurrent(id);
+  $(id).scrollIntoView({ behavior: behavior(), block: 'start' });
+  window.history.replaceState(null, '', `#${id}`);
+}
+
 export function buildNav() {
+  initSections();
   const nav = $('sectionNav');
   for (const s of SECTIONS) {
     const section = $(s.id);
     section.toggleAttribute('data-keep-signed-out', Boolean(s.keepSignedOut));
     const a = el('a', { href: `#${s.id}`, 'data-section': s.id }, s.label, el('span', { class: 'nav-count', hidden: '' }));
+    // Open first, so the link scrolls to the section with its content showing.
     a.addEventListener('click', () => {
+      openSection(s.id);
       pinned = s.id;
       markCurrent(s.id);
     });
@@ -135,6 +296,9 @@ function applyLayout() {
     $(s.id).classList.toggle('user-hidden', display.hidden.includes(s.id));
     links.get(s.id).hidden = !isShown(s);
   }
+  // The top columns share the row equally, however many of them are shown.
+  const tops = SECTIONS.filter((s) => s.top && isShown(s)).length;
+  for (const k of [1, 2, 3]) $('main').classList.toggle(`tops-${k}`, tops === k);
   const n = display.hidden.length;
   $('navHidden').hidden = !n;
   $('navHidden').textContent = n ? `已隐藏 ${n} 个 · 显示设置` : '';
@@ -147,6 +311,7 @@ function applyLayout() {
 export function scrollToHash() {
   const s = SECTIONS.find((x) => `#${x.id}` === window.location.hash);
   if (s && isShown(s)) {
+    openSection(s.id);
     pinned = s.id;
     // Jump straight there: a smooth scroll can be cut short while the page is still filling in.
     $(s.id).scrollIntoView({ behavior: 'instant' });
@@ -265,7 +430,11 @@ export function initDisplayPanel(save) {
   for (const r of document.querySelectorAll('input[name="theme"]')) {
     r.addEventListener('change', () => change({ ...display, theme: r.value }));
   }
-  $('displayReset').addEventListener('click', () => change({ ...DISPLAY_DEFAULTS }, '已恢复默认。'));
+  $('displayReset').addEventListener('click', async () => {
+    await change({ ...DISPLAY_DEFAULTS }, '已恢复默认。');
+    applyFolds();
+    syncPastFolds();
+  });
   $('displayBtn').addEventListener('click', () => ($('displayPanel').hidden ? openPanel() : closePanel()));
   $('displayDone').addEventListener('click', closePanel);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePanel(); });
@@ -279,6 +448,8 @@ export function setDisplay(d) {
   display = { ...DISPLAY_DEFAULTS, ...d };
   syncPanel();
   applyLayout();
+  applyFolds();
+  syncPastFolds();
   // Only here and in change(): before the settings arrive, theme.js's choice stays.
   applyTheme(display.theme);
 }

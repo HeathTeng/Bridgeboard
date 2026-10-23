@@ -2,6 +2,8 @@
 // only ever shows them masked; a new ntfy topic is shown in full until tested.
 import { $, actionLine, api, el, fmt } from './ui.js';
 import { relativeTime } from './message-view.js';
+import { alertsSummary } from './section-summary.js';
+import { clearError, flagError, setAlertsOn, setSummary } from './layout.js';
 
 const json = (method, body) => ({ method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 
@@ -18,6 +20,7 @@ function provider() {
 }
 
 function renderStatus() {
+  setSummary('alerts', alertsSummary(view));
   const box = $('pushStatus');
   if (!view?.enabled) {
     box.replaceChildren(el('p', { class: 'muted' }, view?.tested
@@ -108,8 +111,12 @@ async function refreshStatus() {
 async function load() {
   try {
     view = await api('/api/push');
+    setAlertsOn(view.enabled);
+    clearError('alerts');
     render();
   } catch (err) {
+    setSummary('alerts', '设置没有读取成功，点开看怎么办');
+    flagError('alerts');
     msg('pushMsg', `手机提醒的设置没有读取成功：${err.message}`, 'small fail');
   }
 }
