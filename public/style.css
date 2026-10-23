@@ -151,6 +151,16 @@ body.short-names details[open] > summary .cn-short + .cn-full { display: inline;
 .inline-action { padding: 4px 12px; font-size: 13px; }
 footer .keep-open { color: var(--text); margin: 0 0 4px; }
 footer p { margin: 4px 0; }
+footer .privacy { color: var(--text); }
+.lock { width: 14px; height: 14px; vertical-align: -2px; margin-right: 4px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
+footer .addr { user-select: all; }
+/* Wordmark: system display faces only, so the page needs no network. */
+.wordmark { display: flex; align-items: center; gap: 8px;
+  font-family: "Segoe UI Variable Display", "Segoe UI", "Microsoft YaHei UI", sans-serif; font-weight: 700; letter-spacing: -.01em; }
+.mark { width: 28px; height: 28px; flex: none; }
+.mark rect { fill: var(--accent); }
+.mark path { fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; }
+.subtitle { margin: 0 0 2px; font-size: 13px; }
 .to-top { position: fixed; right: 16px; bottom: 20px; z-index: 9; padding: 8px 14px; border-radius: 999px; box-shadow: 0 4px 12px rgba(0, 0, 0, .18); }
 button.link { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; font-size: 13px; }
 .item { padding: 8px 0; border-top: 1px solid var(--line); }

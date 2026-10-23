@@ -1,6 +1,7 @@
-// Page layout: the section navigation bar, 回到顶部, the 显示设置 panel and
-// short or full course names. Sections and switches come from display.js.
-import { $, el } from './ui.js';
+// Page layout: the section navigation bar, 回到顶部, the 显示设置 panel,
+// short or full course names and the 意见反馈 link in the footer.
+// Sections and switches come from display.js.
+import { $, api, el } from './ui.js';
 import { DISPLAY_DEFAULTS, SECTIONS, shortNames } from './display.js';
 
 let display = { ...DISPLAY_DEFAULTS };
@@ -153,6 +154,33 @@ export function initToTop() {
     document.querySelector('h1').focus({ preventScroll: true });
   });
   update();
+}
+
+// ---- 意见反馈 ----
+
+export const FEEDBACK_ADDRESS = 'feedback@getboundly.com';
+
+/** A mailto link with the version filled in. The panel itself sends nothing. */
+export function feedbackHref(version) {
+  const v = version ? `v${version}` : '';
+  const body = [`版本：${v || '（不知道就留空）'}`, 'Windows 版本：（例如 Windows 11，请填写）', '', '想说的话：', ''].join('\r\n');
+  return `mailto:${FEEDBACK_ADDRESS}?subject=${encodeURIComponent(`Bridgeboard 意见反馈 ${v}`.trim())}&body=${encodeURIComponent(body)}`;
+}
+
+export function initFeedback() {
+  // Works without the version too: the plain address is already in the HTML.
+  api('/api/ping').then((p) => {
+    $('feedbackLink').href = feedbackHref(p.version);
+    if (p.version) $('appVersion').textContent = ` · 当前版本 v${p.version}`;
+  }).catch(() => {});
+  $('feedbackCopy').addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(FEEDBACK_ADDRESS);
+      $('feedbackMsg').textContent = '已复制，粘贴到你的邮箱里发送。';
+    } catch {
+      $('feedbackMsg').textContent = '没能自动复制，请用鼠标选中地址后按 Ctrl+C。';
+    }
+  });
 }
 
 // ---- 显示设置 ----

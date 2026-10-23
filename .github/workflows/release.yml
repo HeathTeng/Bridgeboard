@@ -30,7 +30,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ github.event.inputs.version || github.ref_name }}
         run: |
-          notes="Windows 便携版：下载 blackboard-study-hub-$VERSION-windows.zip，解压后双击 start.bat 即可使用，不需要安装 Node.js。详细步骤见 README。"
+          notes="Bridgeboard（Blackboard 学习面板）Windows 便携版：下载 Bridgeboard-$VERSION-windows.zip 或 Bridgeboard-Windows.zip（两个是同一个文件），解压后双击 start.bat 即可使用，不需要安装 Node.js。从旧版本升级不用搬任何东西，清单和设置都会保留。详细步骤见 README。"
           if gh release view "$VERSION" >/dev/null 2>&1; then
             gh release upload "$VERSION" dist/*.zip --clobber
           else

@@ -9,7 +9,7 @@ VERSION="${1:?usage: build-portable.sh <version> [node-major]}"
 NODE_MAJOR="${2:-22}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/dist"
-NAME="blackboard-study-hub"
+NAME="Bridgeboard"
 STAGE="$OUT/$NAME"
 
 rm -rf "$OUT" && mkdir -p "$STAGE/runtime"
@@ -32,7 +32,7 @@ rm -rf "$STAGE/docs/dev"
 sed -i 's/\r\?$/\r/' "$STAGE/start.bat" "$STAGE/demo.bat"
 
 cat > "$STAGE/HOW-TO-USE.txt" <<TXT
-blackboard-study-hub $VERSION（Windows 便携版）
+Bridgeboard $VERSION（Blackboard 学习面板，Windows 便携版）
 
 1. 双击 start.bat。会出现一个黑色窗口，不要关掉它，浏览器会自动打开面板。
 2. 填入学校的 Blackboard 网址，点"连接 Blackboard"，在弹出的窗口里登录。
@@ -49,5 +49,8 @@ TXT
 sed -i -e 's/\r\?$/\r/' -e '1s/^/\xEF\xBB\xBF/' "$STAGE/HOW-TO-USE.txt"
 
 (cd "$OUT" && zip -qr "$NAME-$VERSION-windows.zip" "$NAME")
+# The same zip under a fixed name: getboundly.com links to
+# /releases/latest/download/Bridgeboard-Windows.zip, so keep this name exactly.
+cp "$OUT/$NAME-$VERSION-windows.zip" "$OUT/$NAME-Windows.zip"
 rm -rf "$STAGE" "$OUT/$NODE_ZIP" "$OUT/SHASUMS256.txt"
-echo "Built $OUT/$NAME-$VERSION-windows.zip with Node $NODE_VERSION"
+echo "Built $OUT/$NAME-$VERSION-windows.zip and $NAME-Windows.zip with Node $NODE_VERSION"

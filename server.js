@@ -1,6 +1,7 @@
-// blackboard-study-hub: a local web dashboard for Blackboard Learn Ultra.
+// Bridgeboard: a local web dashboard for Blackboard Learn Ultra.
 // Listens on 127.0.0.1 only, so nothing on your network can reach it.
 import { createServer } from 'node:http';
+import { readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import { exec, execFile } from 'node:child_process';
@@ -20,6 +21,9 @@ const DEMO = process.argv.includes('--demo');
 // Started by 开机自动启动: minimised, no browser window.
 const BACKGROUND = process.argv.includes('--background');
 const APP_DIR = import.meta.dirname;
+const VERSION = JSON.parse(readFileSync(join(APP_DIR, 'package.json'), 'utf8')).version;
+// The app id keeps the old name so a copy of an older version still running is recognised.
+const APP_ID = 'blackboard-study-hub';
 const PORT = Number(process.env.PORT ?? 3100);
 const HOST = '127.0.0.1';
 const PUBLIC = join(import.meta.dirname, 'public');
@@ -337,7 +341,7 @@ const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   try {
     if (url.pathname === '/api/ping') {
-      return send(res, 200, { app: 'blackboard-study-hub', demo: DEMO });
+      return send(res, 200, { app: APP_ID, version: VERSION, demo: DEMO });
     }
     if (url.pathname === '/api/push' || url.pathname.startsWith('/api/push/')) return await pushRoute(req, res, url);
     if (url.pathname === '/api/status') {
@@ -517,13 +521,13 @@ server.on('error', async (err) => {
   const running = await fetch(`${link}/api/ping`, { signal: AbortSignal.timeout(5000) })
     .then((r) => (r.ok ? r.json() : null))
     .catch(() => null);
-  if (running?.app === 'blackboard-study-hub' && running.demo === DEMO) {
+  if (running?.app === APP_ID && running.demo === DEMO) {
     // Exit code 0 lets start.bat close this extra window by itself.
     if (!BACKGROUND) console.log(`\n面板已经在运行，已为你打开：${link}\n`);
     openPage();
     return;
   }
-  if (running?.app === 'blackboard-study-hub') {
+  if (running?.app === APP_ID) {
     console.log(`\n面板已经在以${running.demo ? '示例模式' : '真实数据'}运行：${link}`);
     console.log('想切换的话，请先关掉之前的黑色窗口（开机自动启动的那个最小化在任务栏里），再重新双击。\n');
   } else {
@@ -533,7 +537,7 @@ server.on('error', async (err) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`\nblackboard-study-hub ${DEMO ? '(示例模式) ' : ''}已启动：${link}`);
+  console.log(`\nBridgeboard ${DEMO ? '(示例模式) ' : ''}已启动：${link}`);
   console.log('关闭这个窗口即可停止。\n');
   if (BACKGROUND) console.log('这是开机自动启动的后台窗口，手机提醒会照常检查。要看面板，双击 start.bat 或在浏览器打开上面的网址。\n');
   openPage();

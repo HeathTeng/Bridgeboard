@@ -1,6 +1,6 @@
-# blackboard-study-hub: notes for Claude Code
+# Bridgeboard: notes for Claude Code
 
-A local web dashboard for Blackboard Learn Ultra, aimed at international students who are not programmers. The owner (HeathTeng) is new to coding and works mostly through Claude Code: explain changes in plain Chinese, one step at a time, and stop to ask before anything irreversible.
+Bridgeboard (formerly blackboard-study-hub; subtitle Blackboard 学习面板) is a local web dashboard for Blackboard Learn Ultra, aimed at international students who are not programmers. The owner (HeathTeng) is new to coding and works mostly through Claude Code: explain changes in plain Chinese, one step at a time, and stop to ask before anything irreversible.
 
 ## Layout
 
@@ -13,11 +13,11 @@ A local web dashboard for Blackboard Learn Ultra, aimed at international student
 - `lib/ics.js`: deadline calendar export. `lib/demo.js`: fake data for `--demo`.
 - Five-colour deadlines: `lib/status.js` (`statusOf`, time-left labels; no Node-only code, the page loads it as `/status.js`), `lib/seen.js` (`~/.blackboard-study-hub/seen.json`, first-seen times when Blackboard gives no opening date), `lib/links.js` (assignment links, https on the school host only). Opening dates come from the content item's date release rule (`releaseStart` in `lib/bb.js`). The timeline durations (`newHours`, `dueSoonHours`) are in settings.json. Spec: `docs/dev/module1-deadlines.md`.
 - Course file downloader: `lib/downloader.js` (target paths, Windows length limit, skip-existing; pure, tested), `lib/office-text.js` (.docx/.pptx text via zlib, since the library only extracts PDF), `lib/settings.js` (`~/.blackboard-study-hub/settings.json`, download folder checks). Listing and the one-at-a-time download loop are `courseFiles` / `downloadAll` in `lib/bb.js`; the page sends file ids only, never URLs. Spec: `docs/dev/step3-downloader.md`.
-- `public/`: plain HTML/CSS/JS, Chinese UI, no build step. `ui.js` (DOM helpers; `api()` turns every error into plain Chinese, raw text to the console; notices when the server is gone and when it is back), `layout.js` (sticky section nav with counts, 回到顶部, the 显示设置 panel, short/full course names via CSS), `app.js` (the sections).
+- `public/`: plain HTML/CSS/JS, Chinese UI, no build step. `ui.js` (DOM helpers; `api()` turns every error into plain Chinese, raw text to the console; notices when the server is gone and when it is back), `layout.js` (sticky section nav with counts, 回到顶部, the 显示设置 panel, short/full course names via CSS, the footer 意见反馈 mailto to feedback@getboundly.com with the version from `/api/ping`), `app.js` (the sections). The footer holds the one privacy line for the whole page; sections only mention what leaves the computer (phone alerts).
 - Sections and display settings: `lib/display.js` (browser-safe, served as `/display.js`): `SECTIONS` lists every section in page order (one entry per section or switch; ids are the `<section>` ids), `checkDisplay` validates what the page saves (`display` in settings.json), `shortNames` shortens course names and keeps them unique. Hint lines use the `tip` class, which adds the lightbulb.
 - `test/`: `node --test`. Run `npm test` before every commit.
 - `start.bat` / `demo.bat`: double-click launchers for Windows. They use `runtime/node.exe` when present (portable zip), else `node` on PATH.
-- `scripts/build-portable.sh` + `.github/workflows/release.yml`: pushing a `v*` tag builds the Windows portable zip (app + node.exe, SHA-256 checked) and publishes it as a GitHub Release.
+- `scripts/build-portable.sh` + `.github/workflows/release.yml`: pushing a `v*` tag builds the Windows portable zip (app + node.exe, SHA-256 checked; folder `Bridgeboard`, `Bridgeboard-<version>-windows.zip` plus the same file as `Bridgeboard-Windows.zip`, which getboundly.com links to) and publishes it as a GitHub Release.
 
 ## Who we design for
 
@@ -29,6 +29,7 @@ Picture the user as extremely impatient, not technical at all, who reads nothing
 - **No secrets in git.** Cookies, cURL captures, HAR files, `~/.blackboard-mcp/`, `~/.blackboard-study-hub/`, API keys and personal paths (e.g. `C:\Users\<name>`) must never be committed or printed in full. Check `git diff --staged` before committing.
 - **Stay local.** The server binds 127.0.0.1 only and checks Host/Origin. Do not add anything that sends student data to a third party; the planned AI feature uses the student's own API key, stored locally.
 - **The one opt-in exception: phone alerts.** Off by default; only after the student switches them on and a test reached their phone, assignment/course names, due times and links go to Bark (`https://api.day.app`), ntfy (`https://ntfy.sh`) or a self-hosted https server they typed in. No other hosts, never cookies or message text; keys and topics are never logged and reach the page masked.
+- **Old names that stay** after the rename (`test/rename.test.js` guards them): the data folder `~/.blackboard-study-hub/`, the calendar UID suffix `@blackboard-study-hub`, the Startup file `blackboard-study-hub.cmd`, the `/api/ping` app id. Changing them loses data or makes duplicates. The GitHub repository keeps its old name until the owner renames it; then update the links in README, FAQ and the build script.
 - **Zero dependencies** for now: Node built-ins only, so the app can ship as a portable zip.
 - **Windows first.** The owner uses Windows + Edge. In Claude Code's `!` shell (Git Bash) use forward slashes in paths.
 - UI text is Chinese; README is bilingual. Times come from the API in UTC; display in local time.

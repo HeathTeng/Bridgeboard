@@ -3,13 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Blackboard 学习面板</title>
+<title>Bridgeboard</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23157a55'/%3E%3Cpath d='M4 20h24M6 20q10-14 20 0M10 20v6M22 20v6M11 14.8V20M16 13V20M21 14.8V20' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header class="page-header">
   <div>
-    <h1 tabindex="-1">Blackboard 学习面板</h1>
+    <h1 tabindex="-1" class="wordmark"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8"/><path d="M4 20h24M6 20q10-14 20 0M10 20v6M22 20v6M11 14.8V20M16 13V20M21 14.8V20"/></svg>Bridgeboard</h1>
+    <p class="subtitle muted">Blackboard 学习面板</p>
     <p id="who" class="muted">正在连接…</p>
   </div>
   <div class="actions">
@@ -93,7 +95,7 @@
   </section>
   <section id="checklist" class="card section">
     <h2>清单</h2>
-    <p class="tip muted small">作业会自动出现在上面；下面可以写你自己的待办，只保存在这台电脑上。</p>
+    <p class="tip muted small">作业会自动出现在上面；下面可以写你自己的待办。</p>
     <h3 class="cl-head">作业清单</h3>
     <div id="clAssignments"></div>
     <h3 class="cl-head">我的清单</h3>
@@ -108,7 +110,7 @@
   </section>
   <section id="messages" class="card section">
     <h2 id="msgTitle">课程消息</h2>
-    <p class="tip muted small">这里汇总老师和同学在 Blackboard 课程里发给你的消息，只在这台电脑上显示。只包括进行中的课程；想看最新消息，点右上角的「刷新」。</p>
+    <p class="tip muted small">这里汇总老师和同学在 Blackboard 课程里发给你的消息。只包括进行中的课程；想看最新消息，点右上角的「刷新」。</p>
     <div id="msgControls" class="msg-controls" hidden>
       <span class="chips" role="group" aria-label="筛选">
         <button type="button" class="chip" data-filter="all" aria-pressed="true">全部</button>
@@ -235,7 +237,15 @@
 
 <footer class="muted small">
   <p class="tip keep-open">使用时请保持那个黑色窗口开着，关掉它面板就停止了。</p>
-  <p>数据只在你的电脑上处理，基于开源项目 <a href="https://github.com/felipedias-ie/blackboard-mcp" target="_blank" rel="noopener">blackboard-mcp</a>。</p>
+  <p class="privacy"><svg class="lock" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>你的数据只保存在这台电脑上，我们收不到。</p>
+  <p class="feedback">
+    <a id="feedbackLink" href="mailto:feedback@getboundly.com">意见反馈</a>
+    · 没有邮件程序的话，发邮件到 <span id="feedbackAddr" class="addr">feedback@getboundly.com</span>
+    <button id="feedbackCopy" type="button" class="link">复制</button>
+    <span id="feedbackMsg" aria-live="polite"></span>
+    <span id="appVersion"></span>
+  </p>
+  <p>基于开源项目 <a href="https://github.com/felipedias-ie/blackboard-mcp" target="_blank" rel="noopener">blackboard-mcp</a>。</p>
 </footer>
 <button id="toTop" class="to-top" type="button" aria-label="回到顶部" hidden>↑ 回到顶部</button>
 <div id="undoBar" class="undo-bar" role="status" hidden><span id="undoText"></span> · <button id="undoBtn" type="button" class="link">撤销</button></div>

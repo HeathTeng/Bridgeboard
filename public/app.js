@@ -4,7 +4,7 @@ import { courseOptions, filterThreads, relativeTime } from './message-view.js';
 import { initPush, reloadPush, setDueSoonHours } from './push.js';
 import { $, SERVER_LOST, actionLine, api, el, fmt, friendlyText, isSignedOutError, sleep, watchServer } from './ui.js';
 import {
-  buildNav, courseEl, courseText, initDisplayPanel, initToTop, onDisplayChange, scrollToHash, setCount, setCourseNames,
+  buildNav, courseEl, courseText, initDisplayPanel, initFeedback, initToTop, onDisplayChange, scrollToHash, setCount, setCourseNames,
   setDisplay, setSignedIn,
 } from './layout.js';
 
@@ -879,6 +879,7 @@ $('doLogin').addEventListener('click', async () => {
 
 buildNav();
 initToTop();
+initFeedback();
 initDisplayPanel(async (display) => {
   const saved = await api('/api/settings', json('POST', { display }));
   return { display: saved.display, demo: settings.demo };

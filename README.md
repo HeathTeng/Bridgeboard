@@ -1,8 +1,10 @@
-# blackboard-study-hub
+# Bridgeboard
 
-**An all-in-one Blackboard hub for international students.** See every deadline, announcement and grade across your courses on one page, and sync deadlines to your calendar. It runs on your own computer, so your login never leaves it.
+Blackboard 学习面板 (formerly blackboard-study-hub)
 
-**面向留学生的 Blackboard 一站式学习平台。** 在一个页面里集中查看所有课程的截止日期、公告和成绩，并把截止日期一键同步到日历，不用再一门一门课点进去找。程序在你自己的电脑上运行，登录信息不会离开你的电脑。
+**Bridgeboard is an all-in-one Blackboard hub for international students.** See every deadline, announcement and grade across your courses on one page, and sync deadlines to your calendar. It runs on your own computer, so your login never leaves it.
+
+**Bridgeboard：面向留学生的 Blackboard 一站式学习平台。** 在一个页面里集中查看所有课程的截止日期、公告和成绩，并把截止日期一键同步到日历，不用再一门一门课点进去找。程序在你自己的电脑上运行，登录信息不会离开你的电脑。
 
 ![screenshot](docs/screenshot.png)
 
@@ -11,13 +13,13 @@
 不需要懂代码，按顺序做一次就好。
 
 **1. 下载便携版**
-打开 [最新版本下载页](https://github.com/HeathTeng/blackboard-study-hub/releases/latest)，在 **Assets** 下面点 `blackboard-study-hub-版本号-windows.zip` 下载。里面已经带好了运行环境，**不用另外安装任何东西**。
+打开 [最新版本下载页](https://github.com/HeathTeng/blackboard-study-hub/releases/latest)，在 **Assets** 下面点 `Bridgeboard-Windows.zip` 下载（旁边带版本号的 `Bridgeboard-版本号-windows.zip` 是同一个文件，下哪个都行）。里面已经带好了运行环境，**不用另外安装任何东西**。
 
 **2. 解压**
 右键压缩包，选「全部解压缩」，解压到一个文件夹，比如 `D:\BLACKBOARD` 或你的 U 盘。**一定要先解压**，直接在压缩包里双击是用不了的。
 
 **3. 双击 `start.bat`**
-在解压出来的 `blackboard-study-hub` 文件夹里双击 `start.bat`。会出现一个黑色窗口（**不要关掉它**，关掉面板就停了），浏览器会自动打开面板。如果 Windows 提示"已保护你的电脑"，点"更多信息"，再点"仍要运行"。
+在解压出来的 `Bridgeboard` 文件夹里双击 `start.bat`。会出现一个黑色窗口（**不要关掉它**，关掉面板就停了），浏览器会自动打开面板。如果 Windows 提示"已保护你的电脑"，点"更多信息"，再点"仍要运行"。
 
 **4. 连接 Blackboard**
 填入你们学校的 Blackboard 网址（浏览器地址栏里到 `.com` 为止的部分），点 **连接 Blackboard**。
@@ -28,6 +30,8 @@
 像平时一样输入学号和密码。如果学校问 **"保持登录状态？"（Stay signed in?），一定要选"是"**，这样以后打开基本不用再登录。登录完成后窗口会自己关闭，面板显示你的截止日期、公告和成绩。
 
 以后每次使用，只要双击 `start.bat` 就行。想先看看效果，可以双击 `demo.bat`，用的是虚构的示例数据，不需要登录。
+
+**从旧版本升级**：把新版本解压到任意位置就行，旧文件夹里什么都不用搬。清单、设置和登录都保存在电脑的用户文件夹里，会自动保留。如果开了 **开机自动启动**，新文件夹换了位置的话，在面板里把它关掉再打开一次。
 
 ### 页面导航和显示设置
 
@@ -84,7 +88,7 @@
 
 提醒默认是关着的。打开后，作业名、课程名、截止时间和 Blackboard 链接会经过 Bark / ntfy 的服务器发到你的手机。只有电脑开着、黑色窗口也开着时才会提醒；可以打开 **开机自动启动**，开电脑后面板会自动在后台运行。
 
-遇到问题请看 **[常见问题](docs/FAQ.md)**。
+遇到问题请看 **[常见问题](docs/FAQ.md)**。想提建议或报告问题，点页面最下面的 **意见反馈**，或发邮件到 feedback@getboundly.com。
 
 > 已经装了 Node.js 22.5 以上版本的话，也可以在本页面点绿色的 **Code → Download ZIP** 下载源码版，解压后同样双击 `start.bat` 使用。
 
@@ -92,7 +96,7 @@
 
 ## Why
 
-Students can't use Blackboard's official API without approval from their school's admin. [blackboard-mcp](https://github.com/felipedias-ie/blackboard-mcp) solves that for AI assistants by reusing your own browser session. blackboard-study-hub builds on its client library and gives you a normal web page instead, with no AI client or terminal needed day to day.
+Students can't use Blackboard's official API without approval from their school's admin. [blackboard-mcp](https://github.com/felipedias-ie/blackboard-mcp) solves that for AI assistants by reusing your own browser session. Bridgeboard builds on its client library and gives you a normal web page instead, with no AI client or terminal needed day to day.
 
 ## Roadmap
 
@@ -179,7 +183,7 @@ Enter your school's Blackboard address and click **连接 Blackboard**. A separa
 
 - The window uses its own profile folder (`~/.blackboard-study-hub/browser-profile`), never your everyday browser data.
 - It remembers your school login, so next time connecting is usually automatic. If your school's login page asks "Stay signed in?", choose yes.
-- While the hub runs it keeps the session alive, and if it lapses it signs back in silently in the background.
+- While Bridgeboard runs it keeps the session alive, and if it lapses it signs back in silently in the background.
 - If the pop-up doesn't work, expand "手动粘贴" on the page and paste a "Copy as cURL" instead.
 - More help: [FAQ (Chinese)](docs/FAQ.md).
 
@@ -190,6 +194,8 @@ Enter your school's Blackboard address and click **连接 Blackboard**. A separa
 - It only **reads** from Blackboard. It cannot submit work or take quizzes.
 - Nothing leaves your computer except **phone alerts**, and only if you turn them on: assignment and course names, due times and Blackboard links go to your phone through the Bark (`api.day.app`) or ntfy (`ntfy.sh`) server, or a self-hosted https server you enter. Turn on 隐藏作业名 to send no names or links. Cookies and message text are never sent. Your Bark key or ntfy topic stays in `~/.blackboard-study-hub/settings.json`.
 - Your session is stored encrypted by blackboard-mcp in `~/.blackboard-mcp/`. Never commit that folder or share a copied cURL.
+- **意见反馈** only opens your own mail app with a pre-filled email to feedback@getboundly.com; the panel itself sends nothing.
+- The data folder is still called `~/.blackboard-study-hub/` after the rename, so existing checklists and settings carry over.
 - Check your school's IT acceptable-use policy before using automation tools.
 
 ## Development
