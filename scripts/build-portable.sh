@@ -40,7 +40,7 @@ Bridgeboard $VERSION（Blackboard 学习面板，Windows 便携版）
 
 想先看看效果：双击 demo.bat（示例数据，不用登录）。
 Windows 提示"已保护你的电脑"时，点"更多信息"，再点"仍要运行"。
-常见问题：docs/FAQ.md，或 https://github.com/HeathTeng/blackboard-study-hub
+常见问题：docs/FAQ.md，或 https://github.com/HeathTeng/Bridgeboard
 
 已内置 Node.js $NODE_VERSION（runtime 文件夹），不需要另外安装。
 TXT
