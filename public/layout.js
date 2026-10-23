@@ -1,4 +1,4 @@
-// Page layout: the section navigation bar, 回到顶部, the 显示设置 panel,
+// Page layout: the section navigation bar, 回到顶部, the 显示设置 panel (with the theme),
 // short or full course names and the 意见反馈 link in the footer.
 // Sections and switches come from display.js.
 import { $, api, el } from './ui.js';
@@ -117,6 +117,19 @@ export function setSignedIn(value) {
   applyLayout();
 }
 
+/** 跟随电脑 leaves data-theme off, so the CSS follows the computer's light or dark mode. */
+function applyTheme(theme) {
+  const root = document.documentElement;
+  if (theme && theme !== 'system') root.dataset.theme = theme;
+  else delete root.dataset.theme;
+  // theme.js reads this copy before the page is drawn on the next visit.
+  try {
+    localStorage.setItem('bridgeboard-theme', theme || 'system');
+  } catch {
+    // No storage: the theme still comes from settings.json, just a moment later.
+  }
+}
+
 function applyLayout() {
   for (const s of SECTIONS) {
     $(s.id).classList.toggle('user-hidden', display.hidden.includes(s.id));
@@ -210,12 +223,14 @@ function closePanel() {
 function syncPanel() {
   for (const box of document.querySelectorAll('#displaySections input')) box.checked = !display.hidden.includes(box.value);
   for (const r of document.querySelectorAll('input[name="courseNames"]')) r.checked = r.value === display.courseNames;
+  for (const r of document.querySelectorAll('input[name="theme"]')) r.checked = r.value === display.theme;
 }
 
 async function change(next, okText = '已保存，下次打开还在。') {
   const before = display;
   display = next;
   applyLayout();
+  applyTheme(display.theme);
   try {
     const saved = await saveDisplay(next);
     display = saved.display ?? next;
@@ -223,6 +238,7 @@ async function change(next, okText = '已保存，下次打开还在。') {
   } catch (err) {
     display = before;
     applyLayout();
+    applyTheme(display.theme);
     panelMsg(`没有保存：${err.message}`);
   }
   syncPanel();
@@ -246,6 +262,9 @@ export function initDisplayPanel(save) {
   for (const r of document.querySelectorAll('input[name="courseNames"]')) {
     r.addEventListener('change', () => change({ ...display, courseNames: r.value }));
   }
+  for (const r of document.querySelectorAll('input[name="theme"]')) {
+    r.addEventListener('change', () => change({ ...display, theme: r.value }));
+  }
   $('displayReset').addEventListener('click', () => change({ ...DISPLAY_DEFAULTS }, '已恢复默认。'));
   $('displayBtn').addEventListener('click', () => ($('displayPanel').hidden ? openPanel() : closePanel()));
   $('displayDone').addEventListener('click', closePanel);
@@ -260,4 +279,6 @@ export function setDisplay(d) {
   display = { ...DISPLAY_DEFAULTS, ...d };
   syncPanel();
   applyLayout();
+  // Only here and in change(): before the settings arrive, theme.js's choice stays.
+  applyTheme(display.theme);
 }

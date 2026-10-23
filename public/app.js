@@ -1,4 +1,4 @@
-import { DEFAULTS, STATUSES, durations, statusLabel, statusOf, timeLeft } from './status.js';
+import { DEFAULTS, STATUSES, durations, pillText, statusLabel, statusOf, timeLeft } from './status.js';
 import { assignmentRows, sortRows } from './checklist-rows.js';
 import { courseOptions, filterThreads, relativeTime } from './message-view.js';
 import { initPush, reloadPush, setDueSoonHours } from './push.js';
@@ -44,12 +44,15 @@ function renderTodo(todo = todoItems) {
     const items = withStatus.filter((t) => t.status === key);
     if (!items.length) continue;
     box.append(el('div', { class: `group st-${key}` },
-      el('h3', {}, el('span', { class: 'dot' }), `${statusLabel(key, timeline)}（${items.length}）`),
-      items.map((t) => el('div', { class: 'item' },
-        el('div', { class: 'title' }, /^https:\/\//.test(t.link ?? '')
-          ? el('a', { href: t.link, target: '_blank', rel: 'noopener noreferrer', title: '在 Blackboard 里打开' }, t.title)
-          : t.title),
-        el('div', { class: 'meta' }, courseEl(t.course), ` · ${fmt.format(new Date(t.due))} · ${timeLeft(t, now)}`),
+      el('h3', {}, el('span', { class: 'dot', 'aria-hidden': 'true' }), statusLabel(key, timeline),
+        el('span', { class: 'count' }, String(items.length))),
+      items.map((t) => el('div', { class: 'item dl-row' },
+        el('div', { class: 'dl-body' },
+          el('div', { class: 'title' }, /^https:\/\//.test(t.link ?? '')
+            ? el('a', { href: t.link, target: '_blank', rel: 'noopener noreferrer', title: '在 Blackboard 里打开' }, t.title)
+            : t.title),
+          el('div', { class: 'meta' }, courseEl(t.course), ` · ${fmt.format(new Date(t.due))}`)),
+        el('span', { class: 'pill', title: timeLeft(t, now) }, pillText(t, key, now)),
       )),
     ));
   }
@@ -261,11 +264,14 @@ function flash(text) {
   flash.timer = setTimeout(() => { $('clMsg').textContent = ''; }, 5000);
 }
 
-/** Same colour and time-left label as the deadlines; only for unfinished work with a due date. */
+/**
+ * Same colour capsule as the deadlines; only for unfinished work with a due date.
+ * The checklist has no group headings, so the text keeps 还剩 / 已逾期.
+ */
 function badge(row, now) {
   if (!row.due || row.done) return null;
   const status = statusOf({ due: row.due, opened: row.opened }, now, timeline);
-  return el('span', { class: `badge st-${status}` }, el('span', { class: 'dot' }), `${statusLabel(status, timeline)} · ${timeLeft({ due: row.due }, now)}`);
+  return el('span', { class: `pill st-${status}`, title: statusLabel(status, timeline) }, timeLeft({ due: row.due }, now));
 }
 
 function roundBox(checked, title, onChange, disabled = false) {

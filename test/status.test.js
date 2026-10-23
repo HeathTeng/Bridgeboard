@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { durations, statusLabel, statusOf, timeLeft } from '../lib/status.js';
+import { durations, pillText, statusLabel, statusOf, timeLeft } from '../lib/status.js';
 import { firstSeen } from '../lib/seen.js';
 import { blackboardLink } from '../lib/links.js';
 
@@ -67,6 +67,19 @@ test('time-left labels', () => {
   assert.equal(timeLeft({ due: iso(now - 2 * 24 * H - H) }, now), '已逾期 2 天');
   assert.equal(timeLeft({ due: iso(now) }, now), '刚刚截止');
   assert.equal(timeLeft({ due: iso(now - H), submitted: true }, now), '已提交');
+});
+
+test('capsule labels: short, Chinese, one per colour', () => {
+  assert.equal(pillText({ due: iso(now - 2 * 24 * H - H) }, 'overdue', now), '逾期 2 天');
+  assert.equal(pillText({ due: iso(now - 3 * H) }, 'overdue', now), '逾期 3 小时');
+  assert.equal(pillText({ due: iso(now - 30 * 1000) }, 'overdue', now), '刚刚截止');
+  assert.equal(pillText({ due: iso(now + 6 * H + 20 * 60 * 1000) }, 'dueSoon', now), '6 小时');
+  assert.equal(pillText({ due: iso(now + 40 * 60 * 1000) }, 'dueSoon', now), '40 分钟');
+  assert.equal(pillText({ due: iso(now + 30 * 1000) }, 'dueSoon', now), '不到 1 分钟');
+  assert.equal(pillText({ due: iso(now + 12 * 24 * H + H) }, 'new', now), '刚开放 · 12 天');
+  assert.equal(pillText({ due: iso(now + 9 * 24 * H) }, 'open', now), '9 天');
+  assert.equal(pillText({ due: iso(now - H), submitted: true }, 'done', now), '已完成');
+  assert.equal(pillText({ due: iso(now + 2 * 24 * H), submitted: true }, 'done', now), '已完成');
 });
 
 test('first-seen store: first run counts as not new, later items get a time', () => {

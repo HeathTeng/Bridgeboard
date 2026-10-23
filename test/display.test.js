@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DISPLAY_DEFAULTS, SECTIONS, checkDisplay, courseParts, displayOf, shortCourseName, shortNames } from '../lib/display.js';
+import { DISPLAY_DEFAULTS, SECTIONS, THEMES, checkDisplay, courseParts, displayOf, shortCourseName, shortNames } from '../lib/display.js';
 
 // Made-up names in the same shape as real ones.
 const MKT_B = 'FT MSc/MBA - Marketing - Group A B C D E - Autumn 2026 Term (Lecture B)';
@@ -57,8 +57,8 @@ test('clashing short names get the lecture, then the programme, else stay full',
 test('display settings: defaults, validation, at least one section shown', () => {
   assert.deepEqual(displayOf(undefined), DISPLAY_DEFAULTS);
   assert.deepEqual(displayOf({ hidden: ['nope'] }), DISPLAY_DEFAULTS);
-  assert.deepEqual(checkDisplay({ hidden: ['grades', 'grades', 'files'], courseNames: 'short' }), { hidden: ['grades', 'files'], courseNames: 'short' });
-  assert.deepEqual(checkDisplay({}), { hidden: [], courseNames: 'full' });
+  assert.deepEqual(checkDisplay({ hidden: ['grades', 'grades', 'files'], courseNames: 'short' }), { hidden: ['grades', 'files'], courseNames: 'short', theme: 'system' });
+  assert.deepEqual(checkDisplay({}), { hidden: [], courseNames: 'full', theme: 'system' });
   const allButOne = SECTIONS.slice(1).map((s) => s.id);
   assert.deepEqual(checkDisplay({ hidden: allButOne }).hidden, allButOne);
   const fails = (d, re) => assert.throws(() => checkDisplay(d), (e) => e.status === 400 && re.test(e.message));
@@ -67,4 +67,17 @@ test('display settings: defaults, validation, at least one section shown', () =>
   fails({ hidden: 'grades' }, /不认识的区域/);
   fails({ courseNames: 'tiny' }, /完整.*简短/);
   fails(null, /格式不对/);
+});
+
+test('display settings: the theme', () => {
+  assert.equal(DISPLAY_DEFAULTS.theme, 'system', '跟随电脑 by default');
+  for (const theme of THEMES) assert.equal(checkDisplay({ theme }).theme, theme);
+  assert.deepEqual(THEMES, ['system', 'light', 'dark', 'eye']);
+  for (const theme of ['night', '', 'Dark', 1]) {
+    assert.throws(() => checkDisplay({ theme }), (e) => e.status === 400 && /跟随电脑.*护眼/.test(e.message), String(theme));
+  }
+  // Settings saved by an older version have no theme: they follow the computer.
+  assert.equal(displayOf({ hidden: ['grades'], courseNames: 'short' }).theme, 'system');
+  // An unknown saved theme falls back to all the defaults rather than breaking the page.
+  assert.deepEqual(displayOf({ theme: 'neon' }), DISPLAY_DEFAULTS);
 });

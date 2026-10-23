@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bridgeboard</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23157a55'/%3E%3Cpath d='M4 20h24M6 20q10-14 20 0M10 20v6M22 20v6M11 14.8V20M16 13V20M21 14.8V20' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E">
+<script src="theme.js"></script>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -25,6 +26,16 @@
   <div id="displayPanel" class="display-panel" role="dialog" aria-label="显示设置" hidden>
     <h2>显示设置</h2>
     <p class="tip muted small">改动会自动保存，下次打开还在。</p>
+    <fieldset>
+      <legend>主题</legend>
+      <div class="switches">
+        <label class="radio"><input type="radio" name="theme" value="system"> 跟随电脑</label>
+        <label class="radio"><input type="radio" name="theme" value="light"> 白天</label>
+        <label class="radio"><input type="radio" name="theme" value="dark"> 夜间</label>
+        <label class="radio"><input type="radio" name="theme" value="eye"> 护眼</label>
+      </div>
+      <p class="tip muted small">跟随电脑：电脑是深色模式时页面也变暗。护眼：暖黄色、亮度更低，适合晚上看。</p>
+    </fieldset>
     <fieldset>
       <legend>显示哪些区域</legend>
       <div id="displaySections" class="switches"></div>
@@ -76,6 +87,13 @@
 <main id="main" hidden>
   <section id="deadlines" class="card section">
     <h2>截止日期</h2>
+    <p class="legend small" aria-label="颜色说明">
+      <span class="pill st-overdue">逾期</span>
+      <span class="pill st-dueSoon">临期</span>
+      <span class="pill st-new">刚开放</span>
+      <span class="pill st-open">还有时间</span>
+      <span class="pill st-done">已完成</span>
+    </p>
     <div class="timeline">
       <div class="tl-track">
         <span class="tl-side">刚开放<br><b id="newLabel">当天</b></span>
