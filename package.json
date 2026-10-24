@@ -3,7 +3,7 @@
   "version": "0.2.13",
   "description": "A local web dashboard for Blackboard Learn Ultra: deadlines, announcements, grades and a calendar feed, built on blackboard-mcp.",
   "type": "module",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "private": true,
   "engines": {
     "node": ">=22.5.0"
