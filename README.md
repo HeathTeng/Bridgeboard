@@ -27,13 +27,22 @@ Every Blackboard deadline on one page
 
 | | 功能 | What it does |
 | --- | --- | --- |
-| ⏰ | **五色截止提醒**：所有课程的作业按逾期、临期、刚开放、还有时间、已完成排好，点标题直达 Blackboard | Deadlines from every course in five colours, one click to the assignment |
+| ⏰ | **五色截止提醒**：所有课程的作业按逾期、临期、还有时间、刚开放、已完成排好 | Deadlines from every course in five colours |
+| 🙈 | **逾期作业可以忽略**：点 × 不再提醒，6 秒内可撤销，随时能在「已忽略」里恢复；只记在你的电脑上 | Stop reminders for an overdue assignment, with undo and restore |
+| ↗ | **直接打开 Blackboard**：作业、课程消息、公告、成绩后面的 ↗ 在新标签页打开 Blackboard 对应的页面 | A ↗ opens the matching Blackboard page in a new tab |
 | 📁 | **课程文件一键下载**：勾选课程，选文件夹（U 盘也行），按课程整理；可导出给 AI 用的文字版 | Download course files sorted by course, with text copies for AI tools |
 | 🔔 | **手机提醒**：iPhone 用 Bark，安卓用 ntfy；默认关闭，测试成功才会发 | Opt-in phone alerts through Bark (iPhone) or ntfy (Android) |
 | ✅ | **清单**：作业自动加入，交了自动打勾；也能写自己的待办 | A checklist that fills and ticks itself, plus your own to-dos |
 | 💬 | **课程消息**：各门课的消息集中在一处，未读标出来 | Course messages from every course in one list |
 | 📢 | **公告和成绩**：所有课程的公告和成绩一起看 | Announcements and grades across courses |
 | 📅 | **导出到日历**：导入手机日历，电脑关机也会提醒 | Export deadlines to your phone's calendar |
+| 💡 | **新手引导和帮助**：第一次打开会在页面上一步步带你认识各个功能；之后随时点「💡 帮助」再看，「常见问题」可以搜索 | A first-run walk-through, a 💡 help button and a searchable FAQ |
+| 🔒 | **只读，不改 Blackboard**：只读取，不交作业、不做测验，连「已读」都不会替你标 | Read-only: it never changes anything in Blackboard, not even "read" |
+
+<p align="center">
+  <img src="docs/screenshot-guide.png" width="420" alt="第一次打开：欢迎框「感谢您选择 Bridgeboard」（示例数据）">
+  <img src="docs/screenshot-help.png" width="420" alt="「💡 帮助」打开的新手引导卡片（示例数据）">
+</p>
 
 适用于使用 **Blackboard Learn Ultra** 的学校（登录后网址里有 `/ultra`）。 · Works with schools on Blackboard Learn Ultra.
 
@@ -44,6 +53,8 @@ Every Blackboard deadline on one page
 3. **双击 `start.bat`**：会出现一个黑色窗口（**用的时候别关**），浏览器自动打开面板。Windows 提示「已保护你的电脑」时，点「更多信息」→「仍要运行」。
 
 然后填入学校的 Blackboard 网址，点 **连接 Blackboard**，在弹出的窗口里像平时一样登录。学校问 **「保持登录状态？」（Stay signed in?）时选「是」**，以后基本不用再登录。
+
+第一次打开时会出现欢迎框和新手引导，在页面上一步步带你认识各个功能，只有几步。以后想再看，点右上角的 **💡 帮助**。
 
 想先看看效果：双击 `demo.bat`，用的是虚构的示例数据，不需要登录。
 
@@ -57,6 +68,15 @@ Every Blackboard deadline on one page
 </details>
 
 ## 使用说明
+
+<details>
+<summary><b>新手引导和帮助</b></summary>
+
+第一次打开面板时，先出现欢迎框「感谢您选择 Bridgeboard」，点 **开始** 后会在真实页面上一块一块地指给你看：先记住黑色窗口不要关，然后是截止日期、课程文件、手机提醒、清单、显示设置和帮助。引导时页面点不动，只能用说明框里的按钮，看完就能正常用了。点 **跳过引导** 也会先看一眼「黑色窗口不要关」那一条。还没登录的话，登录成功、课程读到后会再问一次要不要看看各个功能在哪。
+
+以后想再看，点右上角的 **💡 帮助**，是同样内容的卡片版；第 1 页的 **在页面上再带我走一遍** 可以重新走一次。旁边的 **常见问题** 直接打开常见问题页，最上面有搜索框，输入「提醒」「登录」这类关键字就只显示相关的问题。
+
+</details>
 
 <details>
 <summary><b>页面导航和显示设置</b></summary>
@@ -77,7 +97,9 @@ Every Blackboard deadline on one page
 <details>
 <summary><b>截止日期的五种颜色</b></summary>
 
-每个截止事项都按紧急程度标上颜色和文字：🔴 已逾期、🟠 临期（默认 12 小时内截止）、🔵 新开放（默认当天开放）、🟡 进行中、🟢 已提交。点作业标题会在新标签页打开 Blackboard 里的作业页面。
+每个截止事项都按紧急程度标上颜色和文字，最上面的颜色说明和下面的分组是同一个顺序：🔴 逾期（已逾期）、🟠 临期（默认 12 小时内截止）、🟡 还有时间（进行中）、🔵 刚开放（默认当天新开放）、🟢 已完成（已提交）。作业标题后面的 **↗** 会在新标签页打开 Blackboard 里的作业页面。
+
+逾期的作业不想再被提醒，点那一条右边的圆形 **×**：它会移到截止日期区最下面的 **已忽略（N）** 里，不再出现在「今天要注意」、导航栏数字和手机的逾期提醒里。点错了，底部 6 秒内点 **撤销**；以后想恢复，展开「已忽略」点 **恢复**。忽略只记在你的电脑上，不会改动 Blackboard；如果之后 Blackboard 显示你交了，会自动按「已完成」显示。
 
 截止日期里有一个时间轴：往左拖左边的手柄，调整开放多久以内算"新开放"（当天，或 6 到 72 小时）；往右拖右边的手柄，调整离截止多久以内算"临期"（1 到 72 小时）。颜色会立刻更新，下次打开还在；点 **恢复默认** 可以改回来。
 
@@ -98,7 +120,7 @@ Every Blackboard deadline on one page
 <details>
 <summary><b>课程消息</b></summary>
 
-**课程消息** 把老师和同学在各门课里发给你的 Blackboard 消息集中在一起，最新的在最上面，未读的标着"未读"。点一条就能展开看完整对话；要回复，点 **在 Blackboard 中打开**。可以只看未读，也可以按课程筛选。面板只读取消息，不会替你把消息标成已读。
+**课程消息** 把老师和同学在各门课里发给你的 Blackboard 消息集中在一起，最新的在最上面，未读的标着"未读"。点一条就能展开看完整对话；每一行「查看」旁边的 **在 Blackboard 打开 ↗** 直接去这门课的消息页，要回复就在那里回复。可以只看未读，也可以按课程筛选。面板只读取消息，不会替你把消息标成已读。
 
 </details>
 
@@ -138,7 +160,7 @@ Every Blackboard deadline on one page
 ## 隐私和安全 · Privacy and safety
 
 - 面板只在 `127.0.0.1` 上运行，别的网页和设备连不上。The server listens on `127.0.0.1` only and rejects requests from other host names or web pages.
-- 只**读取** Blackboard，不能交作业、不能做测验。It only **reads** from Blackboard; it cannot submit work or take quizzes.
+- 只**读取** Blackboard，不能交作业、不能做测验，连「已读」都不会替你标；有自动测试守着这一条。面板里的 ↗ 链接会在新标签页打开 Blackboard，点开后就是在 Blackboard 里操作了（比如在那里打开消息会被标成已读），看完关掉那个标签就回到面板。It only **reads** from Blackboard; it cannot submit work or take quizzes, and never marks anything as read (a test guards this). Links open Blackboard itself in a new tab.
 - The sign-in window's debugging port listens on `127.0.0.1` only and closes with the window.
 - Nothing leaves your computer except **phone alerts**, and only if you turn them on: assignment and course names, due times and Blackboard links go to your phone through the Bark (`api.day.app`) or ntfy (`ntfy.sh`) server, or a self-hosted https server you enter. Turn on 隐藏作业名 to send no names or links. Cookies and message text are never sent. Your Bark key or ntfy topic stays in `~/.blackboard-study-hub/settings.json`.
 - Your session is stored encrypted by blackboard-mcp in `~/.blackboard-mcp/`. Never commit that folder or share a copied cURL.
@@ -153,7 +175,9 @@ Every Blackboard deadline on one page
 - [x] 五色截止日期、清单、课程消息、分区导航和显示设置 · Five-colour deadlines, checklist, course messages, navigation and display settings
 - [x] 手机强提醒（Bark / ntfy）· Strong phone alerts (Bark / ntfy)
 - [x] 全新界面设计 · New UI design
-- [ ] 新手引导（常见问题随时可查），然后正式发布 · First-run guide with an always-available FAQ, then the public launch
+- [x] 新手引导、💡 帮助和可搜索的常见问题，逾期作业可以忽略，↗ 直接打开 Blackboard（v0.3.0，第一阶段完成）· First-run guide, help button and searchable FAQ, ignoring overdue work, ↗ links to Blackboard (v0.3.0, first stage done)
+- [ ] 第一阶段收尾：访问统计、整体审核、公开推广 · Wrapping up: visitor statistics, a full review, the public launch
+- [ ] 推广之后：Mac 版、官网英文版 · After the launch: a Mac version and an English website
 - [ ] 之后：课程概览和复习资料包，用你自己的 API Key 做 AI 答疑 · Later: course overview, study packs, AI Q&A with your own API key
 
 <details>
@@ -195,14 +219,18 @@ Enter your school's Blackboard address and click **连接 Blackboard**. A separa
 
 ### Features in detail
 
-- **Five-colour deadlines**: overdue, due soon, newly opened, open and submitted, each with a text label and time left. Drag the timeline to choose how long counts as "new" and "due soon"; it is saved for next time. Each title opens the assignment in Blackboard.
+- **Five-colour deadlines**: overdue, due soon, open, newly opened and submitted (the legend and the groups in one order), each with a text label and time left. Drag the timeline to choose how long counts as "new" and "due soon"; it is saved for next time. Each title has a ↗ that opens the assignment in Blackboard.
+- **Ignore overdue work**: a round × moves an overdue assignment into a folded 已忽略 list (6-second undo, 恢复 to bring it back); it then leaves 今天要注意, the nav count and overdue phone alerts. Stored locally only; it stops counting once Blackboard shows the work handed in.
+- **Links to Blackboard**: a small ↗ after assignments, course messages, announcements and grades, built only on the school's https address. Course pages use the address Blackboard gives for the course; announcements and grades link to the course, since the API gives no page address for them.
 - **Announcements** from all open courses, newest first. **Grades** per course, with percentages.
 - **Checklist**: opened assignments appear by themselves and tick when Blackboard shows them submitted (a manual tick is only a local mark); below, the student's own to-dos with optional due dates, edit in place, and undo after delete. Saved locally only, and still available while signed out.
 - **Course messages**: message threads from every open course in one list, newest first, with unread counts, filters by unread and course, and the full thread readable in place as plain text. Read-only: replying happens in Blackboard.
 - **Calendar export**: an `.ics` file for Google Calendar, Outlook or Apple Calendar. Each deadline reminds you 12 hours, 5 hours, 1 day and 3 days before (the 12- and 5-hour ones first, for phone calendars that keep two). Each event links back to the assignment.
 - **Course file downloader**: save files to any folder (a USB drive works), organised by course and Blackboard folder. Files already there are skipped, public Google Docs/Slides/Sheets links are saved as PDF, and an optional `.txt` export of each PDF, Word and PowerPoint file is ready for an AI tool.
 - **Phone alerts (opt-in)** through Bark (iPhone) or ntfy (Android): once when a deadline turns orange, a strong alert N hours before (rings on silent at volume 5-10, with a 试听 button) and again at 2 and 1 hours left if still not handed in, once when overdue, and optionally for new course messages. Quiet hours, hidden assignment names, a sent log so restarts never repeat, and an optional Windows start-up launcher. Off by default; a test alert must reach the phone before it can be switched on.
-- **Beginner safety nets**: plain-Chinese errors with a button for the next step, friendly empty states, and a clear banner if the black window is closed. **Demo mode** with made-up data.
+- **First-run guide and help**: a welcome box, then a spotlight tour on the real page (the black-window rule cannot be skipped); 💡 帮助 shows the same words as cards, and 常见问题 opens docs/FAQ.md with a search box. Remembered in settings.json.
+- **Read-only guard**: a test scans our code so it only ever asks the library to read, never marks anything as read, and only phone alerts send anything out.
+- **Beginner safety nets**: plain-Chinese errors with a button for the next step, friendly empty states, a page that keeps retrying instead of hanging on 正在连接, and a clear banner if the black window is closed. **Demo mode** with made-up data.
 
 ### Development
 
@@ -210,7 +238,7 @@ Enter your school's Blackboard address and click **连接 Blackboard**. A separa
 npm test
 ```
 
-To publish a release, push a version tag (for example `git tag v0.2.0 && git push origin v0.2.0`). The Release workflow runs the tests, builds the Windows portable zip with `scripts/build-portable.sh` (the app plus Node.js's `node.exe`, checked against nodejs.org's SHA-256 list) and attaches it to a GitHub Release as `Bridgeboard-<version>-windows.zip` and `Bridgeboard-Windows.zip`.
+To publish a release, push a version tag (for example `git tag v0.3.0 && git push origin v0.3.0`). The Release workflow runs the tests, builds the Windows portable zip with `scripts/build-portable.sh` (the app plus Node.js's `node.exe`, checked against nodejs.org's SHA-256 list) and attaches it to a GitHub Release as `Bridgeboard-<version>-windows.zip` and `Bridgeboard-Windows.zip`.
 
 </details>
 

@@ -51,15 +51,14 @@ Picture the user as extremely impatient, not technical at all, who reads nothing
 
 ## Roadmap
 
-Order agreed with the owner (2026-10-22): **functional modules first, then UI design, then the first-run guide**, because the guide walks through every feature and would need redoing after each change.
+Order agreed with the owner (2026-10-22): **functional modules first, then UI design, then the first-run guide**, because the guide walks through every feature and would need redoing after each change. All three are done.
 
-- Done: pop-up sign-in with silent renewal; blackboard-mcp bundled in vendor/ (rebuild with `npm run vendor`, keep vendor/THIRD-PARTY-NOTICES.txt in sync); course file downloader (not yet: attachments and files embedded in page bodies); Windows portable zip via the Release workflow; module 1, five-colour deadlines with the adjustable timeline and links to Blackboard; module 2, the checklist; module 7, course messages (read-only; see the open check below); module 3, section navigation, display settings and beginner safety nets; module 4, phone alerts (Bark / ntfy) with the Windows start-up launcher.
-- Next: the remaining functional modules (e.g. weekly digest, study packs, AI Q&A with the student's own API key). Keep their UI plain and consistent with the current page; no visual redesign yet.
+- Done: pop-up sign-in with silent renewal; blackboard-mcp bundled in vendor/ (rebuild with `npm run vendor`, keep vendor/THIRD-PARTY-NOTICES.txt in sync); course file downloader (not yet: attachments and files embedded in page bodies); Windows portable zip via the Release workflow; module 1, five-colour deadlines with the adjustable timeline and links to Blackboard; module 2, the checklist; module 7, course messages (read-only; see the open check below); module 3, section navigation, display settings and beginner safety nets; module 4, phone alerts (Bark / ntfy) with the Windows start-up launcher; the UI redesign (`docs/dev/ui-redesign.md`, five steps, one release each); the first-run guide: welcome box and spotlight tour, the card guide with the FAQ as its last page and an always-available 💡 帮助 (v0.2.15, spec `docs/dev/step5-onboarding.md`); ignoring overdue work, the read-only guard and ↗ links to Blackboard (v0.2.16). **v0.3.0 (2026-10-24): the owner confirmed the first stage finished**; README screenshots refreshed. When a feature changes, update its guide page and tour step in `public/guide.js` and the FAQ.
 - Open check: 课程消息：等有真实未读消息时，验证在面板里阅读不会让 Blackboard 变成已读；如果会，改成只列出线程。
 - Open check: 静默续期用的无窗口 Edge（`--headless=new`）的浏览器标识里带 `HeadlessEdg`，`connectWithBrowser` 会把这个标识和 cookie 一起存下来。怀疑学校服务器会因此作废现有登录：2026-10-24 测了一次静默续期，等了 91 秒仍然失败，之后原本还剩约 175 分钟的登录也变成了过期。以后单独查：确认是不是因为这个标识（比如把标识换成普通 Edge 的再对比），以及续期失败时为什么要等满 90 秒。
-- Now: UI redesign, agreed with the owner on 2026-10-23 (spec: `docs/dev/ui-redesign.md`, five steps, one release each; step 1 is the rename to Bridgeboard).
-- Done (v0.2.15): first-run welcome box and spotlight tour, the card guide with the FAQ as its last page, and an always-available help button (spec: `docs/dev/step5-onboarding.md`). When a feature changes, update its guide page and tour step in `public/guide.js` and the FAQ.
-- Then: README screenshots, then a public launch.
+- Now: wrapping up the first stage: visitor statistics, a full review, then the public launch.
+- After the launch: a Mac version and an English version of getboundly.com.
+- Later: the remaining functional modules (e.g. weekly digest, study packs, AI Q&A with the student's own API key). Keep their UI plain and consistent with the current page.
 - Keep `docs/FAQ.md` current as features change, including the Windows run warnings (click 运行 / 更多信息 → 仍要运行).
 - 「只有电脑开着、黑色窗口开着才会发提醒」 stays the **first** FAQ entry and page 2 of the guide (a test checks they use the same words), because most "没收到提醒" reports come from this. The page says it in the red reminder under the title card (`#keepOpen`; 不再提示 is remembered in localStorage by `public/keep-open.js` with a version, kept equal to the one in `theme.js`; raise it when the wording changes) and in the apricot note in 手机提醒.
 
