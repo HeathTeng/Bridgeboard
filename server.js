@@ -29,7 +29,7 @@ const HOST = '127.0.0.1';
 const PUBLIC = join(import.meta.dirname, 'public');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml' };
 // Rules the page and the server share, served from lib/.
-const SHARED = new Set(['status.js', 'checklist-rows.js', 'message-view.js', 'display.js', 'terms.js', 'section-summary.js', 'glossary.js']);
+const SHARED = new Set(['status.js', 'checklist-rows.js', 'message-view.js', 'display.js', 'terms.js', 'section-summary.js', 'glossary.js', 'startup.js']);
 const ALLOWED_HOSTS = new Set([`127.0.0.1:${PORT}`, `localhost:${PORT}`]);
 
 // The checklist is local data; demo mode keeps it in memory and writes nothing.
@@ -58,23 +58,44 @@ async function withSession(fn) {
   }
 }
 
-async function getOverview(force) {
-  if (DEMO) return demoOverview();
-  if (!force && cache && Date.now() - cache.at < CACHE_MS) return cache.data;
+/**
+ * One read at a time: when the page gives up waiting and asks again, the
+ * second request waits for the read already under way instead of starting
+ * another round of requests to Blackboard.
+ */
+function shared(fn) {
+  let running;
+  return () => {
+    running ??= fn().finally(() => { running = undefined; });
+    return running;
+  };
+}
+
+const readOverview = shared(async () => {
   const data = await withSession(() => bb.overview());
   cache = { at: Date.now(), data };
   return data;
+});
+
+async function getOverview(force) {
+  if (DEMO) return demoOverview();
+  if (!force && cache && Date.now() - cache.at < CACHE_MS) return cache.data;
+  return readOverview();
 }
 
 // Messages are one request per course; cache the thread list like the overview.
 let messagesCache;
 
-async function getMessages(force) {
-  if (DEMO) return demoMessages();
-  if (!force && messagesCache && Date.now() - messagesCache.at < CACHE_MS) return messagesCache.data;
+const readMessages = shared(async () => {
   const data = await withSession(() => bb.messageThreads());
   messagesCache = { at: Date.now(), data };
   return data;
+});
+
+async function getMessages(force) {
+  if (DEMO) return demoMessages();
+  if (!force && messagesCache && Date.now() - messagesCache.at < CACHE_MS) return messagesCache.data;
+  return readMessages();
 }
 
 // Phone alerts. Demo mode keeps the settings in memory and never sends.

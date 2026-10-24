@@ -8,6 +8,7 @@ import {
 } from './section-summary.js';
 import { initPush, reloadPush, setDueSoonHours } from './push.js';
 import { initKeepOpen } from './keep-open.js';
+import { PHASES, STUCK_TEXT, untilLoaded } from './startup.js';
 import { $, SERVER_LOST, actionLine, api, el, fmt, friendlyText, isSignedOutError, sleep, watchServer } from './ui.js';
 import {
   buildNav, clearError, courseEl, courseText, flagError, glossed, goToSection, initDisplayPanel, initFeedback, initToTop, onDisplayChange, pastFold,
@@ -284,11 +285,19 @@ function messageBlock(m) {
     m.hasMedia ? note('这条消息里有图片或附件，请在 Blackboard 中查看。') : null);
 }
 
+let messagesRun = 0; // a newer loadMessages() makes older ones stop quietly
+
 async function loadMessages(refresh) {
   if (refresh) threadCache.clear();
+  const run = ++messagesRun;
+  const cancelled = () => run !== messagesRun;
   try {
-    messageData = await api(`/api/messages${refresh ? '?refresh' : ''}`);
+    // Slow or failed reads are tried again for up to a minute before the section says so.
+    const data = await untilLoaded(() => api(`/api/messages${refresh ? '?refresh' : ''}`, { timeoutMs: 60_000 }), { giveUpMs: 60_000, cancelled });
+    if (cancelled()) return;
+    messageData = data;
   } catch (err) {
+    if (cancelled()) return;
     messageData = null;
     $('msgControls').hidden = true;
     setSummary('messages', '消息没有读取成功，点开看怎么办');
@@ -962,20 +971,94 @@ $('openFolder').addEventListener('click', () => {
   api('/api/open-folder', { method: 'POST' }).catch((err) => { $('dlProgress').textContent = err.message; });
 });
 
+// ---- Opening the page: wait for Blackboard without getting stuck ----
+
+const STATUS_TIMEOUT = 20_000;
+const OVERVIEW_TIMEOUT = 90_000; // the first read of many courses can take a while
+const RENEW_POLL_MS = 2000;
+const GIVE_UP_MS = 5 * 60_000; // stop retrying on our own; 再试一次 starts over
+
+let loadRun = 0; // a newer load() makes older ones stop quietly
+let stuckShown = false;
+
+/** The line under the title: what the panel is doing, with the small ring while it waits. */
+function setWho(text, waiting = false) {
+  $('whoText').textContent = text;
+  $('whoSpin').hidden = !waiting;
+}
+
+/** After a minute: an explanation with 再试一次 in place of the ring. Retries go on behind it. */
+function showStuck(on) {
+  stuckShown = on;
+  $('stuck').hidden = !on;
+  $('stuck').replaceChildren(...(on
+    ? [actionLine(STUCK_TEXT, [{ label: '再试一次', onClick: () => load(true) }, reconnect], 'alert small')]
+    : []));
+  if (on) setWho('还没读到 Blackboard 的数据');
+}
+
+/** Says what is happening, unless the 1-minute explanation is already up. */
+function waitingFor(text) {
+  if (!stuckShown) setWho(text, true);
+}
+
+/**
+ * Before Blackboard answers: show the page at once. The checklist and phone
+ * alerts are local and fill in straight away; Blackboard's sections say they
+ * are loading. Most students are signed in, so their sections stay in view.
+ */
+function showWaiting() {
+  $('main').hidden = false;
+  $('sectionNav').hidden = false;
+  $('main').classList.remove('signed-out');
+  signedIn = true;
+  setSignedIn(true);
+  todoLoaded = false;
+  for (const id of ['deadlines', 'files', 'announcements', 'grades']) setSummary(id, LOADING);
+  for (const id of ['todo', 'courseFiles', 'annList', 'gradeList']) $(id).replaceChildren(note('正在从 Blackboard 读取…'));
+  renderAssignments();
+  messageData = null;
+  renderMessages();
+}
+
+/** /api/status, asking again every 2 seconds while the server renews the login in the background. */
+async function signInState(cancelled) {
+  for (;;) {
+    const s = await api('/api/status', { timeoutMs: STATUS_TIMEOUT });
+    if (!s.renewing || cancelled()) return s;
+    waitingFor(PHASES.renewing);
+    await sleep(RENEW_POLL_MS);
+  }
+}
+
 async function load(refresh = false) {
+  const run = ++loadRun;
+  const cancelled = () => run !== loadRun;
+  const wait = {
+    since: Date.now(),
+    giveUpMs: GIVE_UP_MS,
+    cancelled,
+    onRetry: () => { if (!cancelled()) waitingFor(PHASES.retrying); },
+    onStuck: () => { if (!cancelled()) showStuck(true); },
+  };
   $('refresh').disabled = true;
+  showStuck(false);
+  showBanner('');
+  if (!signedIn) showWaiting();
   try {
-    const status = await api('/api/status');
+    waitingFor(PHASES.checking);
+    const status = await untilLoaded(() => signInState(cancelled), wait);
+    if (cancelled()) return;
     if (!status.signedIn) {
-      $('who').textContent = '未登录，或登录已过期';
+      showStuck(false);
+      setWho('未登录，或登录已过期');
       $('login').hidden = false;
       showSignedOut();
-      showBanner('');
       return;
     }
     $('login').hidden = true;
     const mins = status.secondsLeft ? Math.round(status.secondsLeft / 60) : null;
-    $('who').textContent = `${status.name}${status.demo ? '（示例数据）' : ''}${mins ? ` · 登录还剩约 ${mins} 分钟` : ''}`;
+    const who = `${status.name}${status.demo ? '（示例数据）' : ''}${mins ? ` · 登录还剩约 ${mins} 分钟` : ''}`;
     $('main').hidden = false;
     $('sectionNav').hidden = false;
     $('main').classList.remove('signed-out');
@@ -986,9 +1069,12 @@ async function load(refresh = false) {
     messageData = null;
     renderMessages();
     loadMessages(refresh);
-    showBanner('正在读取 Blackboard 数据…');
+    waitingFor(PHASES.reading);
     for (const id of ['deadlines', 'files', 'announcements', 'grades']) setSummary(id, LOADING);
-    const data = await api(`/api/overview${refresh ? '?refresh' : ''}`);
+    const data = await untilLoaded(() => api(`/api/overview${refresh ? '?refresh' : ''}`, { timeoutMs: OVERVIEW_TIMEOUT }), wait);
+    if (cancelled()) return;
+    showStuck(false);
+    setWho(who);
     overviewData = data;
     updatePast();
     setCourseNames(data.courses.map((c) => c.name));
@@ -1000,20 +1086,25 @@ async function load(refresh = false) {
     renderCourseFiles(data.courses, refresh);
     // Course names are known now: redraw messages with short names if chosen.
     if (messageData) renderMessages();
-    showBanner('');
     if (firstLoad) scrollToHash();
     firstLoad = false;
   } catch (err) {
+    if (cancelled()) return;
+    showStuck(false);
     if (isSignedOutError(err)) {
+      setWho('未登录，或登录已过期');
       $('login').hidden = false;
       showSignedOut();
       showBanner('登录已过期，请重新连接 Blackboard。', [reconnect]);
-    } else if (err.code !== 'SERVER_DOWN') {
-      showBanner(`数据没有读取成功：${err.message}`, [{ label: '重试', onClick: () => load(true) }]);
+    } else if (err.code === 'SERVER_DOWN') {
+      setWho('面板已停止运行');
+    } else {
+      setWho('数据没有读取成功，看下面的提示');
+      showBanner(`数据没有读取成功：${err.message}`, [{ label: '再试一次', onClick: () => load(true) }, reconnect]);
       for (const id of ['deadlines', 'files', 'announcements', 'grades']) setSummary(id, '没有读取成功，看页面上方的提示');
     }
   } finally {
-    $('refresh').disabled = false;
+    if (!cancelled()) $('refresh').disabled = false;
   }
 }
 

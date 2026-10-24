@@ -334,6 +334,16 @@ p.action-line.fail { display: flex; }
 .action-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .banner .action-line, .banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .banner[hidden] { display: none; }
+/* Waiting for Blackboard in the title card: a small, slow, quiet ring; it stands still under reduced motion. */
+#who { display: flex; align-items: center; gap: 8px; }
+.spinner { flex: none; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--hero-btn-line);
+  border-top-color: var(--on-hero-muted); animation: spin 1.2s linear infinite; }
+.spinner[hidden] { display: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; border-color: var(--on-hero-muted); } }
+.stuck { max-width: 640px; }
+.stuck .alert { margin-bottom: 0; }
+.stuck[hidden] { display: none; }
 .inline-action { padding: 4px 12px; font-size: 13px; }
 /* The one always-visible reminder under the title card: pale red, deep red text, calm (no blinking, no icon). */
 /* 不再提示 sits inside the bar on the right; the text keeps clear of it, so it is never cut off, even when the text wraps. */

@@ -13,7 +13,8 @@
   <div>
     <h1 tabindex="-1" class="wordmark"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8"/><path d="M4 20h24M6 20q10-14 20 0M10 20v6M22 20v6M11 14.8V20M16 13V20M21 14.8V20"/></svg>Bridgeboard</h1>
     <p class="subtitle muted">Blackboard 学习面板</p>
-    <p id="who" class="muted">正在连接…</p>
+    <p id="who" class="muted" role="status"><span id="whoSpin" class="spinner" aria-hidden="true"></span><span id="whoText">正在打开面板…</span></p>
+    <div id="stuck" class="stuck" hidden></div>
   </div>
   <div class="actions">
     <div class="action-buttons">

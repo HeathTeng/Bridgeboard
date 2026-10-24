@@ -83,19 +83,28 @@ export function watchServer(down, up) {
   checkTimer = setTimeout(checkServer, 30_000);
 }
 
-/** fetch + JSON, throwing errors whose message is already plain Chinese. */
-export async function api(path, options) {
+/**
+ * fetch + JSON, throwing errors whose message is already plain Chinese.
+ * With `timeoutMs`, a request that takes longer fails with code TIMEOUT;
+ * a slow answer is not the black window being closed, so it does not count
+ * towards SERVER_DOWN.
+ */
+export async function api(path, { timeoutMs, ...options } = {}) {
   if (serverDown) throw Object.assign(new Error(SERVER_LOST), { code: 'SERVER_DOWN' });
   let res;
   try {
-    res = await fetch(path, options);
+    res = await fetch(path, timeoutMs ? { ...options, signal: AbortSignal.timeout(timeoutMs) } : options);
   } catch (err) {
     console.error(path, err);
+    if (err.name === 'TimeoutError') throw Object.assign(new Error('学校服务器回应太慢，正在重试。'), { code: 'TIMEOUT' });
     noteFailure();
     throw Object.assign(new Error(SERVER_LOST), { code: 'SERVER_DOWN' });
   }
   failures = 0;
-  const data = await res.json().catch(() => ({}));
+  const data = await res.json().catch((err) => {
+    if (err.name === 'TimeoutError') throw Object.assign(new Error('学校服务器回应太慢，正在重试。'), { code: 'TIMEOUT' });
+    return {};
+  });
   if (!res.ok) {
     console.error(path, res.status, data);
     throw Object.assign(new Error(), data, { message: friendlyText(data.error, data.code, res.status), status: res.status });
