@@ -16,6 +16,7 @@ import { ChecklistStore } from './lib/checklist.js';
 import { PushService } from './lib/push-service.js';
 import { SENT_FILE } from './lib/push.js';
 import { autostartStatus, setAutostart, supported as autostartSupported } from './lib/autostart.js';
+import { guideStore } from './lib/guide-state.js';
 
 const DEMO = process.argv.includes('--demo');
 // Started by 开机自动启动: minimised, no browser window.
@@ -27,9 +28,12 @@ const APP_ID = 'blackboard-study-hub';
 const PORT = Number(process.env.PORT ?? 3100);
 const HOST = '127.0.0.1';
 const PUBLIC = join(import.meta.dirname, 'public');
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png' };
 // Rules the page and the server share, served from lib/.
-const SHARED = new Set(['status.js', 'checklist-rows.js', 'message-view.js', 'display.js', 'terms.js', 'section-summary.js', 'glossary.js', 'startup.js']);
+const SHARED = new Set(['status.js', 'checklist-rows.js', 'message-view.js', 'display.js', 'terms.js', 'section-summary.js', 'glossary.js', 'faq.js', 'tour.js', 'startup.js']);
+// The only files from docs/ the page may read: the guide's screenshots. The FAQ text comes from /api/faq.
+const GUIDE_IMAGES = new Map([['/guide-img/connect.png', 'step-connect.png'], ['/guide-img/download.png', 'step-download.png']]);
+const DOCS = join(APP_DIR, 'docs');
 const ALLOWED_HOSTS = new Set([`127.0.0.1:${PORT}`, `localhost:${PORT}`]);
 
 // The checklist is local data; demo mode keeps it in memory and writes nothing.
@@ -38,6 +42,10 @@ const checklist = DEMO ? new ChecklistStore(null, demoChecklist()) : new Checkli
 // Demo mode keeps the deadline timeline in memory instead of settings.json.
 let demoDurations = durations();
 let demoDisplay = displayOf();
+
+// The first-run guide shows until it is finished or skipped once; the spotlight tour is offered once after the first sign-in.
+const guide = guideStore({ demo: DEMO });
+const tour = guideStore({ key: 'tourSeen', demo: DEMO });
 
 // Blackboard is slow across many courses; reuse a result for a few minutes.
 let cache;
@@ -385,6 +393,12 @@ const server = createServer(async (req, res) => {
       const [, courseId, threadId] = threadRoute;
       return send(res, 200, DEMO ? demoThread(courseId, threadId) : await withSession(() => bb.messageThread(courseId, threadId)));
     }
+    if (url.pathname === '/api/faq' && req.method === 'GET') {
+      return send(res, 200, { text: await readFile(join(DOCS, 'FAQ.md'), 'utf8') });
+    }
+    if (GUIDE_IMAGES.has(url.pathname) && req.method === 'GET') {
+      return send(res, 200, await readFile(join(DOCS, GUIDE_IMAGES.get(url.pathname))), 'image/png');
+    }
     if (url.pathname === '/api/config') {
       return send(res, 200, { demo: DEMO, baseUrl: DEMO ? 'https://demo.blackboard.com' : await bb.savedBaseUrl() });
     }
@@ -430,17 +444,29 @@ const server = createServer(async (req, res) => {
       });
     }
     if (url.pathname === '/api/settings' && req.method === 'GET') {
-      if (DEMO) return send(res, 200, { downloadDir: 'E:\\课程资料', canPick: false, demo: true, ...demoDurations, display: demoDisplay });
+      if (DEMO) return send(res, 200, { downloadDir: 'E:\\课程资料', canPick: false, demo: true, ...demoDurations, display: demoDisplay, guideSeen: guide.seen(), tourSeen: tour.seen() });
       const saved = loadSettings();
       return send(res, 200, {
         downloadDir: saved.downloadDir ?? '',
         canPick: process.platform === 'win32',
         ...durations(saved),
         display: displayOf(saved.display),
+        guideSeen: guide.seen(),
+        tourSeen: tour.seen(),
       });
     }
     if (url.pathname === '/api/settings' && req.method === 'POST') {
       const body = JSON.parse(await readBody(req));
+      // Finished or skipped the guide or the tour: only true can be saved; 帮助 opens them again any time.
+      if ('guideSeen' in body || 'tourSeen' in body) {
+        const flags = { guideSeen: guide, tourSeen: tour };
+        const keys = Object.keys(body).filter((k) => k in flags);
+        if (keys.length !== Object.keys(body).length || keys.some((k) => body[k] !== true)) {
+          return send(res, 400, { error: '收到的数据格式不对，请刷新页面再试。' });
+        }
+        for (const k of keys) flags[k].markSeen();
+        return send(res, 200, { guideSeen: guide.seen(), tourSeen: tour.seen() });
+      }
       // Display settings and the deadline timeline are saved on their own, and work in demo mode too.
       if ('display' in body) {
         const display = checkDisplay(body.display);

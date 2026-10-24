@@ -18,7 +18,8 @@
   --accent: #297c5c; --accent-deco: #2f8f6a; --accent-soft: rgba(47, 143, 106, .13); --on-accent: #fff; --brand: #2f8f6a;
   --red: #b44238; --red-bg: #fbe6e3; --orange: #a25718; --orange-bg: #fcecdc; --blue: #3667b6; --blue-bg: #e3ecfa;
   --yellow: #846711; --yellow-bg: #f7efd2; --yellow-mark: #d4a92a; --green: #257850; --green-bg: #dff2e7;
-  --warn-bg: #fff1dd; --warn-text: #7a4100; --error-bg: #fbe6e3; --error-text: #8a1c14; --tip-bg: rgba(31, 61, 51, .06); --warn-line: rgba(122, 65, 0, .2);
+  --warn-bg: #fff1dd; --warn-text: #7a4100; --error-bg: #fbe6e3; --error-text: #8a1c14; --tip-bg: rgba(31, 61, 51, .06); --warn-line: rgba(122, 65, 0, .2); --scrim: rgba(21, 41, 31, .38);
+  --guide-glass: rgba(200, 232, 212, .8); --guide-solid: #cfe8d8; --tour-dim: rgba(12, 28, 20, .55); --brand-word: #164a36; --guide-muted: #34503f;
   color-scheme: light;
 }
 :root[data-theme="dark"] {
@@ -30,7 +31,8 @@
   --accent: #5cc99c; --accent-deco: #5cc99c; --accent-soft: rgba(92, 201, 156, .16); --on-accent: #08261a; --brand: #2f8f6a;
   --red: #ff8f85; --red-bg: #4a2622; --orange: #ffad73; --orange-bg: #4a3220; --blue: #9dbcff; --blue-bg: #24324f;
   --yellow: #f0cf6a; --yellow-bg: #40381c; --yellow-mark: #f0cf6a; --green: #72d9a6; --green-bg: #1f4433;
-  --warn-bg: #3a2a10; --warn-text: #f5c77e; --error-bg: #4a2622; --error-text: #ffb4ac; --tip-bg: rgba(255, 255, 255, .055); --warn-line: rgba(245, 199, 126, .28);
+  --warn-bg: #3a2a10; --warn-text: #f5c77e; --error-bg: #4a2622; --error-text: #ffb4ac; --tip-bg: rgba(255, 255, 255, .055); --warn-line: rgba(245, 199, 126, .28); --scrim: rgba(0, 0, 0, .55);
+  --guide-glass: rgba(22, 74, 54, .78); --guide-solid: #1c4434; --tour-dim: rgba(0, 0, 0, .62); --brand-word: #9fdcbf; --guide-muted: #a9cdbd;
   color-scheme: dark;
 }
 @media (prefers-color-scheme: dark) {
@@ -43,7 +45,8 @@
     --accent: #5cc99c; --accent-deco: #5cc99c; --accent-soft: rgba(92, 201, 156, .16); --on-accent: #08261a; --brand: #2f8f6a;
     --red: #ff8f85; --red-bg: #4a2622; --orange: #ffad73; --orange-bg: #4a3220; --blue: #9dbcff; --blue-bg: #24324f;
     --yellow: #f0cf6a; --yellow-bg: #40381c; --yellow-mark: #f0cf6a; --green: #72d9a6; --green-bg: #1f4433;
-    --warn-bg: #3a2a10; --warn-text: #f5c77e; --error-bg: #4a2622; --error-text: #ffb4ac; --tip-bg: rgba(255, 255, 255, .055); --warn-line: rgba(245, 199, 126, .28);
+    --warn-bg: #3a2a10; --warn-text: #f5c77e; --error-bg: #4a2622; --error-text: #ffb4ac; --tip-bg: rgba(255, 255, 255, .055); --warn-line: rgba(245, 199, 126, .28); --scrim: rgba(0, 0, 0, .55);
+  --guide-glass: rgba(22, 74, 54, .78); --guide-solid: #1c4434; --tour-dim: rgba(0, 0, 0, .62); --brand-word: #9fdcbf; --guide-muted: #a9cdbd;
     color-scheme: dark;
   }
 }
@@ -57,7 +60,8 @@
   --accent: #3f6f4c; --accent-deco: #5a8560; --accent-soft: rgba(90, 133, 96, .15); --on-accent: #fff; --brand: #4f7a52;
   --red: #a33a2f; --red-bg: #f3d9cf; --orange: #97510f; --orange-bg: #f3e0c6; --blue: #2f5b97; --blue-bg: #dde3ea;
   --yellow: #6e5608; --yellow-bg: #efe3bf; --yellow-mark: #c29a1e; --green: #2f6b3f; --green-bg: #d9e6cf;
-  --warn-bg: #f3e0c6; --warn-text: #6b3d08; --error-bg: #f3d9cf; --error-text: #7f1d14; --tip-bg: rgba(110, 85, 40, .08); --warn-line: rgba(107, 61, 8, .22);
+  --warn-bg: #f3e0c6; --warn-text: #6b3d08; --error-bg: #f3d9cf; --error-text: #7f1d14; --tip-bg: rgba(110, 85, 40, .08); --warn-line: rgba(107, 61, 8, .22); --scrim: rgba(58, 49, 38, .38);
+  --guide-glass: rgba(206, 226, 186, .8); --guide-solid: #d4e6c4; --tour-dim: rgba(40, 32, 20, .5); --brand-word: #2f4a22; --guide-muted: #4a4232;
   color-scheme: light;
 }
 /* 护眼 on a dark page (夜间, or 跟随电脑 in dark mode): warm dark brown, less blue light. Twice on purpose, like 夜间. */
@@ -70,7 +74,8 @@
   --accent: #b5c98a; --accent-deco: #a3ba78; --accent-soft: rgba(181, 201, 138, .15); --on-accent: #1d1c0e; --brand: #6f8a52;
   --red: #f0a08c; --red-bg: #4a2a20; --orange: #f0b878; --orange-bg: #47331c; --blue: #b3bcd8; --blue-bg: #31303a;
   --yellow: #e6cc7a; --yellow-bg: #40371a; --yellow-mark: #e0bf5c; --green: #a9d090; --green-bg: #2c3c22;
-  --warn-bg: #44351a; --warn-text: #f0cb8c; --error-bg: #4a2a20; --error-text: #f6b6a6; --tip-bg: rgba(255, 240, 210, .06); --warn-line: rgba(240, 203, 140, .28);
+  --warn-bg: #44351a; --warn-text: #f0cb8c; --error-bg: #4a2a20; --error-text: #f6b6a6; --tip-bg: rgba(255, 240, 210, .06); --warn-line: rgba(240, 203, 140, .28); --scrim: rgba(0, 0, 0, .55);
+  --guide-glass: rgba(46, 72, 38, .8); --guide-solid: #2f442a; --tour-dim: rgba(0, 0, 0, .62); --brand-word: #cfe0a6; --guide-muted: #c4b494;
   color-scheme: dark;
 }
 @media (prefers-color-scheme: dark) {
@@ -83,7 +88,8 @@
     --accent: #b5c98a; --accent-deco: #a3ba78; --accent-soft: rgba(181, 201, 138, .15); --on-accent: #1d1c0e; --brand: #6f8a52;
     --red: #f0a08c; --red-bg: #4a2a20; --orange: #f0b878; --orange-bg: #47331c; --blue: #b3bcd8; --blue-bg: #31303a;
     --yellow: #e6cc7a; --yellow-bg: #40371a; --yellow-mark: #e0bf5c; --green: #a9d090; --green-bg: #2c3c22;
-    --warn-bg: #44351a; --warn-text: #f0cb8c; --error-bg: #4a2a20; --error-text: #f6b6a6; --tip-bg: rgba(255, 240, 210, .06); --warn-line: rgba(240, 203, 140, .28);
+    --warn-bg: #44351a; --warn-text: #f0cb8c; --error-bg: #4a2a20; --error-text: #f6b6a6; --tip-bg: rgba(255, 240, 210, .06); --warn-line: rgba(240, 203, 140, .28); --scrim: rgba(0, 0, 0, .55);
+  --guide-glass: rgba(46, 72, 38, .8); --guide-solid: #2f442a; --tour-dim: rgba(0, 0, 0, .62); --brand-word: #cfe0a6; --guide-muted: #c4b494;
     color-scheme: dark;
   }
 }
@@ -512,6 +518,125 @@ body.no-gloss .gl { display: none; }
 .cn, .dl-body, .cl-body, .item .title, td { overflow-wrap: anywhere; }
 
 /*
+ * 新手引导 and 常见问题: one dialog over a soft scrim, the same solid panel,
+ * round corners and shadow as 显示设置. Big short lines; the page scrolls
+ * inside the dialog while 上一步 / 下一步 stay at the bottom.
+ */
+body.guide-open { overflow: hidden; }
+.guide-scrim { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center;
+  padding: 24px 16px; background: var(--scrim); }
+.guide-scrim[hidden] { display: none; }
+/*
+ * Frosted green glass, like a bathroom window (deep green at night): clearly
+ * greener than the white cards, see-through enough for the colours behind to
+ * glow, blurred so much that no word or shape behind can be made out.
+ */
+.guide, .tour-bubble, .welcome { background: var(--guide-glass); color: var(--text); border: 1px solid var(--glass-line); border-radius: 26px;
+  box-shadow: var(--shadow); -webkit-backdrop-filter: blur(40px) saturate(1.5); backdrop-filter: blur(40px) saturate(1.5); }
+/* Quieter words on the glass: --muted is not 4.5:1 on green, so the glass has its own. */
+.guide .muted, .tour-bubble .muted, .welcome-sub, .welcome-note { color: var(--guide-muted); }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .guide, .tour-bubble, .welcome { background: var(--guide-solid); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .guide, .tour-bubble, .welcome { background: var(--guide-solid); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+/* Links on the glass use the body colour: the green accent is not 4.5:1 on pale green. */
+.guide button.link, .tour-bubble button.link, .guide a { color: var(--text); }
+/* Every page the same size, so the card does not jump; long pages scroll inside. */
+.guide { display: flex; flex-direction: column; width: min(600px, 100%); height: min(470px, calc(100vh - 48px)); height: min(470px, calc(100dvh - 48px));
+  animation: guide-in .18s ease-out; }
+/* Only a small lift, never from invisible: if the animation does not run, the box is still there. */
+@keyframes guide-in { from { transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) { .guide { animation: none; } }
+.guide-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 22px 0; }
+.guide-top button.link { font-size: 14px; }
+.guide-body { flex: 1; overflow-y: auto; padding: 6px 26px 18px; overscroll-behavior: contain; }
+.guide-body h2 { margin: 6px 0 12px; font-size: 22px; outline: none; }
+.guide-icon { font-size: 44px; line-height: 1; margin-top: 10px; }
+.guide-line { margin: 0 0 10px; font-size: 17px; line-height: 1.65; }
+.guide-swatches { margin-top: 4px; }
+.guide-shot { margin: 14px 0 0; }
+.guide-shot img { display: block; max-width: 100%; width: auto; height: auto; max-height: 210px; margin: 0 auto; border-radius: 18px; border: 1px solid var(--line); }
+.guide-walk { display: inline-block; margin-top: 6px; font-size: 14px; }
+.guide-shot figcaption { margin-top: 6px; text-align: center; }
+.guide-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 22px 16px; border-top: 1px solid var(--line); }
+.guide-nav > button { min-width: 88px; }
+.guide-nav .invisible { visibility: hidden; }
+.guide-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+.guide-dots button.guide-dot { width: 22px; height: 22px; padding: 0; border: 0; background: none; border-radius: 50%; position: relative; }
+.guide-dot::after { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: var(--line); box-shadow: inset 0 0 0 1px var(--line); }
+.guide-dot[aria-current="step"]::after { background: var(--accent-deco); box-shadow: none; }
+.guide-dot:hover::after { background: var(--muted); }
+.guide-dot[aria-current="step"]:hover::after { background: var(--accent-deco); }
+/* The FAQ page: a search box, folding groups, folding questions. */
+/*
+ * The welcome box on the first start: the same frosted glass as the guide
+ * (not the title card's dark green, which sits right above it), the logo and
+ * the name, to say thank you. Then the spotlight tour.
+ */
+.welcome { width: min(460px, 100%); padding: 34px 30px 28px; text-align: center; animation: guide-in .18s ease-out; }
+.welcome-mark { display: block; width: 64px; height: 64px; margin: 0 auto 16px; }
+.welcome h2 { margin: 0 0 8px; font-size: 26px; line-height: 1.35; font-weight: 600; outline: none; }
+/* The name in the brand face: deep green and bold, no underline (it would look like a link). */
+.brand-word { font-family: "Segoe UI Variable Display", "Segoe UI", "Microsoft YaHei UI", sans-serif;
+  font-weight: 800; letter-spacing: -.01em; color: var(--brand-word); }
+.welcome-sub { margin: 0 0 24px; font-size: 16px; }
+.welcome-actions { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.welcome-actions button.primary { min-width: 160px; padding: 10px 28px; font-size: 17px; }
+.welcome button.link { color: var(--text); font-size: 13.5px; }
+/* Under 跳过引导: why the walk-through is worth the few steps. Light and small, still 4.5:1 (--muted on the glass). */
+.welcome-note { margin: 16px auto 0; max-width: 330px; font-size: 12.5px; line-height: 1.6; }
+@media (prefers-reduced-motion: reduce) { .welcome { animation: none; } }
+/*
+ * The spotlight tour. The page cannot be clicked (.tour-block covers it); the
+ * ring frames the real element and dims the rest with a wide shadow; ring and
+ * bubble use page coordinates, so they scroll with the page.
+ */
+.tour { position: absolute; top: 0; left: 0; width: 100%; height: 0; z-index: 60; }
+.tour[hidden] { display: none; }
+.tour-block { position: fixed; inset: 0; }
+.tour-block.dim { background: var(--tour-dim); }
+.tour-ring { position: absolute; border-radius: 22px; pointer-events: none;
+  box-shadow: 0 0 0 3px var(--accent-deco), 0 0 0 200vmax var(--tour-dim);
+  transition: left .26s ease-out, top .26s ease-out, width .26s ease-out, height .26s ease-out; }
+.tour-ring.jump { transition: none; }
+.tour-ring[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { .tour-ring { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .tour-bubble { transition: none; } }
+.tour-bubble { position: absolute; z-index: 2; display: flex; flex-direction: column; width: min(360px, calc(100vw - 32px));
+  transition: left .26s ease-out, top .26s ease-out; }
+.tour-bubble.jump, .tour-bubble.center, .tour-bubble.dock { transition: none; }
+.tour-bubble.center { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(520px, calc(100vw - 32px)); }
+.tour-bubble.dock { position: fixed; left: 50%; top: auto; bottom: 16px; transform: translateX(-50%); }
+.tour-body { max-height: 50vh; overflow-y: auto; padding: 2px 20px 4px; }
+.tour-body h2 { margin: 4px 0 8px; font-size: 18px; outline: none; }
+.tour-line { margin: 0 0 8px; font-size: 15px; line-height: 1.6; }
+.tour-bubble.center .tour-body h2 { font-size: 22px; }
+.tour-bubble.center .tour-line { font-size: 17px; }
+.tour-hint { margin: 4px 0 0; }
+.tour-nav { display: flex; justify-content: flex-end; gap: 10px; padding: 10px 16px 14px; }
+.tour-nav button[hidden], .tour-bubble button.link[hidden] { display: none; }
+.faq { margin-top: 6px; }
+.faq-search { display: block; font-weight: 600; margin-bottom: 6px; }
+.faq input[type="search"] { width: 100%; box-sizing: border-box; font-size: 16px; }
+.faq-group { margin: 8px 0; border: 1px solid var(--line); border-radius: 18px; background: var(--row); }
+.faq-group > summary { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 16px;
+  font-weight: 700; cursor: pointer; border-radius: 18px; }
+.faq-group > :not(summary) { margin-left: 16px; margin-right: 16px; }
+.faq-group[open] > summary { padding-bottom: 6px; }
+.faq-group[open] { padding-bottom: 8px; }
+.faq-n { font-weight: 400; white-space: nowrap; }
+.faq-q { border-top: 1px solid var(--line); }
+.faq-q > summary { padding: 8px 0; cursor: pointer; font-weight: 600; }
+.faq-a { padding: 0 0 8px; font-size: 14.5px; }
+.faq-a p, .faq-group > p { margin: 4px 0 8px; }
+.faq-a ul, .faq-a ol { margin: 4px 0 8px; padding-left: 1.4em; }
+.faq-a code { font-size: .92em; padding: 1px 5px; border-radius: 6px; background: var(--tip-bg); overflow-wrap: anywhere; }
+.faq-none { margin: 10px 0; }
+footer .help-links { color: var(--text); }
+
+/*
  * Phone width (600 px and below). The panel still runs on the computer; this
  * only prepares the styles. One column, 16 px at each side, the title-card
  * buttons under the title, every line wraps, nothing scrolls the page sideways.
@@ -537,5 +662,18 @@ body.no-gloss .gl { display: none; }
   .dl-row { flex-wrap: wrap; }
   .grade-avg { margin-left: 0; }
   .undo-bar { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+  /* 新手引导: nearly the whole screen, smaller margins; the dots wrap above the buttons if needed. */
+  .guide-scrim { padding: 8px; }
+  .guide { height: calc(100vh - 16px); height: calc(100dvh - 16px); }
+  .welcome { padding: 28px 20px 24px; }
+  .welcome h2 { font-size: 22px; }
+  .tour-bubble.dock { width: calc(100vw - 16px); bottom: 8px; }
+  .guide-top { padding: 12px 18px 0; }
+  .guide-body { padding: 4px 18px 14px; }
+  .guide-body h2 { font-size: 20px; }
+  .guide-line { font-size: 16px; }
+  .guide-nav { flex-wrap: wrap; padding: 10px 14px 14px; gap: 8px; }
+  .guide-dots { order: -1; flex-basis: 100%; }
+  .guide-nav > button { flex: 1; min-width: 0; }
 }
 @media (max-width: 600px) and (prefers-reduced-motion: reduce) { .keep-open-off:active { transform: none; } }

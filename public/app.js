@@ -9,6 +9,7 @@ import {
 import { initPush, reloadPush, setDueSoonHours } from './push.js';
 import { initKeepOpen } from './keep-open.js';
 import { PHASES, STUCK_TEXT, untilLoaded } from './startup.js';
+import { initHelp, maybeAskTour, maybeShowGuide } from './help.js';
 import { $, SERVER_LOST, actionLine, api, el, fmt, friendlyText, isSignedOutError, sleep, watchServer } from './ui.js';
 import {
   buildNav, clearError, courseEl, courseText, flagError, glossed, goToSection, initDisplayPanel, initFeedback, initToTop, onDisplayChange, pastFold,
@@ -44,6 +45,18 @@ function showBanner(text, actions = []) {
 /** Puts an error line with buttons into an element that is itself a <p>. */
 function fillAction(target, text, actions) {
   target.replaceChildren(...actionLine(text, actions).childNodes);
+}
+
+let focusConnect = false; // the first-start guide ended while the sign-in check was still out
+
+/**
+ * After the first-start guide: focus on 连接 Blackboard when not signed in.
+ * While the sign-in check is still out, 💡 帮助 holds focus until the answer comes.
+ */
+function focusConnectIfSignedOut() {
+  if (!$('login').hidden) return $('connect').focus();
+  $('helpBtn').focus();
+  focusConnect = true;
 }
 
 function showLogin() {
@@ -329,6 +342,7 @@ $('msgCourse').addEventListener('change', () => {
 
 let checklist = { items: [], marks: {} };
 let signedIn = false;
+let connected = false; // the sign-in check said yes (signedIn is also true while it is still out)
 let todoLoaded = false;
 let pendingRemoval; // a delete waiting out its undo window
 const openCounts = { assignments: 0, own: 0 }; // for the nav badge
@@ -637,6 +651,7 @@ async function loadChecklist() {
 /** Signed out: only the checklist stays, since the student's own list is local. */
 function showSignedOut() {
   signedIn = false;
+  connected = false;
   $('main').hidden = false;
   $('sectionNav').hidden = false;
   $('main').classList.add('signed-out');
@@ -857,6 +872,7 @@ async function loadSettings() {
   $('pickDir').hidden = !settings.canPick;
   $('downloadDir').readOnly = Boolean(settings.demo);
   if (settings.demo) $('dirMsg').textContent = '示例模式：不会真的保存文件。';
+  maybeShowGuide(settings);
 }
 
 $('downloadDir').addEventListener('input', () => {
@@ -1054,9 +1070,13 @@ async function load(refresh = false) {
       setWho('未登录，或登录已过期');
       $('login').hidden = false;
       showSignedOut();
+      if (focusConnect && $('guide').hidden) $('connect').focus();
+      focusConnect = false;
       return;
     }
     $('login').hidden = true;
+    focusConnect = false;
+    connected = true;
     const mins = status.secondsLeft ? Math.round(status.secondsLeft / 60) : null;
     const who = `${status.name}${status.demo ? '（示例数据）' : ''}${mins ? ` · 登录还剩约 ${mins} 分钟` : ''}`;
     $('main').hidden = false;
@@ -1088,6 +1108,8 @@ async function load(refresh = false) {
     if (messageData) renderMessages();
     if (firstLoad) scrollToHash();
     firstLoad = false;
+    // The first time the courses are on the page after signing in: offer the tour once.
+    maybeAskTour();
   } catch (err) {
     if (cancelled()) return;
     showStuck(false);
@@ -1165,6 +1187,7 @@ try { storage = window.localStorage; } catch { /* hidden for this visit only */ 
 initKeepOpen({ wrap: $('keepOpen'), button: $('keepOpenOff'), root: document.documentElement, storage });
 initToTop();
 initFeedback();
+initHelp({ signedIn: () => connected, onFirstRunDone: focusConnectIfSignedOut });
 initDisplayPanel(async (display) => {
   const saved = await api('/api/settings', json('POST', { display }));
   return { display: saved.display, demo: settings.demo };

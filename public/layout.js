@@ -98,6 +98,17 @@ export function openSection(id) {
   setOpen(id, true);
 }
 
+/**
+ * Opens a folded section for a moment (the guide's spotlight) and returns how
+ * to fold it back. Nothing is saved: the student's own folds stay as they were.
+ */
+export function peekOpen(id) {
+  const button = toggles.get(id);
+  if (!button || button.getAttribute('aria-expanded') === 'true') return () => {};
+  setOpen(id, true);
+  return () => setOpen(id, false);
+}
+
 /** An error inside a section: open it and put a warning mark on its nav item. */
 export function flagError(id) {
   setOpen(id, true);

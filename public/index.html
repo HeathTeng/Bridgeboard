@@ -21,6 +21,8 @@
       <button id="refresh" type="button">刷新</button>
       <a id="ics" class="button" href="/calendar.ics" download>导出到日历 (.ics)</a>
       <button id="displayBtn" type="button" aria-expanded="false" aria-controls="displayPanel">显示设置</button>
+      <button id="helpBtn" type="button" aria-haspopup="dialog">💡 帮助</button>
+      <button id="faqBtn" type="button" aria-haspopup="dialog">常见问题</button>
     </div>
     <p class="tip muted small ics-tip">导出到日历：导入手机日历后，电脑关机也会提醒。</p>
   </div>
@@ -297,6 +299,8 @@
 
 <footer class="muted small">
   <p class="privacy"><svg class="lock" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>你的数据只保存在这台电脑上，我们收不到。</p>
+  <p class="help-links">💡 <button id="faqFooter" type="button" class="link" aria-haspopup="dialog">常见问题</button>
+    · <button id="guideFooter" type="button" class="link" aria-haspopup="dialog">重新看新手引导</button></p>
   <p class="feedback">
     <a id="feedbackLink" href="mailto:feedback@getboundly.com">意见反馈</a>
     · 没有邮件程序的话，发邮件到 <span id="feedbackAddr" class="addr">feedback@getboundly.com</span>
@@ -307,6 +311,47 @@
   <p>基于开源项目 <a href="https://github.com/felipedias-ie/blackboard-mcp" target="_blank" rel="noopener">blackboard-mcp</a>。</p>
 </footer>
 <button id="toTop" class="to-top" type="button" aria-label="回到顶部" hidden>↑ 回到顶部</button>
+<div id="welcome" class="guide-scrim" hidden>
+  <div id="welcomeBox" class="welcome" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+    <svg class="mark welcome-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8"/><path d="M4 20h24M6 20q10-14 20 0M10 20v6M22 20v6M11 14.8V20M16 13V20M21 14.8V20"/></svg>
+    <h2 id="welcomeTitle" tabindex="-1">感谢您选择 <span class="brand-word">Bridgeboard</span></h2>
+    <p class="welcome-sub">下面开始新手引导</p>
+    <div class="welcome-actions">
+      <button id="welcomeStart" type="button" class="primary">开始</button>
+      <button id="welcomeSkip" type="button" class="link">跳过引导</button>
+    </div>
+    <p class="welcome-note">在页面上一步步带你认识的引导只出现这一次，只有几步，建议看完。以后也可以点「💡 帮助」看文字版。</p>
+  </div>
+</div>
+<div id="tour" class="tour" hidden>
+  <div id="tourBlock" class="tour-block"></div>
+  <div id="tourRing" class="tour-ring" hidden></div>
+  <div id="tourBubble" class="tour-bubble" role="dialog" aria-modal="true" aria-labelledby="tourTitle">
+    <div class="guide-top">
+      <span id="tourStep" class="muted small"></span>
+      <button id="tourSkip" type="button" class="link">跳过</button>
+    </div>
+    <div id="tourBody" class="tour-body"></div>
+    <div class="tour-nav">
+      <button id="tourPrev" type="button">上一步</button>
+      <button id="tourNext" type="button" class="primary">下一步</button>
+    </div>
+  </div>
+</div>
+<div id="guide" class="guide-scrim" hidden>
+  <div id="guideBox" class="guide" role="dialog" aria-modal="true" aria-labelledby="guideTitle">
+    <div class="guide-top">
+      <span id="guideStep" class="muted small"></span>
+      <button id="guideSkip" type="button" class="link">跳过</button>
+    </div>
+    <div id="guideBody" class="guide-body"></div>
+    <div class="guide-nav">
+      <button id="guidePrev" type="button">上一步</button>
+      <div id="guideDots" class="guide-dots"></div>
+      <button id="guideNext" type="button" class="primary">下一步</button>
+    </div>
+  </div>
+</div>
 <div id="undoBar" class="undo-bar" role="status" hidden><span id="undoText"></span> · <button id="undoBtn" type="button" class="link">撤销</button></div>
 <script type="module" src="app.js"></script>
 </body>
