@@ -9,6 +9,7 @@ import {
 import { initPush, reloadPush, setDueSoonHours } from './push.js';
 import { initKeepOpen } from './keep-open.js';
 import { PHASES, STUCK_TEXT, untilLoaded } from './startup.js';
+import { IGNORE_HINT, isIgnored, splitIgnored } from './ignore.js';
 import { initHelp, maybeAskTour, maybeShowGuide } from './help.js';
 import { $, SERVER_LOST, actionLine, api, el, fmt, friendlyText, isSignedOutError, sleep, watchServer } from './ui.js';
 import {
@@ -40,6 +41,35 @@ const courseCount = (list, idOf) => new Set(list.map(idOf)).size;
 function showBanner(text, actions = []) {
   $('banner').replaceChildren(...(text ? actionLine(text, actions, 'banner-line').childNodes : []));
   $('banner').hidden = !text;
+}
+
+/**
+ * A link that opens Blackboard in a new tab: a small ↗ after it, kept on the
+ * same line as the last word by a no-break space (read out as
+ * 在 Blackboard 里打开), underlined on hover. In demo mode it only says what
+ * the real panel would open (see the click handler at the end).
+ */
+function bbLink(href, content, { what = '这个作业', cls = 'bb-link' } = {}) {
+  return el('a', { href, target: '_blank', rel: 'noopener noreferrer', class: cls, title: '在 Blackboard 里打开', 'data-what': what },
+    content, el('span', { class: 'bb-arrow', 'aria-hidden': 'true' }, '\u00a0↗'), el('span', { class: 'sr-only' }, ' 在 Blackboard 里打开'));
+}
+
+/**
+ * Only the ↗ (and a small label, if given) as a link, for rows whose title
+ * folds open in the panel: clicking the title still opens it here. Nothing
+ * when there is no school https address.
+ */
+function bbArrow(href, what, label = '') {
+  if (!/^https:\/\//.test(href ?? '')) return null;
+  return bbLink(href, label, { what, cls: label ? 'bb-link bb-small' : 'bb-link bb-only' });
+}
+
+/** A short line at the bottom of the screen that goes away by itself. */
+function toast(text) {
+  $('demoNote').textContent = text;
+  $('demoNote').hidden = false;
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => { $('demoNote').hidden = true; }, 4000);
 }
 
 /** Puts an error line with buttons into an element that is itself a <p>. */
@@ -88,18 +118,27 @@ function renderToday(rows, now) {
     : [el('p', { class: 'muted today-none' }, NOTHING_TODAY)]));
 }
 
+let ignoredOpen = false; // the 已忽略 fold; not remembered
+
 function renderTodo(todo = todoItems) {
   todoItems = todo;
   const box = $('todo');
   box.replaceChildren();
   const now = Date.now();
-  const withStatus = todo.map((t) => ({ ...t, status: statusOf(t, now, timeline) }));
+  // Ignored overdue work (忽略) leaves the groups, the counts, the folded line and 今天要注意.
+  const { shown: withStatus, ignored } = splitIgnored(todo.map((t) => ({ ...t, status: statusOf(t, now, timeline) })), checklist.ignored);
   const urgent = withStatus.filter((t) => t.status === 'overdue' || t.status === 'dueSoon').length;
   setCount('deadlines', urgent, '已逾期和临期的作业');
   if (signedIn && todoLoaded) setSummary('deadlines', deadlinesSummary(withStatus, now));
   renderToday(withStatus, now);
   if (!todoLoaded) return;
-  if (!todo.length) return box.append(el('p', { class: 'muted' }, '近期没有截止事项 🎉 新作业出现后会显示在这里。'));
+  if (!withStatus.length) {
+    box.append(el('p', { class: 'muted' }, ignored.length
+      ? '没有要提醒的截止事项。忽略的作业在下面的「已忽略」里。'
+      : '近期没有截止事项 🎉 新作业出现后会显示在这里。'));
+    if (ignored.length) box.append(ignoredFold(ignored, now));
+    return;
+  }
   // Most urgent first: by colour, then by due time (the list comes sorted by due time).
   const ordered = STATUSES.flatMap((key) => withStatus.filter((t) => t.status === key));
   const shown = todoAll ? ordered : ordered.slice(0, TODO_FIRST);
@@ -112,10 +151,12 @@ function renderTodo(todo = todoItems) {
       items.map((t) => el('div', { class: 'item dl-row' },
         el('div', { class: 'dl-body' },
           el('div', { class: 'title' }, /^https:\/\//.test(t.link ?? '')
-            ? el('a', { href: t.link, target: '_blank', rel: 'noopener noreferrer', title: '在 Blackboard 里打开' }, glossed(t.title))
+            ? bbLink(t.link, glossed(t.title))
             : glossed(t.title)),
           el('div', { class: 'meta' }, courseEl(t.course), ` · ${fmt.format(new Date(t.due))}`)),
-        el('span', { class: 'pill', title: timeLeft(t, now) }, pillText(t, key, now)),
+        el('div', { class: 'dl-side' },
+          el('span', { class: 'pill', title: timeLeft(t, now) }, pillText(t, key, now)),
+          key === 'overdue' && t.key ? ignoreButton(t) : null),
       )),
     ));
   }
@@ -131,6 +172,73 @@ function renderTodo(todo = todoItems) {
     });
     box.append(more);
   }
+  if (ignored.length) box.append(ignoredFold(ignored, now));
+}
+
+/** The round × on an overdue row: stop reminding of it, on this computer only. */
+function ignoreButton(t) {
+  const b = el('button', { type: 'button', class: 'dl-ignore', title: IGNORE_HINT, 'aria-label': `${IGNORE_HINT}：${t.title}` }, '×');
+  b.addEventListener('click', () => ignoreLater(t));
+  return b;
+}
+
+/** 已忽略（N） at the bottom of 截止日期, folded unless opened; each row can be brought back. */
+function ignoredFold(rows, now) {
+  const fold = el('details', { class: 'cl-done dl-ignored' },
+    el('summary', {}, `已忽略（${rows.length}）`),
+    el('p', { class: 'muted small' }, '只是这台电脑不再提醒，作业还在 Blackboard 上，没有交。'),
+    rows.map((t) => {
+      const back = el('button', { type: 'button', class: 'link' }, '恢复');
+      back.addEventListener('click', () => setIgnored(t, false));
+      return el('div', { class: 'item dl-row' },
+        el('div', { class: 'dl-body' },
+          el('div', { class: 'title' }, /^https:\/\//.test(t.link ?? '')
+            ? bbLink(t.link, glossed(t.title))
+            : glossed(t.title)),
+          el('div', { class: 'meta' }, courseEl(t.course), ` · ${fmt.format(new Date(t.due))} · ${timeLeft(t, now)}`)),
+        el('div', { class: 'dl-side' }, back));
+    }));
+  fold.open = ignoredOpen;
+  fold.addEventListener('toggle', () => { ignoredOpen = fold.open; });
+  return fold;
+}
+
+/** Ignored now, saved after the 6-second undo window (like deleting from the checklist). */
+function ignoreLater(t) {
+  laterWithUndo({
+    text: `已忽略"${short(t.title)}"`,
+    apply: () => {
+      checklist.ignored[t.key] = { at: new Date().toISOString() };
+      redrawIgnored();
+    },
+    send: (keepalive) => api(`/api/checklist/ignored/${encodeURIComponent(t.key)}`, { ...json('PUT', { ignored: true }), keepalive }),
+    undo: () => {
+      delete checklist.ignored[t.key];
+      redrawIgnored();
+    },
+    fail: (err) => {
+      delete checklist.ignored[t.key];
+      redrawIgnored();
+      showBanner(`没有忽略成功：${err.message}`);
+    },
+  });
+}
+
+/** 恢复 (or ignore at once): saved straight away. */
+async function setIgnored(t, on) {
+  try {
+    await api(`/api/checklist/ignored/${encodeURIComponent(t.key)}`, json('PUT', { ignored: on }));
+    if (on) checklist.ignored[t.key] = { at: new Date().toISOString() };
+    else delete checklist.ignored[t.key];
+  } catch (err) {
+    showBanner(`没有恢复成功：${err.message}`);
+  }
+  redrawIgnored();
+}
+
+function redrawIgnored() {
+  renderTodo();
+  renderAssignments();
 }
 
 function showTimeline() {
@@ -243,6 +351,7 @@ function threadRow(t) {
         t.unread ? el('span', { class: 'unread-tag' }, el('span', { class: 'dot' }), `未读 ${t.unread}`) : null,
         el('span', { class: 'msg-with' }, t.with),
         timeSpan(t.time),
+        bbArrow(t.link, '这门课的消息页', '在 Blackboard 打开'),
         el('span', { class: 'chev' })),
       el('div', { class: 'meta' }, courseEl(t.course), ` · 最新：${t.from || '—'} · 共 ${t.total} 条`),
       el('div', { class: 'msg-preview' }, t.preview)),
@@ -272,7 +381,7 @@ async function showThread(t, body) {
     }
   }
   const link = /^https:\/\//.test(t.link ?? '')
-    ? el('a', { href: t.link, target: '_blank', rel: 'noopener noreferrer', class: 'button' }, '在 Blackboard 中打开')
+    ? bbLink(t.link, '在 Blackboard 中打开', { what: '这条消息', cls: 'button bb-link' })
     : note('（暂时没有 Blackboard 链接）');
   body.replaceChildren(
     ...threadCache.get(key).map(messageBlock),
@@ -340,7 +449,7 @@ $('msgCourse').addEventListener('change', () => {
 
 // ---- 清单 ----
 
-let checklist = { items: [], marks: {} };
+let checklist = { items: [], marks: {}, ignored: {} };
 let signedIn = false;
 let connected = false; // the sign-in check said yes (signedIn is also true while it is still out)
 let todoLoaded = false;
@@ -380,6 +489,8 @@ function flash(text) {
 function badge(row, now) {
   if (!row.due || row.done) return null;
   const status = statusOf({ due: row.due, opened: row.opened }, now, timeline);
+  // Ignored in 截止日期: a calm grey capsule here instead of the red one.
+  if (isIgnored({ ...row, status }, checklist.ignored)) return el('span', { class: 'pill st-ignored', title: '这台电脑不再提醒这一项（不会改 Blackboard）' }, '已忽略');
   return el('span', { class: `pill st-${status}`, title: statusLabel(status, timeline) }, timeLeft({ due: row.due }, now));
 }
 
@@ -407,7 +518,7 @@ function assignmentRow(t, now) {
     byBlackboard,
   );
   const title = /^https:\/\//.test(t.link ?? '')
-    ? el('a', { href: t.link, target: '_blank', rel: 'noopener noreferrer', title: '在 Blackboard 里打开' }, glossed(t.title))
+    ? bbLink(t.link, glossed(t.title))
     : glossed(t.title);
   return el('div', { class: `cl-row${t.done ? ' is-done' : ''}` }, box,
     el('div', { class: 'cl-body' },
@@ -428,7 +539,8 @@ function renderAssignments() {
   if (!todoLoaded) return box.replaceChildren(el('p', { class: 'muted small' }, '正在读取作业…'));
   const now = Date.now();
   const { open, done } = sortRows(assignmentRows(todoItems, checklist.marks, now), (r) => r.due);
-  openCounts.assignments = open.length;
+  // Ignored overdue work stays in the list (grey 已忽略) but no longer counts as open.
+  openCounts.assignments = open.filter((r) => !isIgnored({ ...r, status: statusOf(r, now, timeline) }, checklist.ignored)).length;
   totalCounts.assignments = open.length + done.length;
   updateChecklistCount();
   box.replaceChildren(...[
@@ -534,14 +646,41 @@ async function patchItem(id, patch, okText) {
   }
 }
 
-/** Hides the items now and only deletes them once the undo window has passed. */
-function removeLater(ids, text, send) {
+/**
+ * A change shown at once and only sent once the 6-second undo window has
+ * passed (deleting from the checklist, ignoring a deadline). apply() shows
+ * it, send(keepalive) saves it, undo() takes it back; done / fail / settle
+ * run after sending.
+ */
+function laterWithUndo({ text, apply, send, undo, done = () => {}, fail = () => {}, settle = () => {} }) {
   flushRemoval();
-  ids.forEach((id) => hiddenIds.add(id));
-  renderOwn();
-  pendingRemoval = { ids, send, timer: setTimeout(() => flushRemoval(), 6000) };
+  apply();
+  pendingRemoval = { send, undo, done, fail, settle, timer: setTimeout(() => flushRemoval(), 6000) };
   $('undoText').textContent = text;
   $('undoBar').hidden = false;
+}
+
+/** Hides the items now and only deletes them once the undo window has passed. */
+function removeLater(ids, text, send) {
+  laterWithUndo({
+    text,
+    send,
+    apply: () => {
+      ids.forEach((id) => hiddenIds.add(id));
+      renderOwn();
+    },
+    undo: () => {
+      ids.forEach((id) => hiddenIds.delete(id));
+      renderOwn();
+      flash('已恢复。');
+    },
+    done: () => { checklist.items = checklist.items.filter((x) => !ids.includes(x.id)); },
+    fail: (err) => flash(`没有删除成功：${err.message}`),
+    settle: () => {
+      ids.forEach((id) => hiddenIds.delete(id));
+      renderOwn();
+    },
+  });
 }
 
 function flushRemoval(keepalive = false) {
@@ -550,13 +689,7 @@ function flushRemoval(keepalive = false) {
   pendingRemoval = undefined;
   clearTimeout(p.timer);
   $('undoBar').hidden = true;
-  p.send(keepalive)
-    .then(() => { checklist.items = checklist.items.filter((x) => !p.ids.includes(x.id)); })
-    .catch((err) => flash(`没有删除成功：${err.message}`))
-    .finally(() => {
-      p.ids.forEach((id) => hiddenIds.delete(id));
-      renderOwn();
-    });
+  p.send(keepalive).then(p.done, p.fail).finally(p.settle);
 }
 
 $('undoBtn').addEventListener('click', () => {
@@ -565,9 +698,7 @@ $('undoBtn').addEventListener('click', () => {
   pendingRemoval = undefined;
   clearTimeout(p.timer);
   $('undoBar').hidden = true;
-  p.ids.forEach((id) => hiddenIds.delete(id));
-  renderOwn();
-  flash('已恢复。');
+  p.undo();
 });
 
 // Leaving the page during the undo window still carries out the delete.
@@ -644,8 +775,10 @@ async function loadChecklist() {
     return $('clOwn').replaceChildren(actionLine(`清单没有读取成功：${err.message}`, [{ label: '重试', onClick: loadChecklist }]));
   }
   clearError('checklist');
+  checklist.ignored ??= {};
   renderOwn();
   renderAssignments();
+  if (todoLoaded) renderTodo();
 }
 
 /** Signed out: only the checklist stays, since the student's own list is local. */
@@ -671,7 +804,7 @@ function renderAnnouncements(list) {
   for (const a of list.slice(0, 12)) {
     box.append(el('div', { class: 'item' },
       el('details', {},
-        el('summary', {}, el('span', { class: 'title' }, glossed(a.title))),
+        el('summary', {}, el('span', { class: 'title' }, glossed(a.title)), bbArrow(a.link, '这门课的页面')),
         el('div', { class: 'body' }, a.body || '（无正文）'),
       ),
       el('div', { class: 'meta' }, courseEl(a.course), a.date ? ` · ${fmt.format(new Date(a.date))}` : ''),
@@ -689,6 +822,7 @@ function gradeCourse(c) {
   return el('details', { class: 'course grade-course' },
     el('summary', {},
       courseEl(c.course),
+      bbArrow(c.link, '这门课的页面'),
       el('span', { class: 'grade-avg' }, avg == null ? el('span', { class: 'muted' }, '还没有分数') : [bar(avg), `平均 ${avg}%`]),
       waiting ? el('span', { class: 'tag' }, `${waiting} 项等待评分`) : null),
     el('table', {},
@@ -1178,6 +1312,14 @@ $('doLogin').addEventListener('click', async () => {
   } finally {
     $('doLogin').disabled = false;
   }
+});
+
+// Demo mode: links to Blackboard are pretend; say what the real panel would open instead.
+document.addEventListener('click', (e) => {
+  const a = settings.demo && e.target.closest?.('a.bb-link');
+  if (!a) return;
+  e.preventDefault();
+  toast(`示例模式不会打开 Blackboard，正式版会打开${a.dataset.what}`);
 });
 
 buildNav();

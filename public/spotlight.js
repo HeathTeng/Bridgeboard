@@ -26,7 +26,7 @@ export const tourRunning = () => Boolean(run);
 
 /** The five deadline colours as the page's own capsules; the card guide uses them too. */
 export function swatchesEl() {
-  const pills = [['overdue', '逾期'], ['dueSoon', '临期'], ['new', '刚开放'], ['open', '还有时间'], ['done', '已完成']];
+  const pills = [['overdue', '逾期'], ['dueSoon', '临期'], ['open', '还有时间'], ['new', '刚开放'], ['done', '已完成']];
   return el('p', { class: 'legend guide-swatches', 'aria-label': '颜色示例' },
     ...pills.map(([st, text]) => el('span', { class: `pill st-${st}` }, text)));
 }

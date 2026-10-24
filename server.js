@@ -30,7 +30,7 @@ const HOST = '127.0.0.1';
 const PUBLIC = join(import.meta.dirname, 'public');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png' };
 // Rules the page and the server share, served from lib/.
-const SHARED = new Set(['status.js', 'checklist-rows.js', 'message-view.js', 'display.js', 'terms.js', 'section-summary.js', 'glossary.js', 'faq.js', 'tour.js', 'startup.js']);
+const SHARED = new Set(['status.js', 'checklist-rows.js', 'message-view.js', 'display.js', 'terms.js', 'section-summary.js', 'glossary.js', 'faq.js', 'tour.js', 'ignore.js', 'startup.js']);
 // The only files from docs/ the page may read: the guide's screenshots. The FAQ text comes from /api/faq.
 const GUIDE_IMAGES = new Map([['/guide-img/connect.png', 'step-connect.png'], ['/guide-img/download.png', 'step-download.png']]);
 const DOCS = join(APP_DIR, 'docs');
@@ -113,6 +113,7 @@ const push = new PushService({
   load: () => (DEMO ? demoPush : loadSettings().push),
   save: (p) => (DEMO ? (demoPush = p) : saveSettings({ push: p })),
   timeline: () => (DEMO ? demoDurations : durations(loadSettings())),
+  ignored: () => checklist.list().ignored,
   getOverview: () => getOverview(false),
   getMessages: () => getMessages(false),
   sentFile: DEMO ? null : SENT_FILE,
@@ -543,6 +544,15 @@ async function checklistRoute(req, res, url) {
   const item = /^\/api\/checklist\/items\/([\w-]{1,64})$/.exec(pathname);
   if (item && m === 'PATCH') return send(res, 200, checklist.update(item[1], await readJson(req)));
   if (item && m === 'DELETE') return send(res, 200, checklist.remove(item[1]));
+  // 忽略: an overdue assignment the student no longer wants reminders for. Local only.
+  const ign = /^\/api\/checklist\/ignored\/([^/]+)$/.exec(pathname);
+  if (ign && m === 'PUT') {
+    let key = '';
+    try {
+      key = decodeURIComponent(ign[1]);
+    } catch {}
+    return send(res, 200, checklist.ignore(key, (await readJson(req)).ignored));
+  }
   const mark = /^\/api\/checklist\/marks\/([^/]+)$/.exec(pathname);
   if (mark && m === 'PUT') {
     let key = '';
