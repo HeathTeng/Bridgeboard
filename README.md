@@ -9,7 +9,7 @@ Every Blackboard deadline on one page
 
 [![最新版本](https://img.shields.io/github/v/release/HeathTeng/Bridgeboard?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC&color=2f8f6a)](https://github.com/HeathTeng/Bridgeboard/releases/latest)
 ![Windows](https://img.shields.io/badge/Windows-%E5%85%8D%E5%AE%89%E8%A3%85-1f3d33)
-[![License: MIT](https://img.shields.io/badge/license-MIT-5B7C99)](LICENSE)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-5B7C99)](LICENSE)
 
 ### [⬇ 下载 Windows 版 / Download for Windows](https://github.com/HeathTeng/Bridgeboard/releases/latest/download/Bridgeboard-Windows.zip)
 
@@ -219,6 +219,14 @@ To publish a release, push a version tag (for example `git tag v0.2.0 && git pus
 - **作者 Author:** 滕泽浩 Heath Teng（[@HeathTeng](https://github.com/HeathTeng)），负责项目设计与维护，开发过程中使用了 Claude Code。Bridgeboard 是 [Boundly](https://getboundly.com) 的产品之一。
 - **基于 Built on:** [blackboard-mcp](https://github.com/felipedias-ie/blackboard-mcp) by [Felipe Dias (@felipedias-ie)](https://github.com/felipedias-ie), MIT licensed. Its Blackboard client library does the sign-in and data fetching; thank you, Felipe. `vendor/blackboard-mcp.js` is a bundled build of blackboard-mcp v0.6.0 at commit [`fb05792`](https://github.com/felipedias-ie/blackboard-mcp/commit/fb057928ae200364ac3cda48d10779d33f5a4bb7) with its dependencies, made with `npm run vendor`; its license is in `vendor/LICENSE-blackboard-mcp`, and the licenses of the packages bundled with it are in `vendor/THIRD-PARTY-NOTICES.txt`.
 
-## License
+## 许可证 · License
 
-MIT
+Copyright © 2026 滕泽浩 Heath Teng / Boundly.
+
+从 2026 年 10 月 24 日起，Bridgeboard 以 **[GNU AGPL-3.0](LICENSE)** 发布：可以免费使用、学习和修改；但如果你修改后再发布，或者拿它对外提供服务，必须用同样的许可证公开你的全部源代码。这之前发布的版本（v0.2.13 及更早）仍按 MIT 许可证。
+
+Since 24 October 2026 Bridgeboard is licensed under the **[GNU AGPL-3.0](LICENSE)**. You may use, study and change it; if you distribute a modified version or offer it as a network service, you must release your complete source under the same licence. Versions up to and including v0.2.13 were released under the MIT licence.
+
+**名字和图标 · Name and logo:** 许可证只覆盖代码。「Bridgeboard」「Boundly」的名字和图标不在许可证范围内，修改版或复制版请换一个名字和图标，不要让人误以为是官方版本。The licence covers the code only. The names "Bridgeboard" and "Boundly" and their logos are not licensed; forks and copies must use a different name and logo and must not suggest they are the official version.
+
+The bundled `vendor/blackboard-mcp.js` stays under its own MIT licence (see `vendor/LICENSE-blackboard-mcp`).
