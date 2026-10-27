@@ -120,6 +120,11 @@
 <main id="main" hidden>
   <section id="deadlines" class="card section">
     <h2>截止日期</h2>
+    <!-- 💡 怎么用？ comes first in all three top cards, so the three buttons line up; the colours stay in view under it. -->
+    <div class="howto tip small" hidden>
+      点「在 Blackboard 打开 ↗」直接打开 Blackboard 的作业页面；Turnitin 这类只能打开课程，按钮写的是「打开课程主页 ↗」。
+      颜色按离截止还有多久来分；什么时候算「临期」「刚开放」，可以在下面的「调整时间轴」里改。
+    </div>
     <p class="legend small" aria-label="颜色说明">
       <span class="pill st-overdue">逾期</span>
       <span class="pill st-dueSoon">临期</span>
@@ -127,10 +132,6 @@
       <span class="pill st-new">刚开放</span>
       <span class="pill st-done">已完成</span>
     </p>
-    <div class="howto tip small" hidden>
-      点「在 Blackboard 打开 ↗」直接打开 Blackboard 的作业页面；Turnitin 这类只能打开课程，按钮写的是「打开课程主页 ↗」。
-      颜色按离截止还有多久来分；什么时候算「临期」「刚开放」，可以在下面的「调整时间轴」里改。
-    </div>
     <div id="todo"></div>
     <p class="tip muted small bb-browser">「在 Blackboard 打开 ↗」和「打开课程主页 ↗」会在电脑的默认浏览器里打开。如果那个浏览器没登录过 Blackboard，第一次会让你登录一下，登录一次就好。</p>
     <p class="tip muted small bb-note">点开后就是在 Blackboard 里操作了，在那里打开消息会被 Blackboard 标成已读；面板本身不会改动 Blackboard 的任何内容。Blackboard 会在新标签页打开，看完关掉那个标签就回到面板。</p>

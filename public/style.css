@@ -14,7 +14,7 @@
   --hero: #1f3d33; --on-hero: #f1f7f3; --on-hero-muted: #bcd2c7; --hero-btn: rgba(255, 255, 255, .14); --hero-btn-line: rgba(255, 255, 255, .22);
   --glass: rgba(255, 255, 255, .62); --glass-line: rgba(255, 255, 255, .8); --row: rgba(255, 255, 255, .6); --solid: #fbfdfc;
   --field: rgba(255, 255, 255, .8); --shadow: 0 12px 32px rgba(31, 61, 51, .08), 0 2px 6px rgba(31, 61, 51, .04);
-  --text: #15291f; --muted: #4f6b5e; --line: rgba(31, 61, 51, .1);
+  --text: #15291f; --muted: #4f6b5e; --line: rgba(31, 61, 51, .1); --bar-track: rgba(31, 61, 51, .13);
   --accent: #297c5c; --accent-deco: #2f8f6a; --accent-soft: rgba(47, 143, 106, .13); --on-accent: #fff; --brand: #2f8f6a;
   --red: #b44238; --red-bg: #fbe6e3; --orange: #a25718; --orange-bg: #fcecdc; --blue: #3667b6; --blue-bg: #e3ecfa;
   --yellow: #846711; --yellow-bg: #f7efd2; --yellow-mark: #d4a92a; --green: #257850; --green-bg: #dff2e7;
@@ -27,7 +27,7 @@
   --hero: #183229; --on-hero: #e3f2ea; --on-hero-muted: #a9c7b9; --hero-btn: rgba(255, 255, 255, .1); --hero-btn-line: rgba(255, 255, 255, .16);
   --glass: rgba(26, 48, 40, .6); --glass-line: rgba(255, 255, 255, .07); --row: rgba(34, 60, 50, .55); --solid: #18291f;
   --field: rgba(10, 22, 17, .6); --shadow: 0 12px 32px rgba(0, 0, 0, .28), 0 2px 6px rgba(0, 0, 0, .18);
-  --text: #e3f2ea; --muted: #9dbcae; --line: rgba(255, 255, 255, .09);
+  --text: #e3f2ea; --muted: #9dbcae; --line: rgba(255, 255, 255, .09); --bar-track: rgba(255, 255, 255, .13);
   --accent: #5cc99c; --accent-deco: #5cc99c; --accent-soft: rgba(92, 201, 156, .16); --on-accent: #08261a; --brand: #2f8f6a;
   --red: #ff8f85; --red-bg: #4a2622; --orange: #ffad73; --orange-bg: #4a3220; --blue: #9dbcff; --blue-bg: #24324f;
   --yellow: #f0cf6a; --yellow-bg: #40381c; --yellow-mark: #f0cf6a; --green: #72d9a6; --green-bg: #1f4433;
@@ -41,7 +41,7 @@
     --hero: #183229; --on-hero: #e3f2ea; --on-hero-muted: #a9c7b9; --hero-btn: rgba(255, 255, 255, .1); --hero-btn-line: rgba(255, 255, 255, .16);
     --glass: rgba(26, 48, 40, .6); --glass-line: rgba(255, 255, 255, .07); --row: rgba(34, 60, 50, .55); --solid: #18291f;
     --field: rgba(10, 22, 17, .6); --shadow: 0 12px 32px rgba(0, 0, 0, .28), 0 2px 6px rgba(0, 0, 0, .18);
-    --text: #e3f2ea; --muted: #9dbcae; --line: rgba(255, 255, 255, .09);
+    --text: #e3f2ea; --muted: #9dbcae; --line: rgba(255, 255, 255, .09); --bar-track: rgba(255, 255, 255, .13);
     --accent: #5cc99c; --accent-deco: #5cc99c; --accent-soft: rgba(92, 201, 156, .16); --on-accent: #08261a; --brand: #2f8f6a;
     --red: #ff8f85; --red-bg: #4a2622; --orange: #ffad73; --orange-bg: #4a3220; --blue: #9dbcff; --blue-bg: #24324f;
     --yellow: #f0cf6a; --yellow-bg: #40381c; --yellow-mark: #f0cf6a; --green: #72d9a6; --green-bg: #1f4433;
@@ -56,7 +56,7 @@
   --hero: #3e4a3a; --on-hero: #f4ecdb; --on-hero-muted: #ebe3cd; --hero-btn: rgba(255, 248, 230, .14); --hero-btn-line: rgba(255, 248, 230, .24);
   --glass: rgba(250, 245, 235, .6); --glass-line: rgba(255, 252, 244, .75); --row: rgba(250, 245, 235, .6); --solid: #f8f2e6;
   --field: rgba(252, 248, 240, .8); --shadow: 0 12px 32px rgba(70, 55, 30, .08), 0 2px 6px rgba(70, 55, 30, .04);
-  --text: #3a3126; --muted: #665845; --line: rgba(58, 49, 38, .12);
+  --text: #3a3126; --muted: #665845; --line: rgba(58, 49, 38, .12); --bar-track: rgba(58, 49, 38, .14);
   --accent: #3f6f4c; --accent-deco: #5a8560; --accent-soft: rgba(90, 133, 96, .15); --on-accent: #fff; --brand: #4f7a52;
   --red: #a33a2f; --red-bg: #f3d9cf; --orange: #97510f; --orange-bg: #f3e0c6; --blue: #2f5b97; --blue-bg: #dde3ea;
   --yellow: #6e5608; --yellow-bg: #efe3bf; --yellow-mark: #c29a1e; --green: #2f6b3f; --green-bg: #d9e6cf;
@@ -70,7 +70,7 @@
   --hero: #38331f; --on-hero: #efe3cc; --on-hero-muted: #c7b799; --hero-btn: rgba(255, 240, 210, .1); --hero-btn-line: rgba(255, 240, 210, .18);
   --glass: rgba(44, 37, 28, .62); --glass-line: rgba(255, 240, 210, .07); --row: rgba(56, 47, 35, .55); --solid: #251f18;
   --field: rgba(18, 14, 10, .6); --shadow: 0 12px 32px rgba(0, 0, 0, .3), 0 2px 6px rgba(0, 0, 0, .2);
-  --text: #ece0c8; --muted: #bba98a; --line: rgba(255, 240, 210, .1);
+  --text: #ece0c8; --muted: #bba98a; --line: rgba(255, 240, 210, .1); --bar-track: rgba(255, 240, 210, .13);
   --accent: #b5c98a; --accent-deco: #a3ba78; --accent-soft: rgba(181, 201, 138, .15); --on-accent: #1d1c0e; --brand: #6f8a52;
   --red: #f0a08c; --red-bg: #4a2a20; --orange: #f0b878; --orange-bg: #47331c; --blue: #b3bcd8; --blue-bg: #31303a;
   --yellow: #e6cc7a; --yellow-bg: #40371a; --yellow-mark: #e0bf5c; --green: #a9d090; --green-bg: #2c3c22;
@@ -84,7 +84,7 @@
     --hero: #38331f; --on-hero: #efe3cc; --on-hero-muted: #c7b799; --hero-btn: rgba(255, 240, 210, .1); --hero-btn-line: rgba(255, 240, 210, .18);
     --glass: rgba(44, 37, 28, .62); --glass-line: rgba(255, 240, 210, .07); --row: rgba(56, 47, 35, .55); --solid: #251f18;
     --field: rgba(18, 14, 10, .6); --shadow: 0 12px 32px rgba(0, 0, 0, .3), 0 2px 6px rgba(0, 0, 0, .2);
-    --text: #ece0c8; --muted: #bba98a; --line: rgba(255, 240, 210, .1);
+    --text: #ece0c8; --muted: #bba98a; --line: rgba(255, 240, 210, .1); --bar-track: rgba(255, 240, 210, .13);
     --accent: #b5c98a; --accent-deco: #a3ba78; --accent-soft: rgba(181, 201, 138, .15); --on-accent: #1d1c0e; --brand: #6f8a52;
     --red: #f0a08c; --red-bg: #4a2a20; --orange: #f0b878; --orange-bg: #47331c; --blue: #b3bcd8; --blue-bg: #31303a;
     --yellow: #e6cc7a; --yellow-bg: #40371a; --yellow-mark: #e0bf5c; --green: #a9d090; --green-bg: #2c3c22;
@@ -406,8 +406,19 @@ details .body { white-space: pre-wrap; font-size: 14px; margin-top: 6px; }
 table { width: 100%; border-collapse: collapse; font-size: 14px; table-layout: fixed; }
 td, th { text-align: left; padding: 6px 8px; border-top: 1px solid var(--line); }
 th { color: var(--muted); font-weight: 500; }
-.bar { height: 6px; background: var(--line); border-radius: 999px; overflow: hidden; width: 90px; display: inline-block; vertical-align: middle; margin-right: 6px; }
-.bar i { display: block; height: 100%; border-radius: 999px; background: var(--accent-deco); }
+/* 成绩 bars, CSS only: the bar is for the eye, the words beside it carry the score. Grey empty track = 待评分. */
+.gbar { display: inline-block; height: 8px; border-radius: 999px; overflow: hidden; background: var(--bar-track); vertical-align: middle; }
+.gbar i { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
+.gbar.is-none { background: none; }
+.gbar-avg { width: 120px; margin-right: 8px; }
+.gscore { font-variant-numeric: tabular-nums; }
+.gitems { list-style: none; margin: 8px 0 4px; padding: 0; display: grid; gap: 6px; }
+.gitem { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(64px, 1fr) 9em; gap: 4px 12px; align-items: center; font-size: 14px; }
+.gitem .gname { overflow-wrap: anywhere; }
+.gitem .gscore { color: var(--text); font-size: 13px; white-space: nowrap; text-align: right; }
+.gitem.is-waiting .gscore { color: var(--muted); }
+.grade-detail { margin-top: 6px; }
+.grade-detail > summary { color: var(--muted); font-size: 13px; }
 textarea, input { width: 100%; font: 13px/1.4 ui-monospace, Consolas, monospace; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line);
   background: var(--field); color: var(--text); margin: 6px 0 4px; }
 textarea { border-radius: 18px; }
@@ -505,6 +516,12 @@ label.check { margin: 10px 0; }
 .howto-btn { margin: 0 0 8px; padding: 3px 12px; font-size: 13px; color: var(--muted); }
 .howto { margin: 0 0 10px; }
 .show-all { display: block; margin: 10px auto 0; padding: 5px 16px; font-size: 13px; color: var(--accent); }
+/* 收起 ▲ at the bottom of what was opened: small and quiet, the same fold as the heading. */
+.fold-close { display: block; margin: 12px auto 2px; padding: 3px 14px; font-size: 12.5px; color: var(--muted); }
+details > summary, .howto-btn, .show-all { scroll-margin-top: 76px; }
+/* The three top cards: a folded summary takes exactly two lines (… after that), so the cards are one height. */
+.section.top .sec-toggle[aria-expanded="false"] .sec-sum { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+  overflow: hidden; min-height: 3em; }
 /* 往期课程 at the bottom of a per-course section. */
 .past-fold { margin-top: 12px; }
 .past-fold > summary { padding: 8px 14px; border-radius: 18px; border: 1px dashed var(--line); color: var(--muted); font-size: 14px; font-weight: 600; }
@@ -685,6 +702,10 @@ footer .help-links { color: var(--text); }
   .msg-top::after, .grade-course > summary::after { content: ''; flex-basis: 100%; order: 1; }
   .msg-top > .bb-btn, .grade-course > summary > .bb-btn { order: 2; }
   .grade-avg { margin-left: 0; }
+  /* 成绩: the item name on its own line, the bar and the score under it. */
+  .gitem { grid-template-columns: minmax(0, 1fr) auto; }
+  .gitem .gname { grid-column: 1 / -1; }
+  .gbar-avg { width: 90px; }
   .undo-bar { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
   /* 新手引导: nearly the whole screen, smaller margins; the dots wrap above the buttons if needed. */
   .guide-scrim { padding: 8px; }

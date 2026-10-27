@@ -57,6 +57,8 @@ test('text stays at 4.5:1 or better in every palette, even where a card sits on 
       // 在 Blackboard 打开 ↗ / 打开课程主页 ↗: accent words on a button, on a card or a row (hover keeps the fill).
       for (const [where, under] of [['card', card], ['row', row]]) {
         checks.push([`Blackboard button on ${where}/${spot}`, ratio(rgb('accent'), over(t.field, under))]);
+        // 收起 ▲: quiet words on a button.
+        checks.push([`收起 button on ${where}/${spot}`, ratio(rgb('muted'), over(t.field, under))]);
       }
       for (const s of ['red', 'orange', 'blue', 'yellow', 'green']) checks.push([`${s} heading/${spot}`, ratio(rgb(s), card)]);
     }
@@ -68,6 +70,12 @@ test('text stays at 4.5:1 or better in every palette, even where a card sits on 
     checks.push(['hint box in panel', ratio(rgb('muted'), over(t['tip-bg'], rgb('solid')))]);
     checks.push(['hint in title card', ratio(rgb('on-hero-muted'), over(t['hero-btn'], rgb('hero')))]);
     for (const [what, r] of checks) assert.ok(r >= 4.5, `${name}: ${what} is ${r.toFixed(2)}`);
+    // 成绩 bars are graphics: the filled part against its track at 3:1 or better, on a card over any light spot.
+    for (const spot of ['bg', 'blob-1', 'blob-2', 'blob-3']) {
+      const card = over(t.glass, rgb(spot));
+      const r = ratio(rgb('accent'), over(t['bar-track'], card));
+      assert.ok(r >= 3, `${name}: grade bar on ${spot} is ${r.toFixed(2)}`);
+    }
   }
 });
 

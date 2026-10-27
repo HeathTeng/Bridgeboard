@@ -12,6 +12,7 @@ import { PHASES, STUCK_TEXT, untilLoaded } from './startup.js';
 import { IGNORE_HINT, isIgnored, splitIgnored } from './ignore.js';
 import { initHelp, maybeAskTour, maybeShowGuide } from './help.js';
 import { READ_FAILED, RELOAD, listView, partlyFailed } from './read-state.js';
+import { WAITING, gradeAverage, gradeWords } from './grade-view.js';
 import { $, SERVER_LOST, actionLine, api, el, fmt, friendlyText, isSignedOutError, sleep, watchServer } from './ui.js';
 import {
   buildNav, clearError, courseEl, courseText, flagError, glossed, goToSection, initDisplayPanel, initFeedback, initToTop, onDisplayChange, pastFold,
@@ -850,27 +851,50 @@ function renderAnnouncements(list, failed = 0) {
   }
 }
 
-const bar = (pct) => el('span', { class: 'bar' }, el('i', { style: `width:${Math.min(100, pct)}%` }));
+/**
+ * A score as a bar, drawn with CSS only. The bar is for the eye; the words
+ * next to it (always there) carry the score for screen readers. `pct` null
+ * draws the grey empty track (待评分).
+ */
+function gradeBar(pct, cls = '') {
+  return el('span', { class: `gbar${pct == null ? ' is-empty' : ''}${cls ? ` ${cls}` : ''}`, 'aria-hidden': 'true' },
+    pct == null ? null : el('i', { style: `width:${Math.max(0, Math.min(100, pct))}%` }));
+}
 
-/** One course: the average on the folded row, every item once opened. */
+/** One item once a course is open: name, bar, score. Words-only grades get no bar. */
+function gradeItem(g) {
+  const waiting = g.text === WAITING;
+  return el('li', { class: `gitem${waiting ? ' is-waiting' : ''}` },
+    el('span', { class: 'gname' }, glossed(g.name)),
+    waiting || g.pct != null ? gradeBar(waiting ? null : g.pct) : el('span', { class: 'gbar is-none', 'aria-hidden': 'true' }),
+    el('span', { class: 'gscore' }, gradeWords(g)));
+}
+
+/**
+ * One course: a bar for the average on the folded row; once opened, a bar
+ * per item, and the old table under 查看明细.
+ */
 function gradeCourse(c) {
-  const pcts = c.items.map((g) => g.pct).filter((p) => p != null);
-  const avg = pcts.length ? Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length) : null;
-  const waiting = c.items.filter((g) => g.text === '等待评分').length;
+  const avg = gradeAverage(c.items);
+  const waiting = c.items.filter((g) => g.text === WAITING).length;
   return el('details', { class: 'course grade-course' },
     el('summary', {},
       courseEl(c.course),
       bbButton(c.link, 'course'),
-      el('span', { class: 'grade-avg' }, avg == null ? el('span', { class: 'muted' }, '还没有分数') : [bar(avg), `平均 ${avg}%`]),
-      waiting ? el('span', { class: 'tag' }, `${waiting} 项等待评分`) : null),
-    el('table', {},
-      el('tr', {}, el('th', {}, '项目'), el('th', {}, '分数'), el('th', {}, '百分比')),
-      c.items.map((g) => el('tr', {},
-        el('td', {}, glossed(g.name)),
-        el('td', {}, g.text),
-        el('td', {}, g.pct == null ? '—' : [bar(g.pct), `${g.pct}%`]),
-      )),
-    ));
+      el('span', { class: 'grade-avg' }, avg == null
+        ? el('span', { class: 'muted' }, '还没有分数')
+        : [gradeBar(avg, 'gbar-avg'), el('span', { class: 'gscore' }, `平均 ${avg}%`)]),
+      waiting ? el('span', { class: 'tag' }, `${waiting} 项待评分`) : null),
+    el('ul', { class: 'gitems', 'aria-label': '各项成绩' }, c.items.map(gradeItem)),
+    el('details', { class: 'grade-detail' },
+      el('summary', {}, '查看明细'),
+      el('table', {},
+        el('tr', {}, el('th', {}, '项目'), el('th', {}, '分数'), el('th', {}, '百分比')),
+        c.items.map((g) => el('tr', {},
+          el('td', {}, glossed(g.name)),
+          el('td', {}, g.text),
+          el('td', {}, g.pct == null ? '—' : `${g.pct}%`),
+        )))));
 }
 
 function renderGrades(courses) {

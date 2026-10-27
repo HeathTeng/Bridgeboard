@@ -4,9 +4,9 @@
 
 # Bridgeboard
 
-<h3 align="center">你的专属 Blackboard 看板<br>Your personal Blackboard dashboard</h3>
-
-<h4 align="center">截止日期提醒 · 课程文件一键下载 · 手机提醒 · 待办清单 · 课程消息、公告和成绩，一个页面全看到<br>Deadlines, course file downloads, phone alerts, a to-do list, messages, announcements and grades, all on one page</h4>
+<h3 align="center">你的专属 Blackboard 看板</h3>
+<p align="center"><sub>Your personal Blackboard dashboard</sub></p>
+<p align="center">截止提醒 · 文件下载 · 手机提醒 · 清单 · 消息 · 公告 · 成绩</p>
 
 [![最新版本](https://img.shields.io/github/v/release/HeathTeng/Bridgeboard?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC&color=2f8f6a)](https://github.com/HeathTeng/Bridgeboard/releases/latest)
 ![Windows](https://img.shields.io/badge/Windows-%E5%85%8D%E5%AE%89%E8%A3%85-1f3d33)

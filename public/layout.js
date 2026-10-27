@@ -119,10 +119,121 @@ export function clearError(id) {
   links.get(id)?.classList.remove('has-error');
 }
 
-/** The one line a folded section shows. */
+/** The one line a folded section shows (at most two lines in the top cards; the full text on hover). */
 export function setSummary(id, text) {
   const line = $(`${id}-sum`);
-  if (line) line.textContent = text;
+  if (!line) return;
+  line.textContent = text;
+  line.title = text;
+}
+
+// ---- 收起 ▲ at the bottom of what was opened ----
+
+/**
+ * Opened content taller than this also gets a 收起 ▲ at its bottom, so a
+ * long fold can be closed without scrolling back up. Sections, each course
+ * and 往期课程 always get one.
+ */
+export const CLOSE_AT_PX = 240;
+const ALWAYS = 'details.course, details.past-fold';
+/**
+ * What each 收起 ▲ folds, so two at the bottom of nested boxes can be told
+ * apart (手机提醒: 收起设置 ▲ and 收起手机提醒 ▲). The first match wins;
+ * sections use their own name (收起清单 ▲). The words are the button's only
+ * text, so a screen reader reads the same.
+ */
+export const CLOSE_WORDS = [
+  ['details.past-fold', '往期课程'],
+  ['details.course', '这门课'],
+  ['details.grade-detail', '明细'],
+  ['details.dl-ignored', '已忽略'],
+  ['details.cl-done', '已完成'],
+  ['details.msg', '这段对话'],
+  ['details.timeline-fold', '时间轴'],
+  ['details.fallback', '手动粘贴'],
+  ['#announcements details', '这条公告'],
+  ['[data-more]', '设置'],
+  ['.howto', '说明'],
+];
+
+export function closeText(what) {
+  return `收起${what} ▲`;
+}
+
+/** The words for a box's 收起 button; a plain 收起 ▲ for anything not listed. */
+export function closeWordsFor(box) {
+  return closeText(CLOSE_WORDS.find(([selector]) => box.matches(selector))?.[1] ?? '');
+}
+
+function closeButton(onClick, words) {
+  const b = el('button', { type: 'button', class: 'fold-close' }, words);
+  b.addEventListener('click', onClick);
+  return b;
+}
+
+/** After closing: back to the fold's heading, with the keyboard there too. */
+function backTo(target, focus = target) {
+  const smooth = !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  target.scrollIntoView({ block: 'start', behavior: smooth ? 'smooth' : 'auto' });
+  focus.focus({ preventScroll: true });
+}
+
+/**
+ * Adds, keeps at the bottom, or takes away the 收起 ▲ of one opened box.
+ * `always` or taller than CLOSE_AT_PX (`height` is the content's height).
+ */
+function syncClose(box, { want, close }) {
+  let b = [...box.children].find((n) => n.classList.contains('fold-close'));
+  if (!want) return b?.remove();
+  b ??= closeButton(close, closeWordsFor(box));
+  if (box.lastElementChild !== b) box.append(b);
+}
+
+function syncDetails(d) {
+  if (!d.open || d.closest('#guide')) return;
+  const summary = d.querySelector(':scope > summary');
+  if (!summary) return;
+  const close = d.querySelector(':scope > .fold-close');
+  const height = d.offsetHeight - summary.offsetHeight - (close?.offsetHeight ?? 0);
+  syncClose(d, {
+    want: d.matches(ALWAYS) || height > CLOSE_AT_PX,
+    close: () => {
+      d.open = false;
+      backTo(summary);
+    },
+  });
+}
+
+// Opened folds are watched while open: content often arrives later (files, a message thread).
+const watched = typeof ResizeObserver === 'function' ? new ResizeObserver((entries) => entries.forEach((e) => syncDetails(e.target))) : null;
+
+/** Every <details> on the page, also ones drawn later: one listener catches their toggles. */
+function initDetailsClose() {
+  document.addEventListener('toggle', (e) => {
+    const d = e.target;
+    if (!(d instanceof HTMLDetailsElement)) return;
+    if (d.open) {
+      syncDetails(d);
+      watched?.observe(d);
+    } else {
+      watched?.unobserve(d);
+    }
+  }, true);
+}
+
+/** 💡 怎么用？ boxes and 显示全部设置 ([data-more]): the same 收起 ▲ when tall. */
+function syncBoxClose(box, button) {
+  if (box.hidden) return;
+  const close = box.querySelector(':scope > .fold-close');
+  syncClose(box, {
+    want: box.offsetHeight - (close?.offsetHeight ?? 0) > CLOSE_AT_PX,
+    close: () => {
+      box.hidden = true;
+      button.hidden = false;
+      button.setAttribute('aria-expanded', 'false');
+      backTo(button);
+    },
+  });
 }
 
 function applyFolds() {
@@ -155,21 +266,27 @@ function initSections() {
   for (const s of SECTIONS) {
     const section = $(s.id);
     const h2 = section.querySelector(':scope > h2');
+    const name = h2.textContent.trim();
     const body = el('div', { id: `${s.id}-body`, class: 'sec-body' });
     body.append(...[...section.childNodes].filter((n) => n !== h2));
     const button = el('button', { type: 'button', class: 'sec-toggle', 'aria-expanded': 'true', 'aria-controls': body.id },
       icon(s.id),
-      el('span', { class: 'sec-name' }, h2.textContent.trim()),
+      el('span', { class: 'sec-name' }, name),
       el('span', { class: 'sec-sum', id: `${s.id}-sum` }, LOADING),
       el('span', { class: 'sec-chev', 'aria-hidden': 'true' }));
-    button.addEventListener('click', () => {
-      const open = button.getAttribute('aria-expanded') !== 'true';
+    // The heading and the 收起 ▲ at the bottom share one state, which is remembered.
+    const fold = (open) => {
       setOpen(s.id, open);
       remember({ ...display, collapsed: { ...display.collapsed, [s.id]: !open } });
-    });
+    };
+    button.addEventListener('click', () => fold(button.getAttribute('aria-expanded') !== 'true'));
     h2.className = 'sec-head';
     h2.replaceChildren(button);
     section.classList.toggle('top', Boolean(s.top));
+    body.append(closeButton(() => {
+      fold(false);
+      backTo(section, button);
+    }, closeText(name)));
     section.append(body);
     toggles.set(s.id, button);
   }
@@ -178,17 +295,22 @@ function initSections() {
     b.addEventListener('click', () => {
       box.hidden = !box.hidden;
       b.setAttribute('aria-expanded', String(!box.hidden));
+      syncBoxClose(box, b);
     });
     box.before(b);
   }
+  // 显示全部设置: the button gives way to the settings; 收起 ▲ under them brings it back.
   for (const box of document.querySelectorAll('[data-more]')) {
-    const b = el('button', { type: 'button', class: 'show-all' }, box.dataset.more);
+    const b = el('button', { type: 'button', class: 'show-all', 'aria-expanded': 'false' }, box.dataset.more);
     b.addEventListener('click', () => {
       box.hidden = false;
-      b.remove();
+      b.hidden = true;
+      b.setAttribute('aria-expanded', 'true');
+      syncBoxClose(box, b);
     });
     box.before(b);
   }
+  initDetailsClose();
   applyFolds();
 }
 
