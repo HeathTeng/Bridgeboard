@@ -316,8 +316,8 @@
 
 <footer class="muted small">
   <p class="privacy"><svg class="lock" viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>你的数据只保存在这台电脑上，我们收不到。</p>
-  <p class="help-links">💡 <button id="faqFooter" type="button" class="link" aria-haspopup="dialog">常见问题</button>
-    · <button id="guideFooter" type="button" class="link" aria-haspopup="dialog">重新看新手引导</button></p>
+  <p class="help-links">💡 <button id="helpFooter" type="button" class="link" aria-haspopup="dialog">帮助</button>
+    · <button id="faqFooter" type="button" class="link" aria-haspopup="dialog">常见问题</button></p>
   <p class="feedback">
     <a id="feedbackLink" href="mailto:feedback@getboundly.com">意见反馈</a>
     · 没有邮件程序的话，发邮件到 <span id="feedbackAddr" class="addr">feedback@getboundly.com</span>
@@ -367,6 +367,18 @@
       <div id="guideDots" class="guide-dots"></div>
       <button id="guideNext" type="button" class="primary">下一步</button>
     </div>
+  </div>
+</div>
+<!-- 💡 帮助 (title card and footer): which help? Same glass as the welcome box. Replaying saves nothing (guideSeen / tourSeen stay). -->
+<div id="helpChoice" class="guide-scrim" hidden>
+  <div id="helpChoiceBox" class="welcome help-choice" role="dialog" aria-modal="true" aria-labelledby="helpChoiceTitle">
+    <h2 id="helpChoiceTitle" tabindex="-1">想看哪种帮助？</h2>
+    <div class="help-choices">
+      <button id="helpTour" type="button" aria-label="完整教程：跟着页面一步步走"><b>完整教程</b><span>跟着页面一步步走</span></button>
+      <button id="helpCards" type="button" aria-label="卡片教程：几张卡片快速看" aria-haspopup="dialog"><b>卡片教程</b><span>几张卡片快速看</span></button>
+      <button id="helpFaq" type="button" aria-label="常见问题：卡住了先搜一搜" aria-haspopup="dialog"><b>常见问题</b><span>卡住了先搜一搜</span></button>
+    </div>
+    <p class="welcome-note">完整教程大约 2 分钟，会把折叠的区临时展开，看完恢复原样。</p>
   </div>
 </div>
 <div id="demoNote" class="undo-bar" role="status" hidden></div>

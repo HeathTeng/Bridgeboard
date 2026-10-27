@@ -59,6 +59,8 @@ test('text stays at 4.5:1 or better in every palette, even where a card sits on 
         checks.push([`Blackboard button on ${where}/${spot}`, ratio(rgb('accent'), over(t.field, under))]);
         // 收起 ▲: quiet words on a button.
         checks.push([`收起 button on ${where}/${spot}`, ratio(rgb('muted'), over(t.field, under))]);
+        // Plain buttons (再看一遍新手引导 and others): text on a button.
+        checks.push([`plain button on ${where}/${spot}`, ratio(rgb('text'), over(t.field, under))]);
       }
       for (const s of ['red', 'orange', 'blue', 'yellow', 'green']) checks.push([`${s} heading/${spot}`, ratio(rgb(s), card)]);
     }

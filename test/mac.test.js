@@ -35,19 +35,25 @@ function findBash() {
 }
 const BASH = findBash();
 
-/** A pretend Bridgeboard folder (spaces and Chinese in the path) with fake sysctl, uname, xattr and Node.js. */
-function fakeMac({ runtime = true } = {}) {
+/**
+ * A pretend Bridgeboard folder (spaces and Chinese in the path) with fake
+ * sysctl, uname, xattr and Node.js. runtimeDir: false for no runtime folder at
+ * all; app: false for start.command on its own (no server.js, no runtime).
+ */
+function fakeMac({ runtime = true, runtimeDir = true, app: whole = true } = {}) {
   const base = mkdtempSync(join(tmpdir(), 'bb-mac-'));
   const app = join(base, 'Bridgeboard 下载 v1');
   const bin = join(base, 'bin');
-  mkdirSync(join(app, 'runtime'), { recursive: true });
+  mkdirSync(app);
+  if (whole && runtimeDir) mkdirSync(join(app, 'runtime'));
   mkdirSync(bin);
   for (const f of ['start.command', 'demo.command']) copyFileSync(join(ROOT, f), join(app, f));
+  if (whole) writeFileSync(join(app, 'server.js'), '// the app\n');
   const script = (path, body) => {
     writeFileSync(path, `#!/bin/bash\n${body}\n`);
     chmodSync(path, 0o755);
   };
-  if (runtime) {
+  if (whole && runtimeDir && runtime) {
     for (const arch of ['arm64', 'x64']) {
       script(join(app, 'runtime', `node-${arch}`), `[ "$1" = --version ] && exit 0\necho "node=${arch} dir=\${PWD##*/} args=$*"\nexit \${FAKE_EXIT:-0}`);
     }
@@ -129,6 +135,36 @@ test('start.command: the "downloaded" mark goes, the first time only, and only i
     const later = launch(mac, { env: { FAKE_QUARANTINE: '0' } });
     assert.doesNotMatch(later.xattr, /^-d/m, 'nothing to do the next time');
     assert.doesNotMatch(later.out, /第一次运行/);
+  } finally {
+    rmSync(mac.base, { recursive: true, force: true });
+  }
+});
+
+test('start.command on its own (e.g. dragged into Downloads): touches nothing there, says where to run it', { skip: !BASH && 'no bash here' }, () => {
+  const mac = fakeMac({ app: false });
+  try {
+    const alone = launch(mac, { env: { FAKE_QUARANTINE: '1', FAKE_ARM64: '1' } });
+    assert.equal(alone.status, 1);
+    assert.doesNotMatch(alone.xattr, /^-d/m, 'the "downloaded" mark stays on that folder');
+    assert.match(alone.out, /start\.command 要放在解压出来的 Bridgeboard 文件夹里运行（旁边有 server\.js 和 runtime 文件夹）。/);
+    assert.match(alone.out, /请回到那个文件夹双击 start\.command。/);
+    assert.match(alone.out, /按回车键关闭/);
+    assert.doesNotMatch(alone.out, /第一次运行/);
+  } finally {
+    rmSync(mac.base, { recursive: true, force: true });
+  }
+});
+
+test('start.command with server.js but no runtime folder (Node.js on the Mac): starts, leaves the mark alone', { skip: !BASH && 'no bash here' }, () => {
+  const mac = fakeMac({ runtimeDir: false });
+  try {
+    const other = join(mac.base, 'node-bin');
+    mkdirSync(other);
+    mac.script(join(other, 'node'), 'echo "node=installed args=$*"');
+    const sep = process.platform === 'win32' ? ';' : ':';
+    const run = launch(mac, { path: `${mac.bin}${sep}${other}`, env: { FAKE_QUARANTINE: '1' } });
+    assert.match(run.out, /node=installed args=server\.js/);
+    assert.doesNotMatch(run.xattr, /^-d/m);
   } finally {
     rmSync(mac.base, { recursive: true, force: true });
   }

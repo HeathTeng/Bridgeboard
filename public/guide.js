@@ -6,7 +6,7 @@
 // served read-only under /guide-img/). swatches: the five deadline colours.
 // faq: the last page, which shows docs/FAQ.md with a search box.
 //
-// The same pages feed two guides: 💡 帮助 shows them as cards (GUIDE_PAGES),
+// The same pages feed two guides: 💡 帮助 → 卡片教程 shows them as cards (GUIDE_PAGES),
 // and the first start walks through the real page (TOUR_STEPS below), which
 // borrows the pages' words instead of having its own.
 //
@@ -106,7 +106,7 @@ export const GUIDE_PAGES = [
     faq: true,
     lines: [
       '卡住了先在这里搜一搜，比如「提醒」「登录」「下载」。',
-      '随时点右上角「💡 帮助」再看这份引导，点「常见问题」直接打开这一页。',
+      '点 💡 帮助，可以选完整教程或卡片教程；点「常见问题」直接打开这一页。',
     ],
   },
 ];

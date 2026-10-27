@@ -115,14 +115,13 @@ test('started signed out: asked once after the first sign-in, when the courses a
   assert.deepEqual(flagsAfterFirstRun({ signedIn: true }), { guideSeen: true, tourSeen: true }, 'signed in: the features were shown');
 });
 
-test('💡 帮助 opens the card guide at page 1; 常见问题 at its last page', () => {
+test('卡片教程 opens the card guide at page 1; 常见问题 at its last page', () => {
   assert.deepEqual(helpAction('help', GUIDE_PAGES), { mode: 'cards', page: 0 });
   assert.deepEqual(helpAction('faq', GUIDE_PAGES), { mode: 'cards', page: GUIDE_PAGES.length - 1 });
   assert.equal(GUIDE_PAGES[GUIDE_PAGES.length - 1].faq, true);
   const help = read('../public/help.js');
-  assert.match(help, /\$\('helpBtn'\)\.addEventListener\('click', \(\) => openGuide\(helpAction\('help', GUIDE_PAGES\)\.page\)\)/);
   assert.match(help, /for \(const id of \['faqBtn', 'faqFooter'\]\) \$\(id\)\.addEventListener\('click', \(\) => openGuide\(helpAction\('faq', GUIDE_PAGES\)\.page\)\)/);
-  assert.match(help, /'在页面上再带我走一遍'/, 'card page 1 can start the spotlight again');
+  assert.match(help, /else openGuide\(helpAction\(choice === 'faq' \? 'faq' : 'help', GUIDE_PAGES\)\.page\);/);
 });
 
 test('tourSeen: saved and read back like guideSeen; demo mode writes nothing', (t) => {

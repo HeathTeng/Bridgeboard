@@ -181,7 +181,9 @@ test('page: the dialog, the 💡 帮助 button and the 常见问题 links are in
   assert.match(header, /<button id="faqBtn" type="button" aria-haspopup="dialog">常见问题<\/button>/);
   const footer = html.slice(html.indexOf('<footer'), html.indexOf('</footer>'));
   assert.match(footer, /id="faqFooter"/);
-  assert.match(footer, /id="guideFooter"/);
+  // 帮助 in the footer opens the same choice box as 💡 帮助; no separate replay link.
+  assert.match(footer, /<button id="helpFooter" type="button" class="link" aria-haspopup="dialog">帮助<\/button>/);
+  assert.doesNotMatch(footer, /guideFooter|重新看新手引导/);
   const css = read('../public/style.css');
   assert.match(css, /@media \(prefers-reduced-motion: reduce\) \{ \.guide \{ animation: none; \} \}/);
   // Esc closes, arrows turn pages but not while typing in the search box.

@@ -594,7 +594,6 @@ body.guide-open { overflow: hidden; }
 .guide-swatches { margin-top: 4px; }
 .guide-shot { margin: 14px 0 0; }
 .guide-shot img { display: block; max-width: 100%; width: auto; height: auto; max-height: 210px; margin: 0 auto; border-radius: 18px; border: 1px solid var(--line); }
-.guide-walk { display: inline-block; margin-top: 6px; font-size: 14px; }
 .guide-shot figcaption { margin-top: 6px; text-align: center; }
 .guide-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 22px 16px; border-top: 1px solid var(--line); }
 .guide-nav > button { min-width: 88px; }
@@ -624,6 +623,17 @@ body.guide-open { overflow: hidden; }
 /* Under 跳过引导: why the walk-through is worth the few steps. Light and small, still 4.5:1 (--muted on the glass). */
 .welcome-note { margin: 16px auto 0; max-width: 330px; font-size: 12.5px; line-height: 1.6; }
 @media (prefers-reduced-motion: reduce) { .welcome { animation: none; } }
+/* 💡 帮助: which help, three choices on the welcome box's glass (under each other at phone width). Outlined, so the words sit on the glass itself. */
+.help-choice { width: min(620px, 100%); padding: 26px 24px 22px; }
+.help-choice h2 { margin: 0 0 16px; font-size: 20px; }
+.help-choices { display: flex; gap: 10px; }
+.help-choices button { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px 12px; border-radius: 18px;
+  background: transparent; border: 1px solid color-mix(in srgb, var(--text) 28%, transparent); color: var(--text); }
+.help-choices button:hover { border-color: var(--text); }
+.help-choices b { font-size: 16px; }
+.help-choices span { font-size: 13.5px; }
+.help-choice .welcome-note { max-width: none; }
+@media (prefers-reduced-motion: reduce) { .help-choices button:active { transform: none; } }
 /*
  * The spotlight tour. The page cannot be clicked (.tour-block covers it); the
  * ring frames the real element and dims the rest with a wide shadow; ring and
@@ -685,6 +695,7 @@ footer .help-links { color: var(--text); }
   .ics-tip { text-align: left; }
   .card { padding: 16px; }
   .today { padding: 14px 16px; }
+  .help-choices { flex-direction: column; }
   /* The red reminder: 不再提示 moves under the words, so neither is cut off. */
   .keep-open-wrap { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 9px 16px 10px; border-radius: 14px;
     background: var(--error-bg); border: 1px solid color-mix(in srgb, var(--error-text) 22%, transparent); }

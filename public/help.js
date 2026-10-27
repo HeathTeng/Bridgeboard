@@ -1,7 +1,8 @@
 // Help for newcomers, in three parts that share the words in guide.js:
 // - the first start: a welcome box (the title card's colours), then the
 //   spotlight tour on the real page (spotlight.js);
-// - 💡 帮助: the same pages as frosted cards, the FAQ last (常见问题 opens it);
+// - 💡 帮助: first a small choice (完整教程, the spotlight tour again; 卡片教程,
+//   the same pages as frosted cards with the FAQ last; 常见问题);
 // - once after the first sign-in: 要不要看看各个功能在哪？
 // The FAQ comes from docs/FAQ.md through /api/faq and is drawn with DOM
 // methods and text nodes only, so no text can turn into markup.
@@ -29,7 +30,9 @@ function saveFlags(patch) {
   api('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) }).catch(() => {});
 }
 
-const busy = () => !$('guide').hidden || !$('welcome').hidden || tourRunning();
+let choiceOpener = null; // where focus goes back to after the choice box
+
+const busy = () => !$('guide').hidden || !$('welcome').hidden || !$('helpChoice').hidden || tourRunning();
 
 // ---- The first start ----
 
@@ -75,9 +78,44 @@ export function maybeAskTour() {
   });
 }
 
-/** The tour again (在页面上再带我走一遍, or 好 after signing in, without the black-window card). */
-function walkAgain(withCard = true) {
-  startTour(withCard ? TOUR_STEPS : TOUR_STEPS.filter((s) => !s.mustSee), { signedIn: isSignedIn });
+/**
+ * The tour again (完整教程 from 💡 帮助, or 好 after signing in, without the
+ * black-window card). Steps follow the sign-in state; nothing is saved.
+ */
+function walkAgain(withCard = true, onEnd = () => {}) {
+  startTour(withCard ? TOUR_STEPS : TOUR_STEPS.filter((s) => !s.mustSee), { signedIn: isSignedIn, onEnd });
+}
+
+// ---- 💡 帮助: which help? ----
+
+/** The small choice box: 完整教程, 卡片教程 or 常见问题. Nothing is saved. */
+export function openHelpChoice() {
+  if (busy()) return;
+  choiceOpener = document.activeElement;
+  $('helpChoice').hidden = false;
+  document.body.classList.add('guide-open');
+  $('helpTour').focus();
+}
+
+/** Closes the box; focus back on 💡 帮助 (or the footer link), so the next box or tour returns there too. */
+function closeHelpChoice() {
+  $('helpChoice').hidden = true;
+  document.body.classList.remove('guide-open');
+  const back = choiceOpener && choiceOpener !== document.body && document.contains(choiceOpener) ? choiceOpener : $('helpBtn');
+  back.focus({ preventScroll: true });
+  return back;
+}
+
+/** After the tour: the button it was started from back in view (focus is already on it). */
+function backInView(button) {
+  const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  button.scrollIntoView({ block: 'nearest', behavior: smooth ? 'smooth' : 'auto' });
+}
+
+function choose(choice) {
+  const from = closeHelpChoice();
+  if (choice === 'tour') walkAgain(true, () => backInView(from));
+  else openGuide(helpAction(choice === 'faq' ? 'faq' : 'help', GUIDE_PAGES).page);
 }
 
 // ---- The cards (💡 帮助 / 常见问题) ----
@@ -122,14 +160,6 @@ function render() {
   }));
   const body = $('guideBody');
   body.scrollTop = 0;
-  let walk = null;
-  if (page === 0) {
-    walk = el('button', { type: 'button', id: 'walkAgain', class: 'link guide-walk' }, '在页面上再带我走一遍');
-    walk.addEventListener('click', () => {
-      closeGuide();
-      walkAgain();
-    });
-  }
   // replaceChildren would write a null as the word "null", so the parts a page lacks are dropped first.
   body.replaceChildren(...[
     p.icon ? el('div', { class: 'guide-icon', 'aria-hidden': 'true' }, p.icon) : null,
@@ -139,7 +169,6 @@ function render() {
     p.image ? el('figure', { class: 'guide-shot' },
       el('img', { src: p.image.src, alt: p.image.alt, width: String(p.image.width), height: String(p.image.height) }),
       el('figcaption', { class: 'muted small' }, '示例截图（只是图片，不能点）')) : null,
-    walk,
     p.faq ? faqSection() : null,
   ].filter(Boolean));
 }
@@ -246,9 +275,27 @@ export function initHelp({ signedIn = () => false, onFirstRunDone = () => {} } =
       items[(items.indexOf(document.activeElement) + 1) % items.length].focus();
     }
   });
-  $('helpBtn').addEventListener('click', () => openGuide(helpAction('help', GUIDE_PAGES).page));
+  // 💡 帮助 in the title card and the footer: the choice box first. 常见问题 still opens the FAQ straight away.
+  for (const id of ['helpBtn', 'helpFooter']) $(id).addEventListener('click', openHelpChoice);
+  $('helpTour').addEventListener('click', () => choose('tour'));
+  $('helpCards').addEventListener('click', () => choose('cards'));
+  $('helpFaq').addEventListener('click', () => choose('faq'));
+  // Esc or a click outside the box closes it; Tab stays on the three choices.
+  $('helpChoice').addEventListener('click', (e) => {
+    if (e.target === $('helpChoice')) closeHelpChoice();
+  });
+  $('helpChoice').addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeHelpChoice();
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      const items = [$('helpTour'), $('helpCards'), $('helpFaq')];
+      const at = items.indexOf(document.activeElement);
+      items[(at + (e.shiftKey ? items.length - 1 : 1)) % items.length].focus();
+    }
+  });
   for (const id of ['faqBtn', 'faqFooter']) $(id).addEventListener('click', () => openGuide(helpAction('faq', GUIDE_PAGES).page));
-  $('guideFooter').addEventListener('click', () => openGuide(helpAction('help', GUIDE_PAGES).page));
   $('guidePrev').addEventListener('click', () => go(page - 1));
   $('guideNext').addEventListener('click', () => (page === LAST ? closeGuide() : go(page + 1)));
   $('guideSkip').addEventListener('click', closeGuide);

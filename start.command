@@ -18,6 +18,15 @@ wait_for_enter() {
   read -r _
 }
 
+# Moved out on its own (e.g. into Downloads): the panel is not here, so say
+# where to run it, and touch nothing in this folder.
+if [ ! -f "$DIR/server.js" ]; then
+  echo "start.command 要放在解压出来的 Bridgeboard 文件夹里运行（旁边有 server.js 和 runtime 文件夹）。"
+  echo "请回到那个文件夹双击 start.command。"
+  wait_for_enter
+  exit 1
+fi
+
 # Apple chip or Intel. sysctl first: a Terminal running under Rosetta says
 # x86_64 in uname -m even on an Apple chip.
 if [ "$(sysctl -n hw.optional.arm64 2>/dev/null)" = "1" ]; then
@@ -32,9 +41,12 @@ NODE="$DIR/runtime/node-$ARCH"
 
 # The first time: macOS marks everything from the internet as "downloaded"
 # and would stop the built-in Node.js again after start.command was allowed.
-# Only this Bridgeboard folder is touched, nothing else on the Mac.
-if xattr -p com.apple.quarantine "$DIR/start.command" >/dev/null 2>&1 \
-  || { [ -f "$NODE" ] && xattr -p com.apple.quarantine "$NODE" >/dev/null 2>&1; }; then
+# Only this Bridgeboard folder is touched, nothing else on the Mac, and only
+# when it really is one (server.js and the runtime folder next to this file).
+if [ -f "$DIR/server.js" ] && [ -d "$DIR/runtime" ] && {
+  xattr -p com.apple.quarantine "$DIR/start.command" >/dev/null 2>&1 \
+    || { [ -f "$NODE" ] && xattr -p com.apple.quarantine "$NODE" >/dev/null 2>&1; }
+}; then
   xattr -dr com.apple.quarantine "$DIR" 2>/dev/null
   echo "第一次运行：已去掉这个 Bridgeboard 文件夹里文件的「从网上下载」标记，以后不会再被拦（只处理这个文件夹，不碰电脑上其他地方）。"
 fi
