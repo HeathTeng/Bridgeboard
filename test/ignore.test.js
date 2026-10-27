@@ -135,7 +135,7 @@ test('page: the round × says it does not change Blackboard; 已忽略 starts fo
   assert.match(css, /\.pill\.st-ignored \{ background: var\(--tip-bg\); color: var\(--muted\); \}/);
   // Phone width: the capsule and × go under the title, so the words are not squeezed.
   const phone = css.slice(css.indexOf('@media (max-width: 600px) {\n  body'));
-  assert.match(phone, /\.dl-row > \.dl-body \{ flex-basis: 100%; \}\n  \.dl-side \{ margin-left: auto; \}/);
+  assert.match(phone, /\.dl-row > \.dl-body \{ flex-basis: 100%; \}\n  \.dl-side \{ margin-left: auto; flex-wrap: wrap; justify-content: flex-end; \}/);
   assert.match(read('../server.js'), /\/\^\\\/api\\\/checklist\\\/ignored\\\/\(\[\^\/\]\+\)\$\/\.exec\(pathname\)/);
 });
 

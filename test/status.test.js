@@ -103,7 +103,7 @@ test('links: assessment overview, course outline, https on the school host only'
   const base = 'https://school.blackboard.com';
   assert.equal(
     blackboardLink(base, { courseId: '_12_1', contentId: '_34_1', assessment: true }),
-    'https://school.blackboard.com/ultra/courses/_12_1/outline/assessment/_34_1/overview?courseId=_12_1',
+    'https://school.blackboard.com/ultra/courses/_12_1/assessment/_34_1/overview?courseId=_12_1',
   );
   assert.equal(blackboardLink(`${base}/`, { courseId: '_12_1', contentId: '_34_1' }), `${base}/ultra/courses/_12_1/outline`);
   assert.equal(blackboardLink(base, { courseId: '_12_1' }), `${base}/ultra/courses/_12_1/outline`);
@@ -112,7 +112,7 @@ test('links: assessment overview, course outline, https on the school host only'
   assert.equal(blackboardLink(base, {}), undefined);
   // Odd ids are escaped instead of changing the path or host.
   const odd = blackboardLink(base, { courseId: '../x?y#z', contentId: '//evil.com', assessment: true });
-  assert.ok(odd.startsWith(`${base}/ultra/courses/..%2Fx%3Fy%23z/outline/assessment/%2F%2Fevil.com/`), odd);
+  assert.ok(odd.startsWith(`${base}/ultra/courses/..%2Fx%3Fy%23z/assessment/%2F%2Fevil.com/`), odd);
 });
 
 test('opening date from date-based release rules', async () => {

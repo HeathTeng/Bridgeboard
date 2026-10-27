@@ -23,6 +23,7 @@
       <button id="displayBtn" type="button" aria-expanded="false" aria-controls="displayPanel">显示设置</button>
       <button id="helpBtn" type="button" aria-haspopup="dialog">💡 帮助</button>
       <button id="faqBtn" type="button" aria-haspopup="dialog">常见问题</button>
+      <button id="logoutBtn" type="button" hidden>退出登录</button>
     </div>
     <p class="tip muted small ics-tip">导出到日历：导入手机日历后，电脑关机也会提醒。</p>
   </div>
@@ -96,7 +97,10 @@
   <p class="tip muted small">在浏览器里打开 Blackboard 时地址栏显示的网址，只需要到 .com 为止。</p>
   <button id="connect" type="button" class="primary big">连接 Blackboard</button>
   <p id="connectMsg" class="small"></p>
+  <p id="connectTip" class="tip muted small" hidden>请用学校邮箱登录。如果它自动选了你的个人微软账号，点「使用其他账户」，再输入学校邮箱。</p>
+  <p id="connectWrong" class="alert" role="alert" hidden>登录用的不是学校账号。在登录窗口点「使用其他账户」，用学校邮箱重新登录。</p>
   <p class="tip muted small">点击后会弹出一个单独的浏览器窗口，在里面像平时一样登录学校账号。登录完成后窗口会自动关闭。这个窗口不会使用或改动你平时浏览器里的数据。</p>
+  <p class="tip muted small bb-browser">「在 Blackboard 打开 ↗」和「打开课程主页 ↗」会在电脑的默认浏览器里打开。如果那个浏览器没登录过 Blackboard，第一次会让你登录一下，登录一次就好。</p>
 
   <details class="fallback">
     <summary>弹出窗口用不了？改用手动粘贴</summary>
@@ -124,10 +128,11 @@
       <span class="pill st-done">已完成</span>
     </p>
     <div class="howto tip small" hidden>
-      点作业标题可以直接打开 Blackboard 的作业页面（Turnitin 这类会打开课程大纲）。
+      点「在 Blackboard 打开 ↗」直接打开 Blackboard 的作业页面；Turnitin 这类只能打开课程，按钮写的是「打开课程主页 ↗」。
       颜色按离截止还有多久来分；什么时候算「临期」「刚开放」，可以在下面的「调整时间轴」里改。
     </div>
     <div id="todo"></div>
+    <p class="tip muted small bb-browser">「在 Blackboard 打开 ↗」和「打开课程主页 ↗」会在电脑的默认浏览器里打开。如果那个浏览器没登录过 Blackboard，第一次会让你登录一下，登录一次就好。</p>
     <p class="tip muted small bb-note">点开后就是在 Blackboard 里操作了，在那里打开消息会被 Blackboard 标成已读；面板本身不会改动 Blackboard 的任何内容。Blackboard 会在新标签页打开，看完关掉那个标签就回到面板。</p>
     <details class="timeline-fold">
       <summary>调整时间轴</summary>
@@ -192,6 +197,7 @@
           <input id="barkLink" type="text" placeholder="https://api.day.app/……" spellcheck="false" autocomplete="off">
         </label>
         <p id="barkSaved" class="muted small"></p>
+        <p class="alert">Bark 链接就像密码，别人拿到也能给你的手机发消息，不要发给别人。不小心发出去了，就在 Bark 里重置密钥，再把新链接粘贴到这里。</p>
       </div>
 
       <div id="ntfySetup" hidden>
@@ -278,7 +284,7 @@
   </section>
   <section id="messages" class="card section">
     <h2>课程消息</h2>
-    <p class="howto tip small" hidden>这里汇总老师和同学在 Blackboard 课程里发给你的消息。只包括进行中的课程；想看最新消息，点右上角的「刷新」。要回复，点开对话后选「在 Blackboard 中打开」。</p>
+    <p class="howto tip small" hidden>这里汇总老师和同学在 Blackboard 课程里发给你的消息。只包括进行中的课程；想看最新消息，点右上角的「刷新」。要回复，点「在 Blackboard 打开 ↗」。</p>
     <div id="msgControls" class="msg-controls" hidden>
       <span class="chips" role="group" aria-label="筛选">
         <button type="button" class="chip" data-filter="all" aria-pressed="true">全部</button>

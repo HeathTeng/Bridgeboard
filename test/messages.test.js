@@ -39,7 +39,7 @@ test('threads: newest first, named by audience, unread total, plain-text preview
   assert.equal([...group.preview].length, 81); // 80 characters and an ellipsis
   assert.ok(group.preview.endsWith('…'));
   assert.equal(all.course, 'Management');
-  assert.equal(all.link, `${base}/ultra/courses/_10_1/messages`);
+  assert.equal(all.link, `${base}/ultra/courses/_10_1/messages/edit/_c1_1?courseId=_10_1&offset=0&count=1`);
 });
 
 test('missing or odd fields do not break a thread', () => {
@@ -85,7 +85,8 @@ test('relative times in local time', () => {
 });
 
 test('messages link: https on the school host only', () => {
-  assert.equal(messagesLink(base, '_10_1'), `${base}/ultra/courses/_10_1/messages`);
+  assert.equal(messagesLink(base, '_10_1', '_7_1'), `${base}/ultra/courses/_10_1/messages/edit/_7_1?courseId=_10_1&offset=0&count=1`);
+  assert.equal(messagesLink(base, '_10_1'), `${base}/ultra/courses/_10_1/outline`, 'no thread: course home');
   assert.equal(messagesLink('http://school.blackboard.com', '_10_1'), undefined);
   assert.equal(messagesLink(base, ''), undefined);
   assert.ok(messagesLink(base, '../../evil?x').startsWith(`${base}/ultra/courses/..%2F..%2Fevil%3Fx/`));

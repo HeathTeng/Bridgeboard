@@ -11,6 +11,7 @@ import { demoChecklist, demoDownload, demoFiles, demoMessages, demoOverview, dem
 import { alreadyThere, planPaths } from './lib/downloader.js';
 import { checkDownloadDir, checkDurations, loadSettings, saveSettings } from './lib/settings.js';
 import { durations } from './lib/status.js';
+import { hasFailures } from './lib/read-state.js';
 import { checkDisplay, displayOf } from './lib/display.js';
 import { ChecklistStore } from './lib/checklist.js';
 import { PushService } from './lib/push-service.js';
@@ -30,7 +31,7 @@ const HOST = '127.0.0.1';
 const PUBLIC = join(import.meta.dirname, 'public');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png' };
 // Rules the page and the server share, served from lib/.
-const SHARED = new Set(['status.js', 'checklist-rows.js', 'message-view.js', 'display.js', 'terms.js', 'section-summary.js', 'glossary.js', 'faq.js', 'tour.js', 'ignore.js', 'startup.js']);
+const SHARED = new Set(['status.js', 'checklist-rows.js', 'message-view.js', 'display.js', 'terms.js', 'section-summary.js', 'glossary.js', 'faq.js', 'tour.js', 'ignore.js', 'startup.js', 'read-state.js']);
 // The only files from docs/ the page may read: the guide's screenshots. The FAQ text comes from /api/faq.
 const GUIDE_IMAGES = new Map([['/guide-img/connect.png', 'step-connect.png'], ['/guide-img/download.png', 'step-download.png']]);
 const DOCS = join(APP_DIR, 'docs');
@@ -81,7 +82,8 @@ function shared(fn) {
 
 const readOverview = shared(async () => {
   const data = await withSession(() => bb.overview());
-  cache = { at: Date.now(), data };
+  // A read with failures is not kept: the next request (重新读取) asks Blackboard again.
+  cache = hasFailures(data) ? undefined : { at: Date.now(), data };
   return data;
 });
 
@@ -96,7 +98,7 @@ let messagesCache;
 
 const readMessages = shared(async () => {
   const data = await withSession(() => bb.messageThreads());
-  messagesCache = { at: Date.now(), data };
+  messagesCache = hasFailures(data) ? undefined : { at: Date.now(), data };
   return data;
 });
 
@@ -381,7 +383,8 @@ const server = createServer(async (req, res) => {
       return send(res, 200, await getOverview(url.searchParams.has('refresh')));
     }
     if (url.pathname === '/calendar.ics') {
-      const { todo } = await getOverview(false);
+      const { todo, failed } = await getOverview(false);
+      if (failed?.todo) return send(res, 503, { error: '这次没读到 Blackboard 的截止日期，过一会儿再导出。' });
       return send(res, 200, toIcs(todo), 'text/calendar; charset=utf-8', {
         'Content-Disposition': 'attachment; filename="blackboard-deadlines.ics"',
       });
@@ -412,7 +415,7 @@ const server = createServer(async (req, res) => {
       const { url: baseUrl } = JSON.parse(await readBody(req));
       if (!baseUrl) return send(res, 400, { error: '请先填写学校的 Blackboard 网址。' });
       connectJob = { state: 'running', message: '正在打开浏览器…' };
-      bb.connectWithBrowser(baseUrl, (message) => { connectJob = { state: 'running', message }; })
+      bb.connectWithBrowser(baseUrl, (message, { wrongAccount = false } = {}) => { connectJob = { state: 'running', message, wrongAccount }; })
         .then(async () => {
           cache = undefined;
           const s = await bb.status();
@@ -428,6 +431,17 @@ const server = createServer(async (req, res) => {
       await bb.loginWithCurl(curl, baseUrl || undefined);
       cache = undefined;
       return send(res, 200, await bb.status());
+    }
+    if (url.pathname === '/api/logout' && req.method === 'POST') {
+      if (DEMO) return send(res, 400, { error: '示例模式没有登录，不需要退出。' });
+      if (connectJob.state === 'running') return send(res, 409, { error: '登录窗口还开着。先把它登录完或关掉，再退出。' });
+      if (downloadJob.state === 'running') return send(res, 409, { error: '课程文件还在下载。等下载完，或在「课程文件」里点「停止」后再退出。' });
+      await bb.signOut();
+      cache = undefined;
+      messagesCache = undefined;
+      fileCache.clear();
+      connectJob = { state: 'idle' };
+      return send(res, 200, { signedOut: true });
     }
     const filesRoute = /^\/api\/courses\/(_\d+_\d+)\/files$/.exec(url.pathname);
     if (filesRoute && req.method === 'GET') {

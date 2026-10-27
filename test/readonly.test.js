@@ -30,6 +30,8 @@ const LIBRARY_READS = new Set([
   'BlackboardClient', 'courseLabel', 'htmlToText', 'displayName', 'extractText', 'fileDetailOf', 'linkTargetOf',
   'recogniseExternalDocument', 'externalFileName', 'loadConfigOrNull', 'login', 'normaliseBaseUrl', 'safeFileName',
   'downloadToDisk', 'fetchExternalDocument', 'rawFileUrl', 'setLogLevel',
+  // logout only deletes the session saved on this computer (退出登录); it sends nothing to Blackboard.
+  'logout',
 ]);
 
 test('read-only: nothing marks anything as read, reviewed or submitted', () => {

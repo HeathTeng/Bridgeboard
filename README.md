@@ -4,8 +4,9 @@
 
 # Bridgeboard
 
-**一个页面看全所有课程的截止日期**<br>
-Every Blackboard deadline on one page
+<h3 align="center">你的专属 Blackboard 看板<br>Your personal Blackboard dashboard</h3>
+
+<h4 align="center">截止日期提醒 · 课程文件一键下载 · 手机提醒 · 待办清单 · 课程消息、公告和成绩，一个页面全看到<br>Deadlines, course file downloads, phone alerts, a to-do list, messages, announcements and grades, all on one page</h4>
 
 [![最新版本](https://img.shields.io/github/v/release/HeathTeng/Bridgeboard?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC&color=2f8f6a)](https://github.com/HeathTeng/Bridgeboard/releases/latest)
 ![Windows](https://img.shields.io/badge/Windows-%E5%85%8D%E5%AE%89%E8%A3%85-1f3d33)
@@ -29,7 +30,7 @@ Every Blackboard deadline on one page
 | --- | --- | --- |
 | ⏰ | **五色截止提醒**：所有课程的作业按逾期、临期、还有时间、刚开放、已完成排好 | Deadlines from every course in five colours |
 | 🙈 | **逾期作业可以忽略**：点 × 不再提醒，6 秒内可撤销，随时能在「已忽略」里恢复；只记在你的电脑上 | Stop reminders for an overdue assignment, with undo and restore |
-| ↗ | **直接打开 Blackboard**：作业、课程消息、公告、成绩后面的 ↗ 在新标签页打开 Blackboard 对应的页面 | A ↗ opens the matching Blackboard page in a new tab |
+| ↗ | **直接打开 Blackboard**：作业和课程消息旁边的「在 Blackboard 打开 ↗」直接打开那一项；公告、成绩和课程文件的「打开课程主页 ↗」打开课程首页 | Buttons open the assignment or message in Blackboard, or the course home where Blackboard gives no page address |
 | 📁 | **课程文件一键下载**：勾选课程，选文件夹（U 盘也行），按课程整理；可导出给 AI 用的文字版 | Download course files sorted by course, with text copies for AI tools |
 | 🔔 | **手机提醒**：iPhone 用 Bark，安卓用 ntfy；默认关闭，测试成功才会发 | Opt-in phone alerts through Bark (iPhone) or ntfy (Android) |
 | ✅ | **清单**：作业自动加入，交了自动打勾；也能写自己的待办 | A checklist that fills and ticks itself, plus your own to-dos |
@@ -97,7 +98,7 @@ Every Blackboard deadline on one page
 <details>
 <summary><b>截止日期的五种颜色</b></summary>
 
-每个截止事项都按紧急程度标上颜色和文字，最上面的颜色说明和下面的分组是同一个顺序：🔴 逾期（已逾期）、🟠 临期（默认 12 小时内截止）、🟡 还有时间（进行中）、🔵 刚开放（默认当天新开放）、🟢 已完成（已提交）。作业标题后面的 **↗** 会在新标签页打开 Blackboard 里的作业页面。
+每个截止事项都按紧急程度标上颜色和文字，最上面的颜色说明和下面的分组是同一个顺序：🔴 逾期（已逾期）、🟠 临期（默认 12 小时内截止）、🟡 还有时间（进行中）、🔵 刚开放（默认当天新开放）、🟢 已完成（已提交）。每项旁边的 **在 Blackboard 打开 ↗** 会在新标签页打开 Blackboard 里的作业页面（Turnitin 这类写的是 **打开课程主页 ↗**）。
 
 逾期的作业不想再被提醒，点那一条右边的圆形 **×**：它会移到截止日期区最下面的 **已忽略（N）** 里，不再出现在「今天要注意」、导航栏数字和手机的逾期提醒里。点错了，底部 6 秒内点 **撤销**；以后想恢复，展开「已忽略」点 **恢复**。忽略只记在你的电脑上，不会改动 Blackboard；如果之后 Blackboard 显示你交了，会自动按「已完成」显示。
 
@@ -120,7 +121,7 @@ Every Blackboard deadline on one page
 <details>
 <summary><b>课程消息</b></summary>
 
-**课程消息** 把老师和同学在各门课里发给你的 Blackboard 消息集中在一起，最新的在最上面，未读的标着"未读"。点一条就能展开看完整对话；每一行「查看」旁边的 **在 Blackboard 打开 ↗** 直接去这门课的消息页，要回复就在那里回复。可以只看未读，也可以按课程筛选。面板只读取消息，不会替你把消息标成已读。
+**课程消息** 把老师和同学在各门课里发给你的 Blackboard 消息集中在一起，最新的在最上面，未读的标着"未读"。点一条就能展开看完整对话；每一行的 **在 Blackboard 打开 ↗** 直接打开那段对话，要回复就在那里回复。可以只看未读，也可以按课程筛选。面板只读取消息，不会替你把消息标成已读。
 
 </details>
 
@@ -160,7 +161,7 @@ Every Blackboard deadline on one page
 ## 隐私和安全 · Privacy and safety
 
 - 面板只在 `127.0.0.1` 上运行，别的网页和设备连不上。The server listens on `127.0.0.1` only and rejects requests from other host names or web pages.
-- 只**读取** Blackboard，不能交作业、不能做测验，连「已读」都不会替你标；有自动测试守着这一条。面板里的 ↗ 链接会在新标签页打开 Blackboard，点开后就是在 Blackboard 里操作了（比如在那里打开消息会被标成已读），看完关掉那个标签就回到面板。It only **reads** from Blackboard; it cannot submit work or take quizzes, and never marks anything as read (a test guards this). Links open Blackboard itself in a new tab.
+- 只**读取** Blackboard，不能交作业、不能做测验，连「已读」都不会替你标；有自动测试守着这一条。面板里的「在 Blackboard 打开 ↗」「打开课程主页 ↗」按钮会在新标签页打开 Blackboard，点开后就是在 Blackboard 里操作了（比如在那里打开消息会被标成已读），看完关掉那个标签就回到面板。It only **reads** from Blackboard; it cannot submit work or take quizzes, and never marks anything as read (a test guards this). Links open Blackboard itself in a new tab.
 - The sign-in window's debugging port listens on `127.0.0.1` only and closes with the window.
 - Nothing leaves your computer except **phone alerts**, and only if you turn them on: assignment and course names, due times and Blackboard links go to your phone through the Bark (`api.day.app`) or ntfy (`ntfy.sh`) server, or a self-hosted https server you enter. Turn on 隐藏作业名 to send no names or links. Cookies and message text are never sent. Your Bark key or ntfy topic stays in `~/.blackboard-study-hub/settings.json`.
 - Your session is stored encrypted by blackboard-mcp in `~/.blackboard-mcp/`. Never commit that folder or share a copied cURL.
@@ -219,9 +220,9 @@ Enter your school's Blackboard address and click **连接 Blackboard**. A separa
 
 ### Features in detail
 
-- **Five-colour deadlines**: overdue, due soon, open, newly opened and submitted (the legend and the groups in one order), each with a text label and time left. Drag the timeline to choose how long counts as "new" and "due soon"; it is saved for next time. Each title has a ↗ that opens the assignment in Blackboard.
+- **Five-colour deadlines**: overdue, due soon, open, newly opened and submitted (the legend and the groups in one order), each with a text label and time left. Drag the timeline to choose how long counts as "new" and "due soon"; it is saved for next time. Each one has an 在 Blackboard 打开 ↗ (open in Blackboard) button.
 - **Ignore overdue work**: a round × moves an overdue assignment into a folded 已忽略 list (6-second undo, 恢复 to bring it back); it then leaves 今天要注意, the nav count and overdue phone alerts. Stored locally only; it stops counting once Blackboard shows the work handed in.
-- **Links to Blackboard**: a small ↗ after assignments, course messages, announcements and grades, built only on the school's https address. Course pages use the address Blackboard gives for the course; announcements and grades link to the course, since the API gives no page address for them.
+- **Buttons to Blackboard**: 在 Blackboard 打开 ↗ (open in Blackboard) on assignments and message threads, 打开课程主页 ↗ (open the course home) on announcements, grades, course files and tools like Turnitin, since the API gives no page address for them. Built only on the school's https address.
 - **Announcements** from all open courses, newest first. **Grades** per course, with percentages.
 - **Checklist**: opened assignments appear by themselves and tick when Blackboard shows them submitted (a manual tick is only a local mark); below, the student's own to-dos with optional due dates, edit in place, and undo after delete. Saved locally only, and still available while signed out.
 - **Course messages**: message threads from every open course in one list, newest first, with unread counts, filters by unread and course, and the full thread readable in place as plain text. Read-only: replying happens in Blackboard.

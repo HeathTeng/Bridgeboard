@@ -54,6 +54,10 @@ test('text stays at 4.5:1 or better in every palette, even where a card sits on 
       const card = over(t.glass, rgb(spot));
       const row = over(t.row, card);
       for (const k of ['text', 'muted', 'accent']) checks.push([`${k} on card/${spot}`, ratio(rgb(k), card)], [`${k} on row/${spot}`, ratio(rgb(k), row)]);
+      // 在 Blackboard 打开 ↗ / 打开课程主页 ↗: accent words on a button, on a card or a row (hover keeps the fill).
+      for (const [where, under] of [['card', card], ['row', row]]) {
+        checks.push([`Blackboard button on ${where}/${spot}`, ratio(rgb('accent'), over(t.field, under))]);
+      }
       for (const s of ['red', 'orange', 'blue', 'yellow', 'green']) checks.push([`${s} heading/${spot}`, ratio(rgb(s), card)]);
     }
     for (const s of ['red', 'orange', 'blue', 'yellow', 'green']) checks.push([`${s} capsule`, ratio(rgb(s), rgb(`${s}-bg`))]);
@@ -96,7 +100,7 @@ test('must-see notes use the apricot warning box, not the quiet hint box', () =>
     assert.ok(m, words);
     return m[1].split(' ');
   };
-  for (const words of ['相当于你的登录凭证', '这个名字就像密码', '黑色窗口也开着时', '会经过 Bark / ntfy 的服务器']) {
+  for (const words of ['相当于你的登录凭证', '这个名字就像密码', 'Bark 链接就像密码', '黑色窗口也开着时', '会经过 Bark / ntfy 的服务器']) {
     const cls = classOf(words);
     assert.ok(cls.includes('alert') && !cls.includes('tip'), `${words}: ${cls.join(' ')}`);
   }

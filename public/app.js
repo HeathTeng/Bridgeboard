@@ -11,6 +11,7 @@ import { initKeepOpen } from './keep-open.js';
 import { PHASES, STUCK_TEXT, untilLoaded } from './startup.js';
 import { IGNORE_HINT, isIgnored, splitIgnored } from './ignore.js';
 import { initHelp, maybeAskTour, maybeShowGuide } from './help.js';
+import { READ_FAILED, RELOAD, listView, partlyFailed } from './read-state.js';
 import { $, SERVER_LOST, actionLine, api, el, fmt, friendlyText, isSignedOutError, sleep, watchServer } from './ui.js';
 import {
   buildNav, clearError, courseEl, courseText, flagError, glossed, goToSection, initDisplayPanel, initFeedback, initToTop, onDisplayChange, pastFold,
@@ -43,25 +44,22 @@ function showBanner(text, actions = []) {
   $('banner').hidden = !text;
 }
 
-/**
- * A link that opens Blackboard in a new tab: a small ↗ after it, kept on the
- * same line as the last word by a no-break space (read out as
- * 在 Blackboard 里打开), underlined on hover. In demo mode it only says what
- * the real panel would open (see the click handler at the end).
- */
-function bbLink(href, content, { what = '这个作业', cls = 'bb-link' } = {}) {
-  return el('a', { href, target: '_blank', rel: 'noopener noreferrer', class: cls, title: '在 Blackboard 里打开', 'data-what': what },
-    content, el('span', { class: 'bb-arrow', 'aria-hidden': 'true' }, '\u00a0↗'), el('span', { class: 'sr-only' }, ' 在 Blackboard 里打开'));
-}
+/** The words on a Blackboard button: that item itself, or only the course home. */
+const BB_BUTTON = { item: '在 Blackboard 打开', course: '打开课程主页' };
 
 /**
- * Only the ↗ (and a small label, if given) as a link, for rows whose title
- * folds open in the panel: clicking the title still opens it here. Nothing
- * when there is no school https address.
+ * A small capsule button that opens Blackboard in a new tab. Built from DOM
+ * nodes and text only. The address comes from the server, which only makes
+ * them on the school's https host (onSchoolHost in lib/links.js); anything
+ * else gets no button. `kind` is 'item' or 'course' (linkKind). In demo
+ * mode a click only says what the real panel would open (see the click
+ * handler at the end), using `what`.
  */
-function bbArrow(href, what, label = '') {
+function bbButton(href, kind, what) {
   if (!/^https:\/\//.test(href ?? '')) return null;
-  return bbLink(href, label, { what, cls: label ? 'bb-link bb-small' : 'bb-link bb-only' });
+  const words = BB_BUTTON[kind] ?? BB_BUTTON.course;
+  return el('a', { href, target: '_blank', rel: 'noopener noreferrer', class: 'button bb-btn bb-link', 'data-what': kind === 'item' ? what : '这门课的主页' },
+    words, el('span', { class: 'bb-arrow', 'aria-hidden': 'true' }, '\u00a0↗'), el('span', { class: 'sr-only' }, '（新标签页）'));
 }
 
 /** A short line at the bottom of the screen that goes away by itself. */
@@ -96,6 +94,37 @@ function showLogin() {
 }
 const reconnect = { label: '重新连接', onClick: showLogin };
 
+// ---- 读取失败 ----
+
+let readFailed = {}; // the last overview's failed reads: { todo, announcements, grades }
+let reloading = false; // 重新读取 is under way: every such button is grey until it ends
+const FAILED_SUMMARY = '这次没读到，点开看怎么办';
+
+/** The apricot line with 重新读取, for a section whose read failed. */
+function reloadLine(text) {
+  const line = actionLine(text, [{ label: RELOAD, onClick: reloadNow }], 'alert small read-failed');
+  const button = line.querySelector('button');
+  button.classList.add('reload-btn');
+  button.disabled = reloading;
+  return line;
+}
+
+function setReloading(on) {
+  reloading = on;
+  for (const b of document.querySelectorAll('.reload-btn')) b.disabled = on;
+}
+
+/** Reads everything again from Blackboard, once at a time. */
+async function reloadNow() {
+  if (reloading) return;
+  setReloading(true);
+  try {
+    await load(true);
+  } finally {
+    setReloading(false);
+  }
+}
+
 // ---- 截止日期 ----
 
 let todoItems = [];
@@ -115,7 +144,7 @@ function renderToday(rows, now) {
       b.addEventListener('click', () => goToSection(c.section));
       return b;
     })
-    : [el('p', { class: 'muted today-none' }, NOTHING_TODAY)]));
+    : [el('p', { class: 'muted today-none' }, readFailed.todo ? '这次没读到截止日期，看下面「截止日期」里的提示。' : NOTHING_TODAY)]));
 }
 
 let ignoredOpen = false; // the 已忽略 fold; not remembered
@@ -129,9 +158,14 @@ function renderTodo(todo = todoItems) {
   const { shown: withStatus, ignored } = splitIgnored(todo.map((t) => ({ ...t, status: statusOf(t, now, timeline) })), checklist.ignored);
   const urgent = withStatus.filter((t) => t.status === 'overdue' || t.status === 'dueSoon').length;
   setCount('deadlines', urgent, '已逾期和临期的作业');
-  if (signedIn && todoLoaded) setSummary('deadlines', deadlinesSummary(withStatus, now));
+  if (signedIn && todoLoaded) setSummary('deadlines', readFailed.todo ? FAILED_SUMMARY : deadlinesSummary(withStatus, now));
   renderToday(withStatus, now);
   if (!todoLoaded) return;
+  if (listView({ failed: readFailed.todo, count: todo.length }) === 'failed') {
+    flagError('deadlines');
+    return box.append(reloadLine(READ_FAILED));
+  }
+  clearError('deadlines');
   if (!withStatus.length) {
     box.append(el('p', { class: 'muted' }, ignored.length
       ? '没有要提醒的截止事项。忽略的作业在下面的「已忽略」里。'
@@ -150,11 +184,10 @@ function renderTodo(todo = todoItems) {
         el('span', { class: 'count' }, String(ordered.filter((t) => t.status === key).length))),
       items.map((t) => el('div', { class: 'item dl-row' },
         el('div', { class: 'dl-body' },
-          el('div', { class: 'title' }, /^https:\/\//.test(t.link ?? '')
-            ? bbLink(t.link, glossed(t.title))
-            : glossed(t.title)),
+          el('div', { class: 'title' }, glossed(t.title)),
           el('div', { class: 'meta' }, courseEl(t.course), ` · ${fmt.format(new Date(t.due))}`)),
         el('div', { class: 'dl-side' },
+          bbButton(t.link, t.linkKind, '这个作业'),
           el('span', { class: 'pill', title: timeLeft(t, now) }, pillText(t, key, now)),
           key === 'overdue' && t.key ? ignoreButton(t) : null),
       )),
@@ -192,11 +225,9 @@ function ignoredFold(rows, now) {
       back.addEventListener('click', () => setIgnored(t, false));
       return el('div', { class: 'item dl-row' },
         el('div', { class: 'dl-body' },
-          el('div', { class: 'title' }, /^https:\/\//.test(t.link ?? '')
-            ? bbLink(t.link, glossed(t.title))
-            : glossed(t.title)),
+          el('div', { class: 'title' }, glossed(t.title)),
           el('div', { class: 'meta' }, courseEl(t.course), ` · ${fmt.format(new Date(t.due))} · ${timeLeft(t, now)}`)),
-        el('div', { class: 'dl-side' }, back));
+        el('div', { class: 'dl-side' }, bbButton(t.link, t.linkKind, '这个作业'), back));
     }));
   fold.open = ignoredOpen;
   fold.addEventListener('toggle', () => { ignoredOpen = fold.open; });
@@ -318,10 +349,14 @@ function renderMessages() {
     setSummary('messages', LOADING);
     return box.replaceChildren(note('正在读取消息…'));
   }
-  const { threads } = messageData;
-  setSummary('messages', messagesSummary(threads));
+  const { threads, failed = 0 } = messageData;
+  const view = listView({ failed: failed > 0, count: threads.length });
+  setSummary('messages', failed ? FAILED_SUMMARY : messagesSummary(threads));
+  if (failed) flagError('messages'); else clearError('messages');
   if (todoLoaded) renderTodo(); // 今天要注意 counts unread messages
-  if (!threads.length) return box.replaceChildren(note('还没有课程消息。老师或同学在 Blackboard 里给你发消息后，会出现在这里。'));
+  if (view === 'failed') return box.replaceChildren(reloadLine(READ_FAILED));
+  const partly = failed ? reloadLine(partlyFailed(failed)) : null;
+  if (view === 'empty') return box.replaceChildren(note('还没有课程消息。老师或同学在 Blackboard 里给你发消息后，会出现在这里。'));
 
   // Earlier terms go into their own group at the end of the dropdown.
   const options = splitByTerm(courseOptions(threads), past);
@@ -337,6 +372,7 @@ function renderMessages() {
   if (!shown.length) return box.replaceChildren(note(msgFilter.unreadOnly ? '没有未读消息 🎉' : '这门课还没有消息。'));
   const { current, earlier } = splitByTerm(shown, past, (t) => t.courseId);
   box.replaceChildren(...[
+    partly,
     ...(current.length ? current.map(threadRow) : [note('本学期的课程还没有消息。')]),
     earlier.length ? pastFold('messages', courseCount(earlier, (t) => t.courseId), earlier.map(threadRow)) : null,
   ].filter(Boolean));
@@ -351,7 +387,7 @@ function threadRow(t) {
         t.unread ? el('span', { class: 'unread-tag' }, el('span', { class: 'dot' }), `未读 ${t.unread}`) : null,
         el('span', { class: 'msg-with' }, t.with),
         timeSpan(t.time),
-        bbArrow(t.link, '这门课的消息页', '在 Blackboard 打开'),
+        bbButton(t.link, t.linkKind, '这段对话'),
         el('span', { class: 'chev' })),
       el('div', { class: 'meta' }, courseEl(t.course), ` · 最新：${t.from || '—'} · 共 ${t.total} 条`),
       el('div', { class: 'msg-preview' }, t.preview)),
@@ -380,13 +416,11 @@ async function showThread(t, body) {
         isSignedOutError(err) ? [reconnect] : [{ label: '重试', onClick: () => showThread(t, body) }]));
     }
   }
-  const link = /^https:\/\//.test(t.link ?? '')
-    ? bbLink(t.link, '在 Blackboard 中打开', { what: '这条消息', cls: 'button bb-link' })
-    : note('（暂时没有 Blackboard 链接）');
+  const link = bbButton(t.link, t.linkKind, '这段对话') ?? note('（暂时没有 Blackboard 链接）');
   body.replaceChildren(
     ...threadCache.get(key).map(messageBlock),
     el('div', { class: 'msg-foot' }, link,
-      note('要回复，请点「在 Blackboard 中打开」。在这里看过的消息，Blackboard 上仍会显示为未读，直到你在 Blackboard 里打开。')),
+      note('要回复，请点「在 Blackboard 打开」。在这里看过的消息，Blackboard 上仍会显示为未读，直到你在 Blackboard 里打开。')),
   );
 }
 
@@ -517,9 +551,7 @@ function assignmentRow(t, now) {
     (done) => setMark(t, done),
     byBlackboard,
   );
-  const title = /^https:\/\//.test(t.link ?? '')
-    ? bbLink(t.link, glossed(t.title))
-    : glossed(t.title);
+  const title = glossed(t.title);
   return el('div', { class: `cl-row${t.done ? ' is-done' : ''}` }, box,
     el('div', { class: 'cl-body' },
       el('div', { class: 'cl-text' }, title),
@@ -527,7 +559,7 @@ function assignmentRow(t, now) {
       t.manual ? el('div', { class: 'cl-note' }, '已手动标记完成（不会在 Blackboard 上提交）') : null,
       byBlackboard ? el('div', { class: 'cl-note' }, 'Blackboard 显示已提交') : null,
     ),
-    el('div', { class: 'cl-side' }, dueLabel(t.due), badge(t, now)));
+    el('div', { class: 'cl-side' }, bbButton(t.link, t.linkKind, '这个作业'), dueLabel(t.due), badge(t, now)));
 }
 
 /** The due time, small and grey at the right of a row; nothing when there is none. */
@@ -537,6 +569,7 @@ function renderAssignments() {
   const box = $('clAssignments');
   if (!signedIn) return box.replaceChildren(el('p', { class: 'muted small' }, '重新连接 Blackboard 后会显示作业。'));
   if (!todoLoaded) return box.replaceChildren(el('p', { class: 'muted small' }, '正在读取作业…'));
+  if (readFailed.todo && !todoItems.length) return box.replaceChildren(reloadLine(READ_FAILED));
   const now = Date.now();
   const { open, done } = sortRows(assignmentRows(todoItems, checklist.marks, now), (r) => r.due);
   // Ignored overdue work stays in the list (grey 已忽略) but no longer counts as open.
@@ -785,6 +818,7 @@ async function loadChecklist() {
 function showSignedOut() {
   signedIn = false;
   connected = false;
+  $('logoutBtn').hidden = true;
   $('main').hidden = false;
   $('sectionNav').hidden = false;
   $('main').classList.add('signed-out');
@@ -796,15 +830,19 @@ function showSignedOut() {
   renderMessages();
 }
 
-function renderAnnouncements(list) {
+function renderAnnouncements(list, failed = 0) {
   const box = $('annList');
   box.replaceChildren();
-  setSummary('announcements', announcementsSummary(list));
-  if (!list.length) return box.append(el('p', { class: 'muted' }, '最近没有公告。老师发布公告后会出现在这里。'));
+  const view = listView({ failed: failed > 0, count: list.length });
+  setSummary('announcements', failed ? FAILED_SUMMARY : announcementsSummary(list));
+  if (failed) flagError('announcements'); else clearError('announcements');
+  if (view === 'failed') return box.append(reloadLine(READ_FAILED));
+  if (failed) box.append(reloadLine(partlyFailed(failed)));
+  if (view === 'empty') return box.append(el('p', { class: 'muted' }, '最近没有公告。老师发布公告后会出现在这里。'));
   for (const a of list.slice(0, 12)) {
     box.append(el('div', { class: 'item' },
       el('details', {},
-        el('summary', {}, el('span', { class: 'title' }, glossed(a.title)), bbArrow(a.link, '这门课的页面')),
+        el('summary', {}, el('span', { class: 'title' }, glossed(a.title)), bbButton(a.link, 'course')),
         el('div', { class: 'body' }, a.body || '（无正文）'),
       ),
       el('div', { class: 'meta' }, courseEl(a.course), a.date ? ` · ${fmt.format(new Date(a.date))}` : ''),
@@ -822,7 +860,7 @@ function gradeCourse(c) {
   return el('details', { class: 'course grade-course' },
     el('summary', {},
       courseEl(c.course),
-      bbArrow(c.link, '这门课的页面'),
+      bbButton(c.link, 'course'),
       el('span', { class: 'grade-avg' }, avg == null ? el('span', { class: 'muted' }, '还没有分数') : [bar(avg), `平均 ${avg}%`]),
       waiting ? el('span', { class: 'tag' }, `${waiting} 项等待评分`) : null),
     el('table', {},
@@ -839,9 +877,14 @@ function renderGrades(courses) {
   const box = $('gradeList');
   box.replaceChildren();
   const withItems = courses.filter((c) => c.items.length);
+  const failed = courses.filter((c) => c.failed).length;
+  const view = listView({ failed: failed > 0, count: withItems.length });
   const { current, earlier } = splitByTerm(withItems, past, (c) => c.courseId);
-  setSummary('grades', gradesSummary(current));
-  if (!withItems.length) return box.append(el('p', { class: 'muted' }, '还没有成绩。老师公布成绩后会出现在这里。'));
+  setSummary('grades', failed ? FAILED_SUMMARY : gradesSummary(current));
+  if (failed) flagError('grades'); else clearError('grades');
+  if (view === 'failed') return box.append(reloadLine(READ_FAILED));
+  if (failed) box.append(reloadLine(partlyFailed(failed)));
+  if (view === 'empty') return box.append(el('p', { class: 'muted' }, '还没有成绩。老师公布成绩后会出现在这里。'));
   if (!current.length) box.append(el('p', { class: 'muted' }, '本学期的课程还没有成绩。'));
   box.append(...current.map(gradeCourse));
   if (earlier.length) box.append(pastFold('grades', earlier.length, earlier.map(gradeCourse)));
@@ -961,7 +1004,8 @@ function fileCourse(course) {
   const body = el('div', {});
   const details = el('details', { class: 'course' },
     el('summary', {}, check, courseEl(course.name), course.open ? null : el('span', { class: 'tag' }, '已结课'),
-      el('span', { class: 'meta', 'data-meta': course.id }, '点击展开')),
+      el('span', { class: 'meta', 'data-meta': course.id }, '点击展开'),
+      bbButton(course.link, 'course')),
     body,
   );
   // A click on the checkbox should not also fold the course open or shut.
@@ -1211,6 +1255,7 @@ async function load(refresh = false) {
     $('login').hidden = true;
     focusConnect = false;
     connected = true;
+    $('logoutBtn').hidden = Boolean(status.demo);
     const mins = status.secondsLeft ? Math.round(status.secondsLeft / 60) : null;
     const who = `${status.name}${status.demo ? '（示例数据）' : ''}${mins ? ` · 登录还剩约 ${mins} 分钟` : ''}`;
     $('main').hidden = false;
@@ -1230,12 +1275,13 @@ async function load(refresh = false) {
     showStuck(false);
     setWho(who);
     overviewData = data;
+    readFailed = data.failed ?? {};
     updatePast();
     setCourseNames(data.courses.map((c) => c.name));
     todoLoaded = true;
     renderTodo(data.todo);
     renderAssignments();
-    renderAnnouncements(data.announcements);
+    renderAnnouncements(data.announcements, readFailed.announcements);
     renderGrades(data.grades);
     renderCourseFiles(data.courses, refresh);
     // Course names are known now: redraw messages with short names if chosen.
@@ -1278,8 +1324,11 @@ $('connect').addEventListener('click', async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url }),
     });
+    // While the window is open: which account to use, and a warning when Microsoft says it is the wrong one.
+    $('connectTip').hidden = false;
     while (job.state === 'running') {
-      $('connectMsg').textContent = job.message;
+      $('connectWrong').hidden = !job.wrongAccount;
+      $('connectMsg').textContent = job.wrongAccount ? '' : job.message;
       await sleep(1000);
       job = await api('/api/connect');
     }
@@ -1289,7 +1338,33 @@ $('connect').addEventListener('click', async () => {
     $('connectMsg').textContent = `没有连接成功：${err.message}`;
   } finally {
     $('connect').disabled = false;
+    $('connectTip').hidden = true;
+    $('connectWrong').hidden = true;
   }
+});
+
+// 退出登录: forget the Blackboard login on this computer; the checklist and settings stay.
+const LOGOUT_CONFIRM = '退出后需要重新登录 Blackboard。你的清单和设置会保留。';
+
+$('logoutBtn').addEventListener('click', async () => {
+  if (!window.confirm(LOGOUT_CONFIRM)) return;
+  $('logoutBtn').disabled = true;
+  try {
+    await api('/api/logout', json('POST', {}));
+  } catch (err) {
+    return showBanner(`没有退出成功：${err.message}`);
+  } finally {
+    $('logoutBtn').disabled = false;
+  }
+  loadRun++; // a read still under way no longer fills the page
+  overviewData = null;
+  messageData = null;
+  showStuck(false);
+  showBanner('');
+  setWho('已退出登录');
+  showSignedOut();
+  $('connectMsg').textContent = '已退出登录。需要的话先改学校网址，再点「连接 Blackboard」。';
+  showLogin();
 });
 
 $('doLogin').addEventListener('click', async () => {

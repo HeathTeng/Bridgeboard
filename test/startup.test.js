@@ -279,5 +279,5 @@ test('page: sign-in check and course read retry with timeouts; the checklist doe
   // The checklist starts loading next to load(), not after it.
   assert.match(app, /loadChecklist\(\);\ninitPush\(\);\nload\(\);\s*$/);
   const server = read('../server.js');
-  assert.match(server, /'startup\.js'\]\);/, 'served to the page like the other shared rules');
+  assert.match(server, /const SHARED = new Set\(\[[^\]]*'startup\.js'/, 'served to the page like the other shared rules');
 });
