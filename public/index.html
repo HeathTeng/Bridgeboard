@@ -75,7 +75,7 @@
 
 <!-- Shown signed in or not, until 不再提示 (remembered in this browser, see keep-open.js): closing the black window stops everything. -->
 <div id="keepOpen" class="keep-open-wrap">
-  <p class="keep-open-bar" role="note">使用时请保持黑色窗口开着，关掉它面板和手机提醒都会停止。</p>
+  <p class="keep-open-bar" role="note">使用时请保持<span class="os-win">黑色窗口</span><span class="os-mac">终端窗口</span>开着，关掉它面板和手机提醒都会停止。</p>
   <button id="keepOpenOff" type="button" class="keep-open-off">不再提示</button>
 </div>
 
@@ -179,7 +179,7 @@
     <p class="howto tip small" hidden>作业快到期时，让手机响一下。手机只负责收提醒，点开提醒会打开 Blackboard 的作业网页；面板本身还是在这台电脑上运行。</p>
     <label class="switch push-main"><input id="pushOn" type="checkbox"> <span>打开手机提醒</span></label>
     <p class="alert push-privacy">打开后，作业名、课程名、截止时间和 Blackboard 链接会经过 Bark / ntfy 的服务器发到你的手机。不想发作业名，可以打开「隐藏作业名」。</p>
-    <p class="alert">只有这台电脑开着、没有睡眠、黑色窗口也开着时，才会发提醒。保险起见，也可以用右上角的「导出到日历」把截止日期放进手机日历。</p>
+    <p class="alert">只有这台电脑开着、没有睡眠<span class="os-mac">（也没合上盖子）</span>、<span class="os-win">黑色窗口</span><span class="os-mac">终端窗口</span>也开着时，才会发提醒。保险起见，也可以用右上角的「导出到日历」把截止日期放进手机日历。</p>
     <div id="pushStatus" class="push-status small" aria-live="polite"></div>
     <p id="pushMsg" class="small" aria-live="polite"></p>
 
@@ -258,6 +258,12 @@
         <label class="switch"><input id="autostartOn" type="checkbox"> <span>开电脑后自动在后台运行面板</span></label>
         <p class="muted small push-hint">登录 Windows 后，黑色窗口会自动最小化在任务栏里，不会弹出浏览器，提醒照常检查。想看面板时照常双击 start.bat。</p>
         <div id="autostartMsg"></div>
+      </fieldset>
+
+      <!-- Mac: no 开机自动启动 yet, so no switch that does nothing (push.js shows this instead). -->
+      <fieldset id="autostartMac" class="push-step" hidden>
+        <legend>第 3 步：开机自动启动</legend>
+        <p class="alert">Mac 版暂时不能开机自动启动，要收提醒请保持终端窗口开着。电脑睡眠或合上盖子时不会发提醒。</p>
       </fieldset>
     </div>
   </section>

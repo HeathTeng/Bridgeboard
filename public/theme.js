@@ -16,8 +16,19 @@ try {
   // The keep-the-black-window-open reminder: hidden once 不再提示 was clicked
   // for this version of its wording. Change the wording, raise the version
   // here and in keep-open.js (a test checks they match).
-  var KEEP_OPEN_VERSION = '1';
+  var KEEP_OPEN_VERSION = '2';
   if (localStorage.getItem('bridgeboard-keep-open-dismissed') === KEEP_OPEN_VERSION) root.dataset.keepOpenOff = '';
 } catch (e) {
   // No storage (private window, blocked site data): the page still follows the computer.
 }
+// Windows or Mac words (黑色窗口 / 终端窗口): what the server said last time,
+// else a guess from the browser, which runs on the same computer. layout.js
+// corrects it from /api/ping.
+try {
+  var os = null;
+  try {
+    os = localStorage.getItem('bridgeboard-os');
+  } catch (e) {}
+  if (os !== 'mac' && os !== 'windows') os = typeof navigator !== 'undefined' && /Mac/.test(navigator.platform || '') ? 'mac' : 'windows';
+  document.documentElement.dataset.os = os;
+} catch (e) {}

@@ -368,6 +368,8 @@ p.action-line.fail { display: flex; }
 .stuck .alert { margin-bottom: 0; }
 .stuck[hidden] { display: none; }
 .inline-action { padding: 4px 12px; font-size: 13px; }
+/* Words that differ on Windows and Mac come as span pairs; data-os on <html> (theme.js, layout.js) shows one. */
+:root:not([data-os="mac"]) .os-mac, :root[data-os="mac"] .os-win { display: none; }
 /* The one always-visible reminder under the title card: pale red, deep red text, calm (no blinking, no icon). */
 /* 不再提示 sits inside the bar on the right; the text keeps clear of it, so it is never cut off, even when the text wraps. */
 .keep-open-wrap { position: relative; margin: 0 0 16px; }

@@ -61,6 +61,18 @@
 
 **升级**：下载新版，解压到任意位置就行。清单、设置和登录都保存在电脑的用户文件夹里，会自动保留。开了 **开机自动启动** 又换了文件夹位置的话，在面板里把它关掉再打开一次。
 
+### Mac 版（试用）
+
+Mac 版正在请同学试用，有问题请点面板最下面的 **意见反馈** 告诉我们。
+
+1. **下载** [`Bridgeboard-Mac.zip`](https://github.com/HeathTeng/Bridgeboard/releases/latest/download/Bridgeboard-Mac.zip)，双击解压（Safari 可能已经自动解压好了）。苹果芯片和 Intel 的 Mac 都能用，不用另外装 Node.js。
+2. **双击 `start.command`**。第一次 Mac 会说「无法验证开发者」或「Apple 无法检查其是否包含恶意软件」，因为我们没有向苹果付费签名。放行一次：
+   - **macOS 14 及更早**：按住 Control 点 `start.command`（或右键）→「打开」→ 再点「打开」。
+   - **macOS 15 及以后**：先双击一次，看到拦截后点「完成」；打开「系统设置 → 隐私与安全性」，拉到下面点「仍要打开」，输入电脑密码。
+3. 会打开「终端」窗口（通常是白色的），**用的时候别关**，浏览器自动打开面板。之后和 Windows 一样连接 Blackboard（要装 Edge 或 Chrome）。
+
+Mac 版暂时不能开机自动启动；电脑睡眠或合上盖子时不会发提醒。示例数据：双击 `demo.command`。
+
 <details>
 <summary><b>连接 Blackboard 的截图</b></summary>
 
@@ -178,7 +190,8 @@
 - [x] 全新界面设计 · New UI design
 - [x] 新手引导、💡 帮助和可搜索的常见问题，逾期作业可以忽略，↗ 直接打开 Blackboard（v0.3.0，第一阶段完成）· First-run guide, help button and searchable FAQ, ignoring overdue work, ↗ links to Blackboard (v0.3.0, first stage done)
 - [ ] 第一阶段收尾：访问统计、整体审核、公开推广 · Wrapping up: visitor statistics, a full review, the public launch
-- [ ] 推广之后：Mac 版、官网英文版 · After the launch: a Mac version and an English website
+- [ ] 推广之前：Mac 版（试用中） · Before the launch: a Mac version (in trial)
+- [ ] 推广之后：官网英文版 · After the launch: an English website
 - [ ] 之后：课程概览和复习资料包，用你自己的 API Key 做 AI 答疑 · Later: course overview, study packs, AI Q&A with your own API key
 
 <details>
@@ -197,6 +210,8 @@ blackboard-mcp comes bundled in `vendor/`, so nothing else is needed. To use you
 ### Quick start
 
 **Windows:** download the portable zip from [Releases](https://github.com/HeathTeng/Bridgeboard/releases/latest), unzip it and double-click `start.bat`. Node.js is included.
+
+**Mac (trial):** download [`Bridgeboard-Mac.zip`](https://github.com/HeathTeng/Bridgeboard/releases/latest/download/Bridgeboard-Mac.zip), unzip it and double-click `start.command` (Node.js for Apple silicon and Intel is included). The first time, macOS blocks it because the app is not signed: on macOS 14 and earlier, Control-click → Open → Open; on macOS 15 and later, click Done, then System Settings → Privacy & Security → Open Anyway. Keep the Terminal window open. Starting at login is Windows-only for now.
 
 **Command line** (any OS, Node.js 22.5+):
 
@@ -239,7 +254,7 @@ Enter your school's Blackboard address and click **连接 Blackboard**. A separa
 npm test
 ```
 
-To publish a release, push a version tag (for example `git tag v0.3.0 && git push origin v0.3.0`). The Release workflow runs the tests, builds the Windows portable zip with `scripts/build-portable.sh` (the app plus Node.js's `node.exe`, checked against nodejs.org's SHA-256 list) and attaches it to a GitHub Release as `Bridgeboard-<version>-windows.zip` and `Bridgeboard-Windows.zip`.
+To publish a release, push a version tag (for example `git tag v0.3.0 && git push origin v0.3.0`). The Release workflow runs the tests, builds the Windows portable zip with `scripts/build-portable.sh` (the app plus Node.js's `node.exe`, checked against nodejs.org's SHA-256 list) and attaches it to a GitHub Release as `Bridgeboard-<version>-windows.zip` and `Bridgeboard-Windows.zip`. It then builds the Mac zip with `scripts/build-mac.sh` (the app plus Node.js for Apple silicon and Intel, `runtime/node-arm64` and `runtime/node-x64`, also SHA-256 checked; `start.command` picks one) as `Bridgeboard-<version>-mac.zip` and `Bridgeboard-Mac.zip`. To preview the Mac wording on Windows, run `node server.js --demo --os=mac`.
 
 </details>
 

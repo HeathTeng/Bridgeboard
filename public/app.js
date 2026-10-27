@@ -8,12 +8,12 @@ import {
 } from './section-summary.js';
 import { initPush, reloadPush, setDueSoonHours } from './push.js';
 import { initKeepOpen } from './keep-open.js';
-import { PHASES, STUCK_TEXT, untilLoaded } from './startup.js';
+import { PHASES, stuckText, untilLoaded } from './startup.js';
 import { IGNORE_HINT, isIgnored, splitIgnored } from './ignore.js';
 import { initHelp, maybeAskTour, maybeShowGuide } from './help.js';
 import { READ_FAILED, RELOAD, listView, partlyFailed } from './read-state.js';
 import { WAITING, gradeAverage, gradeWords } from './grade-view.js';
-import { $, SERVER_LOST, actionLine, api, el, fmt, friendlyText, isSignedOutError, sleep, watchServer } from './ui.js';
+import { $, actionLine, api, el, fmt, friendlyText, isSignedOutError, osWords, serverLost, sleep, watchServer } from './ui.js';
 import {
   buildNav, clearError, courseEl, courseText, flagError, glossed, goToSection, initDisplayPanel, initFeedback, initToTop, onDisplayChange, pastFold,
   scrollToHash, setCount, setCourseNames, setDisplay, setSignedIn, setSummary,
@@ -1100,7 +1100,7 @@ $('saveDir').addEventListener('click', async () => {
 
 $('pickDir').addEventListener('click', async () => {
   $('pickDir').disabled = true;
-  $('dirMsg').textContent = '已经打开选择文件夹的窗口（如果没看到，看看任务栏）…';
+  $('dirMsg').textContent = `已经打开选择文件夹的窗口（如果没看到，看看${osWords().taskbar}）…`;
   try {
     const r = await api('/api/pick-folder', { method: 'POST' });
     if (r.downloadDir) {
@@ -1210,7 +1210,7 @@ function showStuck(on) {
   stuckShown = on;
   $('stuck').hidden = !on;
   $('stuck').replaceChildren(...(on
-    ? [actionLine(STUCK_TEXT, [{ label: '再试一次', onClick: () => load(true) }, reconnect], 'alert small')]
+    ? [actionLine(stuckText(osWords().window), [{ label: '再试一次', onClick: () => load(true) }, reconnect], 'alert small')]
     : []));
   if (on) setWho('还没读到 Blackboard 的数据');
 }
@@ -1438,7 +1438,7 @@ onDisplayChange(() => { if (messageData) renderMessages(); });
 
 watchServer(
   () => {
-    $('serverDown').textContent = SERVER_LOST;
+    $('serverDown').textContent = serverLost();
     $('serverDown').hidden = false;
   },
   () => {

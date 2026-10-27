@@ -1,10 +1,12 @@
 // Page layout: folding sections, the section navigation bar, 回到顶部, the
 // 显示设置 panel (with the theme), short or full course names and the 意见反馈
 // link in the footer. Sections and switches come from display.js.
-import { $, api, el } from './ui.js';
+import { $, api, el, osWords } from './ui.js';
 import { DISPLAY_DEFAULTS, SECTIONS, isOpen, navArrows, navReveal, navStep, shortNames } from './display.js';
 import { LOADING } from './section-summary.js';
 import { glossSegments } from './glossary.js';
+import { wordsFor } from './os-words.js';
+import { useGuideOs } from './guide.js';
 
 let display = { ...DISPLAY_DEFAULTS };
 let signedIn = false;
@@ -532,16 +534,36 @@ export function initToTop() {
 export const FEEDBACK_ADDRESS = 'feedback@getboundly.com';
 
 /** A mailto link with the version filled in. The panel itself sends nothing. */
-export function feedbackHref(version) {
+export function feedbackHref(version, os) {
   const v = version ? `v${version}` : '';
-  const body = [`版本：${v || '（不知道就留空）'}`, 'Windows 版本：（例如 Windows 11，请填写）', '', '想说的话：', ''].join('\r\n');
+  const w = wordsFor(os);
+  const body = [`版本：${v || '（不知道就留空）'}`, `${w.system} 版本：（例如 ${w.systemExample}，请填写）`, '', '想说的话：', ''].join('\r\n');
   return `mailto:${FEEDBACK_ADDRESS}?subject=${encodeURIComponent(`Bridgeboard 意见反馈 ${v}`.trim())}&body=${encodeURIComponent(body)}`;
+}
+
+/**
+ * The words that depend on the system (黑色窗口 on Windows, 终端窗口 on a Mac).
+ * Spans in index.html come in pairs (.os-win / .os-mac) and CSS shows one by
+ * data-os on <html>; theme.js sets it from the last visit before the first
+ * paint, this keeps it right and remembers it.
+ */
+export function applyOs(os) {
+  const o = os === 'mac' ? 'mac' : 'windows';
+  document.documentElement.dataset.os = o;
+  try {
+    localStorage.setItem('bridgeboard-os', o);
+  } catch {
+    // No storage: right for this visit, guessed again next time.
+  }
+  useGuideOs(o);
+  $('downloadDir').placeholder = `还没有选择，例如 ${wordsFor(o).folderExample}`;
 }
 
 export function initFeedback() {
   // Works without the version too: the plain address is already in the HTML.
   api('/api/ping').then((p) => {
-    $('feedbackLink').href = feedbackHref(p.version);
+    applyOs(p.os);
+    $('feedbackLink').href = feedbackHref(p.version, p.os);
     if (p.version) $('appVersion').textContent = ` · 当前版本 v${p.version}`;
   }).catch(() => {});
   $('feedbackCopy').addEventListener('click', async () => {
@@ -549,7 +571,7 @@ export function initFeedback() {
       await navigator.clipboard.writeText(FEEDBACK_ADDRESS);
       $('feedbackMsg').textContent = '已复制，粘贴到你的邮箱里发送。';
     } catch {
-      $('feedbackMsg').textContent = '没能自动复制，请用鼠标选中地址后按 Ctrl+C。';
+      $('feedbackMsg').textContent = `没能自动复制，请用鼠标选中地址后按 ${osWords().copyKey}。`;
     }
   });
 }

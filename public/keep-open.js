@@ -5,7 +5,7 @@
 
 export const KEEP_OPEN_KEY = 'bridgeboard-keep-open-dismissed';
 // Same number as KEEP_OPEN_VERSION in theme.js (a test checks they match).
-export const KEEP_OPEN_VERSION = '1';
+export const KEEP_OPEN_VERSION = '2';
 
 /** Hides the reminder for good once 不再提示 is clicked. Works without storage too (just for this visit). */
 export function initKeepOpen({ wrap, button, root, storage }) {

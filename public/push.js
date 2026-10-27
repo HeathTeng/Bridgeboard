@@ -1,6 +1,6 @@
 // 手机提醒: the settings card. The server keeps the Bark key and ntfy topic and
 // only ever shows them masked; a new ntfy topic is shown in full until tested.
-import { $, actionLine, api, el, fmt } from './ui.js';
+import { $, actionLine, api, el, fmt, osWords } from './ui.js';
 import { relativeTime } from './message-view.js';
 import { alertsSummary } from './section-summary.js';
 import { clearError, flagError, setAlertsOn, setSummary } from './layout.js';
@@ -37,7 +37,7 @@ function renderStatus() {
   box.replaceChildren(...[
     el('p', { class: 'action-line' }, el('span', { class: 'ok' }, `✅ 提醒已打开。${last}${next}`), checkNow),
     s.lastResult ? el('p', { class: 'muted' }, `结果：${s.lastResult}`) : null,
-    view.demo ? el('p', { class: 'muted' }, '示例模式不会真的发送，只会在黑色窗口里显示本来会发什么。') : null,
+    view.demo ? el('p', { class: 'muted' }, `示例模式不会真的发送，只会在${osWords().window}里显示本来会发什么。`) : null,
   ].filter(Boolean));
 }
 
@@ -50,6 +50,8 @@ function renderTopic() {
 function renderAutostart() {
   const a = view.autostart ?? {};
   $('autostartBox').hidden = !a.supported;
+  // Mac: a note instead of a switch that would do nothing.
+  $('autostartMac').hidden = !a.mac;
   if (!a.supported) return;
   $('autostartOn').checked = Boolean(a.on);
   $('autostartOn').disabled = Boolean(view.demo);
@@ -151,7 +153,7 @@ async function sendTest() {
     view = await api('/api/push/test', json('POST', body));
     $('barkLink').value = '';
     msg('pushTestMsg', view.demo
-      ? '示例模式不会真的发送（黑色窗口里显示了本来会发的内容）。真实使用时，手机会收到「测试成功 ✅」。'
+      ? `示例模式不会真的发送（${osWords().window}里显示了本来会发的内容）。真实使用时，手机会收到「测试成功 ✅」。`
       : '已发送 ✅ 手机收到「测试成功」了吗？收到了就可以打开最上面的「打开手机提醒」。没收到的话，看看手机是否允许 Bark / ntfy 发通知、是否开着勿扰或专注模式。', 'small ok');
     render();
   } catch (err) {
@@ -167,7 +169,7 @@ async function trial() {
   try {
     const r = await api('/api/push/trial', json('POST', { volume: Number($('strongVolume').value) }));
     msg('trialMsg', r.demo
-      ? '示例模式不会真的发送（黑色窗口里显示了本来会发的内容）。'
+      ? `示例模式不会真的发送（${osWords().window}里显示了本来会发的内容）。`
       : view.provider === 'bark'
         ? `已发送 ✅ 手机应该用音量 ${r.volume} 的闹钟铃声响起来，静音时也会响。没响的话，看看 iPhone 设置 → 通知 → Bark 里「重要警告」有没有打开。`
         : '已发送 ✅ 手机应该以最高优先级响起来。', 'small ok push-hint');
@@ -224,7 +226,7 @@ export function initPush() {
   $('strongVolume').replaceChildren(...[10, 9, 8, 7, 6, 5].map((v) => el('option', { value: String(v) }, v === 10 ? '10（最大）' : v === 5 ? '5（约等于普通铃声）' : String(v))));
   $('pushOn').addEventListener('change', () => {
     const on = $('pushOn').checked;
-    save({ enabled: on }, on ? '提醒已打开。电脑开着、黑色窗口开着时，每 15 分钟检查一次。' : '提醒已关闭，不会再发到手机。');
+    save({ enabled: on }, on ? `提醒已打开。电脑开着、${osWords().window}开着时，每 15 分钟检查一次。` : '提醒已关闭，不会再发到手机。');
   });
   for (const r of document.querySelectorAll('input[name="pushProvider"]')) {
     r.addEventListener('change', async () => {

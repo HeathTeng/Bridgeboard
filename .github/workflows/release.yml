@@ -1,4 +1,4 @@
-# Builds the Windows portable zip and attaches it to a GitHub Release.
+# Builds the Windows portable zip and the Mac zip (trial) and attaches them to a GitHub Release.
 # Push a tag like v0.2.0 to publish, or run it by hand from the Actions tab.
 name: Release
 
@@ -25,12 +25,17 @@ jobs:
       - run: npm test
       - name: Build the portable zip
         run: scripts/build-portable.sh "${{ github.event.inputs.version || github.ref_name }}"
+      # After the Windows build, which empties dist/ first. A trial: if it fails,
+      # the Windows zips are still published (the step shows red in Actions).
+      - name: Build the Mac zip
+        continue-on-error: true
+        run: bash scripts/build-mac.sh "${{ github.event.inputs.version || github.ref_name }}"
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ github.event.inputs.version || github.ref_name }}
         run: |
-          notes="Bridgeboard（Blackboard 学习面板）Windows 便携版：下载 Bridgeboard-$VERSION-windows.zip 或 Bridgeboard-Windows.zip（两个是同一个文件），解压后双击 start.bat 即可使用，不需要安装 Node.js。从旧版本升级不用搬任何东西，清单和设置都会保留。详细步骤见 README。"
+          notes="Bridgeboard（Blackboard 学习面板）Windows 便携版：下载 Bridgeboard-$VERSION-windows.zip 或 Bridgeboard-Windows.zip（两个是同一个文件），解压后双击 start.bat 即可使用，不需要安装 Node.js。从旧版本升级不用搬任何东西，清单和设置都会保留。详细步骤见 README。Mac 版是试用版：下载 Bridgeboard-$VERSION-mac.zip 或 Bridgeboard-Mac.zip（两个是同一个文件），解压后双击 start.command；第一次打开要在系统里放行一次，步骤见压缩包里的 HOW-TO-USE.txt。"
           if gh release view "$VERSION" >/dev/null 2>&1; then
             gh release upload "$VERSION" dist/*.zip --clobber
           else

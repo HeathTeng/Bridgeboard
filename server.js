@@ -18,10 +18,15 @@ import { PushService } from './lib/push-service.js';
 import { SENT_FILE } from './lib/push.js';
 import { autostartStatus, setAutostart, supported as autostartSupported } from './lib/autostart.js';
 import { guideStore } from './lib/guide-state.js';
+import { canPick, pickFolder } from './lib/pick-folder.js';
+import { serverOs, wordsFor } from './lib/os-words.js';
 
 const DEMO = process.argv.includes('--demo');
 // Started by 开机自动启动: minimised, no browser window.
 const BACKGROUND = process.argv.includes('--background');
+// 'windows' or 'mac' (or 'other'): the page words its reminders for it. --os=mac previews the Mac words on Windows.
+const OS = serverOs(process.platform, process.argv);
+const WORDS = wordsFor(OS);
 const APP_DIR = import.meta.dirname;
 const VERSION = JSON.parse(readFileSync(join(APP_DIR, 'package.json'), 'utf8')).version;
 // The app id keeps the old name so a copy of an older version still running is recognised.
@@ -31,7 +36,7 @@ const HOST = '127.0.0.1';
 const PUBLIC = join(import.meta.dirname, 'public');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png' };
 // Rules the page and the server share, served from lib/.
-const SHARED = new Set(['status.js', 'checklist-rows.js', 'message-view.js', 'display.js', 'terms.js', 'section-summary.js', 'glossary.js', 'faq.js', 'tour.js', 'ignore.js', 'startup.js', 'read-state.js', 'grade-view.js']);
+const SHARED = new Set(['status.js', 'checklist-rows.js', 'message-view.js', 'display.js', 'terms.js', 'section-summary.js', 'glossary.js', 'faq.js', 'tour.js', 'ignore.js', 'startup.js', 'read-state.js', 'os-words.js', 'grade-view.js']);
 // The only files from docs/ the page may read: the guide's screenshots. The FAQ text comes from /api/faq.
 const GUIDE_IMAGES = new Map([['/guide-img/connect.png', 'step-connect.png'], ['/guide-img/download.png', 'step-download.png']]);
 const DOCS = join(APP_DIR, 'docs');
@@ -122,6 +127,8 @@ const push = new PushService({
 });
 
 function pushView(view = push.view()) {
+  // Mac has no 开机自动启动 yet: the page shows a note instead of the switch.
+  if (OS === 'mac') return { ...view, autostart: { supported: false, on: false, mac: true } };
   const autostart = DEMO ? { supported: autostartSupported(), on: false } : autostartStatus(APP_DIR);
   return { ...view, autostart };
 }
@@ -207,134 +214,7 @@ async function startDownload(items, exportText) {
   return downloadJob;
 }
 
-// The native Windows folder picker: the Explorer-style IFileOpenDialog with
-// FOS_PICKFOLDERS, through a few lines of C# compiled by Add-Type (no extra
-// dependency). If that fails for any reason, the older FolderBrowserDialog is
-// shown instead, so a folder can always be picked; BBHUB_PICKER=classic forces
-// it. PowerShell -STA is needed for both; a hidden top-most owner window keeps
-// the dialog in front of the browser. Prints the chosen path, or nothing.
-const PICK_FOLDER = `
-[Console]::OutputEncoding = [Text.Encoding]::UTF8
-Add-Type -AssemblyName System.Windows.Forms
-$title = '选择保存课程文件的文件夹（可以选 U 盘）'
-$start = ''
-if ($env:BBHUB_START -and (Test-Path -LiteralPath $env:BBHUB_START)) { $start = $env:BBHUB_START }
-$owner = New-Object System.Windows.Forms.Form -Property @{ TopMost = $true; ShowInTaskbar = $false }
-$picked = $null
-$shown = $false
-if ($env:BBHUB_PICKER -ne 'classic') {
-  try {
-    Add-Type -TypeDefinition @'
-using System;
-using System.Runtime.InteropServices;
-
-public static class BbHubFolderPicker {
-  [ComImport, Guid("DC1C5A9C-E88A-4DDE-A5A1-60F82A20AEF7")]
-  private class FileOpenDialog {}
-
-  // Methods in vtable order, up to the last one used (GetResult).
-  [ComImport, Guid("42F85136-DB7E-439C-85F1-E4075D135FC8"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-  private interface IFileDialog {
-    [PreserveSig] int Show(IntPtr parent);
-    void SetFileTypes(uint count, IntPtr specs);
-    void SetFileTypeIndex(uint index);
-    void GetFileTypeIndex(out uint index);
-    void Advise(IntPtr events, out uint cookie);
-    void Unadvise(uint cookie);
-    void SetOptions(uint options);
-    void GetOptions(out uint options);
-    void SetDefaultFolder(IShellItem item);
-    void SetFolder(IShellItem item);
-    void GetFolder(out IShellItem item);
-    void GetCurrentSelection(out IShellItem item);
-    void SetFileName([MarshalAs(UnmanagedType.LPWStr)] string name);
-    void GetFileName([MarshalAs(UnmanagedType.LPWStr)] out string name);
-    void SetTitle([MarshalAs(UnmanagedType.LPWStr)] string title);
-    void SetOkButtonLabel([MarshalAs(UnmanagedType.LPWStr)] string label);
-    void SetFileNameLabel([MarshalAs(UnmanagedType.LPWStr)] string label);
-    void GetResult(out IShellItem item);
-  }
-
-  [ComImport, Guid("43826D1E-E718-42EE-BC55-A1E261C37BFE"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-  private interface IShellItem {
-    void BindToHandler(IntPtr bindContext, ref Guid handler, ref Guid iid, out IntPtr result);
-    void GetParent(out IShellItem parent);
-    void GetDisplayName(uint form, [MarshalAs(UnmanagedType.LPWStr)] out string name);
-    void GetAttributes(uint mask, out uint attributes);
-    void Compare(IShellItem other, uint hint, out int order);
-  }
-
-  [DllImport("shell32.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
-  private static extern void SHCreateItemFromParsingName(string path, IntPtr bindContext, ref Guid iid, out IShellItem item);
-
-  private const uint FOS_PICKFOLDERS = 0x20, FOS_FORCEFILESYSTEM = 0x40, FOS_PATHMUSTEXIST = 0x800;
-  private const uint SIGDN_FILESYSPATH = 0x80058000;
-  private const int ERROR_CANCELLED = unchecked((int)0x800704C7);
-
-  /** The chosen folder, or null if the student cancelled. Throws on any other failure. */
-  public static string Pick(IntPtr owner, string title, string start) {
-    IFileDialog dialog = (IFileDialog)new FileOpenDialog();
-    try {
-      uint options;
-      dialog.GetOptions(out options);
-      dialog.SetOptions(options | FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM | FOS_PATHMUSTEXIST);
-      dialog.SetTitle(title);
-      if (!String.IsNullOrEmpty(start)) {
-        try {
-          Guid iid = typeof(IShellItem).GUID;
-          IShellItem folder;
-          SHCreateItemFromParsingName(start, IntPtr.Zero, ref iid, out folder);
-          dialog.SetFolder(folder);
-        } catch (Exception) {
-          // A folder that has gone away (USB drive unplugged): open at the default place.
-        }
-      }
-      int hr = dialog.Show(owner);
-      if (hr == ERROR_CANCELLED) return null;
-      Marshal.ThrowExceptionForHR(hr);
-      IShellItem item;
-      dialog.GetResult(out item);
-      string path;
-      item.GetDisplayName(SIGDN_FILESYSPATH, out path);
-      return path;
-    } finally {
-      Marshal.ReleaseComObject(dialog);
-    }
-  }
-}
-'@
-    $picked = [BbHubFolderPicker]::Pick($owner.Handle, $title, $start)
-    $shown = $true
-  } catch {
-    [Console]::Error.WriteLine("new folder picker failed, using the classic one: $($_.Exception.Message)")
-  }
-}
-if (-not $shown) {
-  $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
-  $dialog.Description = $title
-  $dialog.ShowNewFolderButton = $true
-  if ($start) { $dialog.SelectedPath = $start }
-  if ($dialog.ShowDialog($owner) -eq [System.Windows.Forms.DialogResult]::OK) { $picked = $dialog.SelectedPath }
-}
-if ($picked) { $picked }
-$owner.Dispose()
-`;
-
 let picking = false;
-
-function pickFolder(start) {
-  return new Promise((resolve, reject) => {
-    execFile(
-      'powershell.exe',
-      ['-NoProfile', '-NonInteractive', '-STA', '-ExecutionPolicy', 'Bypass', '-Command', PICK_FOLDER],
-      { env: { ...process.env, BBHUB_START: start ?? '' }, windowsHide: true, timeout: 10 * 60 * 1000 },
-      (err, stdout, stderr) => {
-        if (stderr.trim()) console.log(stderr.trim());
-        return err ? reject(err) : resolve(stdout.trim() || null);
-      },
-    );
-  });
-}
 
 function send(res, status, body, type = 'application/json; charset=utf-8', extra = {}) {
   res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...extra });
@@ -373,7 +253,7 @@ const server = createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   try {
     if (url.pathname === '/api/ping') {
-      return send(res, 200, { app: APP_ID, version: VERSION, demo: DEMO });
+      return send(res, 200, { app: APP_ID, version: VERSION, demo: DEMO, os: OS });
     }
     if (url.pathname === '/api/push' || url.pathname.startsWith('/api/push/')) return await pushRoute(req, res, url);
     if (url.pathname === '/api/status') {
@@ -459,11 +339,11 @@ const server = createServer(async (req, res) => {
       });
     }
     if (url.pathname === '/api/settings' && req.method === 'GET') {
-      if (DEMO) return send(res, 200, { downloadDir: 'E:\\课程资料', canPick: false, demo: true, ...demoDurations, display: demoDisplay, guideSeen: guide.seen(), tourSeen: tour.seen() });
+      if (DEMO) return send(res, 200, { downloadDir: WORDS.folderExample, canPick: false, demo: true, ...demoDurations, display: demoDisplay, guideSeen: guide.seen(), tourSeen: tour.seen() });
       const saved = loadSettings();
       return send(res, 200, {
         downloadDir: saved.downloadDir ?? '',
-        canPick: process.platform === 'win32',
+        canPick: canPick(),
         ...durations(saved),
         display: displayOf(saved.display),
         guideSeen: guide.seen(),
@@ -500,7 +380,7 @@ const server = createServer(async (req, res) => {
       return send(res, 400, { error: '示例模式不会保存文件，保存位置只是示例。' });
     }
     if (url.pathname === '/api/pick-folder' && req.method === 'POST') {
-      if (process.platform !== 'win32') return send(res, 400, { error: '这台电脑不支持弹出选择窗口，请直接输入文件夹路径。' });
+      if (!canPick()) return send(res, 400, { error: '这台电脑不支持弹出选择窗口，请直接输入文件夹路径。' });
       if (picking) return send(res, 409, { error: '选择文件夹的窗口已经打开了，可能在其他窗口后面。' });
       picking = true;
       try {
@@ -593,14 +473,15 @@ server.on('error', async (err) => {
     .then((r) => (r.ok ? r.json() : null))
     .catch(() => null);
   if (running?.app === APP_ID && running.demo === DEMO) {
-    // Exit code 0 lets start.bat close this extra window by itself.
+    // Exit code 0 lets start.bat / start.command close this extra window by itself.
     if (!BACKGROUND) console.log(`\n面板已经在运行，已为你打开：${link}\n`);
     openPage();
     return;
   }
   if (running?.app === APP_ID) {
     console.log(`\n面板已经在以${running.demo ? '示例模式' : '真实数据'}运行：${link}`);
-    console.log('想切换的话，请先关掉之前的黑色窗口（开机自动启动的那个最小化在任务栏里），再重新双击。\n');
+    const autostarted = OS === 'windows' ? '（开机自动启动的那个最小化在任务栏里）' : '';
+    console.log(`想切换的话，请先关掉之前的${WORDS.window}${autostarted}，再重新双击。\n`);
   } else {
     console.log(`\n端口 ${PORT} 被其他程序占用了。可以关掉占用它的程序后重试。\n`);
   }
@@ -610,7 +491,7 @@ server.on('error', async (err) => {
 server.listen(PORT, HOST, () => {
   console.log(`\nBridgeboard ${DEMO ? '(示例模式) ' : ''}已启动：${link}`);
   console.log('关闭这个窗口即可停止。\n');
-  if (BACKGROUND) console.log('这是开机自动启动的后台窗口，手机提醒会照常检查。要看面板，双击 start.bat 或在浏览器打开上面的网址。\n');
+  if (BACKGROUND) console.log(`这是开机自动启动的后台窗口，手机提醒会照常检查。要看面板，双击 ${WORDS.launcher} 或在浏览器打开上面的网址。\n`);
   openPage();
   push.start();
 });

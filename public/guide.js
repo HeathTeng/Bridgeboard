@@ -9,6 +9,9 @@
 // The same pages feed two guides: 💡 帮助 shows them as cards (GUIDE_PAGES),
 // and the first start walks through the real page (TOUR_STEPS below), which
 // borrows the pages' words instead of having its own.
+//
+// macLines: the same page's words on a Mac, put in place by useGuideOs once
+// the page knows the system (/api/ping), so the cards and the tour both follow.
 
 export const GUIDE_PAGES = [
   {
@@ -29,6 +32,12 @@ export const GUIDE_PAGES = [
       '只有电脑开着、黑色窗口开着才会发提醒。',
       '黑色窗口可以最小化，但不要点 ✕ 关掉。',
       '电脑不要睡眠，否则面板停了，手机也收不到提醒。',
+    ],
+    // On a Mac the panel runs in 终端 (usually a white window); useGuideOs swaps these in.
+    macLines: [
+      '只有电脑开着、终端窗口开着才会发提醒。',
+      '终端窗口可以最小化（点左上角的黄色圆点），但不要点红色圆点关掉，也不要退出「终端」。',
+      '电脑睡眠或合上盖子时不会发提醒，手机也收不到。',
     ],
   },
   {
@@ -101,6 +110,13 @@ export const GUIDE_PAGES = [
     ],
   },
 ];
+
+const winLines = new Map(GUIDE_PAGES.filter((p) => p.macLines).map((p) => [p.id, p.lines]));
+
+/** Uses the Mac words ('mac') or the Windows ones (anything else) on every page that has both. */
+export function useGuideOs(os) {
+  for (const p of GUIDE_PAGES) if (p.macLines) p.lines = os === 'mac' ? p.macLines : winLines.get(p.id);
+}
 
 /**
  * The spotlight tour on the real page. page: whose words to use (lines: only

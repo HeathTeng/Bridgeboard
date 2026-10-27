@@ -55,5 +55,5 @@ test('FAQ: first start and the phone alert steps come first in their groups', ()
   assert.equal(firstIn('手机提醒'), '### 手机提醒一步步设置（苹果）');
   assert.ok(faq.indexOf('### 手机提醒一步步设置（安卓）') < faq.indexOf('### 在手机上能打开面板吗？'));
   // The most important entry stays the very first question.
-  assert.equal(faq.split('\n').find((l) => l.startsWith('### ')), '### 只有电脑开着、黑色窗口开着才会发提醒');
+  assert.equal(faq.split('\n').find((l) => l.startsWith('### ')), '### 只有电脑开着、黑色窗口（Mac 上是终端窗口）开着才会发提醒');
 });

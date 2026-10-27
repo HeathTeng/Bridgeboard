@@ -79,16 +79,41 @@ test('text stays at 4.5:1 or better in every palette, even where a card sits on 
   }
 });
 
-/** Runs public/theme.js with this localStorage and returns what it put on <html>. */
-function themeScript(stored) {
+/** Runs public/theme.js with this localStorage (and browser) and returns what it put on <html>. */
+function runTheme(stored, navigator) {
   const dataset = {};
   const context = {
     document: { documentElement: { dataset } },
     localStorage: { getItem: (k) => (k in stored ? stored[k] : null) },
+    ...(navigator ? { navigator } : {}),
   };
   vm.runInNewContext(readFileSync(new URL('../public/theme.js', import.meta.url), 'utf8'), context);
   return dataset;
 }
+
+/** The theme part only: data-os is checked on its own below. */
+function themeScript(stored) {
+  const { os, ...theme } = runTheme(stored);
+  return theme;
+}
+
+test('Windows or Mac words before the page draws: the last answer from the server, else the browser', () => {
+  assert.equal(runTheme({}).os, 'windows', 'nothing known: the Windows words');
+  assert.equal(runTheme({}, { platform: 'MacIntel' }).os, 'mac', 'a Mac browser');
+  assert.equal(runTheme({}, { platform: 'Win32' }).os, 'windows');
+  assert.equal(runTheme({ 'bridgeboard-os': 'mac' }, { platform: 'Win32' }).os, 'mac', 'the server said mac (also --os=mac)');
+  assert.equal(runTheme({ 'bridgeboard-os': 'windows' }, { platform: 'MacIntel' }).os, 'windows');
+  // Blocked storage still gets the guess.
+  const dataset = {};
+  vm.runInNewContext(readFileSync(new URL('../public/theme.js', import.meta.url), 'utf8'), {
+    document: { documentElement: { dataset } },
+    localStorage: { getItem: () => { throw new Error('blocked'); } },
+    navigator: { platform: 'MacIntel' },
+  });
+  assert.equal(dataset.os, 'mac');
+  // CSS shows one word of each pair.
+  assert.match(css, /:root:not\(\[data-os="mac"\]\) \.os-mac, :root\[data-os="mac"\] \.os-win \{ display: none; \}/);
+});
 
 test('no white flash: the saved 外观 and 护眼 are on <html> before the page draws', () => {
   assert.deepEqual(themeScript({}), {}, 'nothing saved: follow the computer');
@@ -104,11 +129,12 @@ test('no white flash: the saved 外观 and 护眼 are on <html> before the page 
 test('must-see notes use the apricot warning box, not the quiet hint box', () => {
   const html = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
   const classOf = (words) => {
-    const m = html.match(new RegExp(`<p class="([^"]+)">[^<]*${words}`));
+    // Windows / Mac word pairs are spans inside the line.
+    const m = html.replace(/<\/?span[^>]*>/g, '').match(new RegExp(`<p class="([^"]+)">[^<]*${words}`));
     assert.ok(m, words);
     return m[1].split(' ');
   };
-  for (const words of ['相当于你的登录凭证', '这个名字就像密码', 'Bark 链接就像密码', '黑色窗口也开着时', '会经过 Bark / ntfy 的服务器']) {
+  for (const words of ['相当于你的登录凭证', '这个名字就像密码', 'Bark 链接就像密码', '黑色窗口终端窗口也开着时', 'Mac 版暂时不能开机自动启动', '会经过 Bark / ntfy 的服务器']) {
     const cls = classOf(words);
     assert.ok(cls.includes('alert') && !cls.includes('tip'), `${words}: ${cls.join(' ')}`);
   }
@@ -120,17 +146,19 @@ test('must-see notes use the apricot warning box, not the quiet hint box', () =>
 
 test('the keep-the-black-window-open reminder: once, always shown, above 今天要注意', () => {
   const html = readFileSync(new URL('../public/index.html', import.meta.url), 'utf8');
-  const text = '使用时请保持黑色窗口开着，关掉它面板和手机提醒都会停止。';
-  const bar = html.match(/<p class="keep-open-bar"([^>]*)>([^<]*)<\/p>/);
+  const bar = html.match(/<p class="keep-open-bar"([^>]*)>(.*?)<\/p>/);
   assert.ok(bar, 'the bar is there');
-  assert.equal(bar[2], text);
+  // One sentence, with the window named for this computer (CSS shows one of the pair).
+  const words = (os) => bar[2].replace(os === 'mac' ? /<span class="os-win">[^<]*<\/span>/g : /<span class="os-mac">[^<]*<\/span>/g, '').replace(/<[^>]+>/g, '');
+  assert.equal(words('windows'), '使用时请保持黑色窗口开着，关掉它面板和手机提醒都会停止。');
+  assert.equal(words('mac'), '使用时请保持终端窗口开着，关掉它面板和手机提醒都会停止。');
   assert.ok(!/hidden/.test(bar[1]), 'never hidden: shown signed in and signed out');
   assert.ok(!/[!！]/.test(bar[2]), 'no exclamation marks');
   // Under the title card, above 今天要注意, outside <main> (which is hidden before sign-in).
   const at = html.indexOf('keep-open-bar');
   assert.ok(at > html.indexOf('</header>') && at < html.indexOf('id="today"') && at < html.indexOf('<main'));
   // Said once: the footer no longer repeats it.
-  assert.equal(html.split('黑色窗口开着，关掉它').length - 1, 1);
+  assert.equal(html.split('开着，关掉它面板').length - 1, 1);
   // Pale red with deep red text; the 4.5:1 check above covers --error-text on --error-bg in every palette.
   assert.match(css, /\.keep-open-bar \{[^}]*background: var\(--error-bg\); color: var\(--error-text\)/);
   assert.ok(!/\.keep-open-bar[^{]*\{[^}]*animation/.test(css), 'does not blink');

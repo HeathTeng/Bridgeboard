@@ -1,6 +1,8 @@
 // Small helpers shared by the page: DOM building, requests with plain-Chinese
 // errors, and noticing when the local server (the black window) has gone.
 
+import { wordsFor } from './os-words.js';
+
 export const $ = (id) => document.getElementById(id);
 
 export function el(tag, attrs = {}, ...children) {
@@ -17,7 +19,15 @@ export function el(tag, attrs = {}, ...children) {
 export const fmt = new Intl.DateTimeFormat('zh-CN', { month: 'numeric', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' });
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-export const SERVER_LOST = '面板已停止运行（可能是黑色窗口被关掉了）。请重新双击 start.bat。';
+/** The system the panel runs on: data-os on <html>, set by theme.js and then by applyOs in layout.js. */
+export const currentOs = () => (document.documentElement.dataset.os === 'mac' ? 'mac' : 'windows');
+/** 黑色窗口 / 终端窗口, start.bat / start.command and the like for this computer. */
+export const osWords = () => wordsFor(currentOs());
+
+export function serverLost() {
+  const w = osWords();
+  return `面板已停止运行（可能是${w.window}被关掉了）。请重新双击 ${w.launcher}。`;
+}
 const SIGNED_OUT_CODES = ['NOT_AUTHENTICATED', 'SESSION_EXPIRED', 'NOT_CONFIGURED'];
 const CJK = /[㐀-鿿]/;
 
@@ -30,7 +40,7 @@ export const isSignedOutError = (err) => SIGNED_OUT_CODES.includes(err?.code);
  */
 export function friendlyText(text, code, status) {
   if (SIGNED_OUT_CODES.includes(code)) return '登录已过期，请重新连接 Blackboard。';
-  if (code === 'SERVER_DOWN') return SERVER_LOST;
+  if (code === 'SERVER_DOWN') return serverLost();
   if (text && CJK.test(text)) return text;
   if (code === 'FORBIDDEN' || status === 403) return '没有权限查看这部分内容。';
   if (status === 404) return '找不到要找的内容，请点右上角的「刷新」再试。';
@@ -90,7 +100,7 @@ export function watchServer(down, up) {
  * towards SERVER_DOWN.
  */
 export async function api(path, { timeoutMs, ...options } = {}) {
-  if (serverDown) throw Object.assign(new Error(SERVER_LOST), { code: 'SERVER_DOWN' });
+  if (serverDown) throw Object.assign(new Error(serverLost()), { code: 'SERVER_DOWN' });
   let res;
   try {
     res = await fetch(path, timeoutMs ? { ...options, signal: AbortSignal.timeout(timeoutMs) } : options);
@@ -98,7 +108,7 @@ export async function api(path, { timeoutMs, ...options } = {}) {
     console.error(path, err);
     if (err.name === 'TimeoutError') throw Object.assign(new Error('学校服务器回应太慢，正在重试。'), { code: 'TIMEOUT' });
     noteFailure();
-    throw Object.assign(new Error(SERVER_LOST), { code: 'SERVER_DOWN' });
+    throw Object.assign(new Error(serverLost()), { code: 'SERVER_DOWN' });
   }
   failures = 0;
   const data = await res.json().catch((err) => {

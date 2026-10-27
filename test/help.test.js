@@ -65,7 +65,7 @@ test('FAQ: grouped by ##, only 「最重要的一条」 open, and it is the firs
   assert.ok(groups.length >= 6);
   assert.equal(groups[0].title, FIRST_OPEN);
   assert.deepEqual(groups.filter((g) => g.open).map((g) => g.title), [FIRST_OPEN]);
-  assert.equal(groups[0].questions[0].title, '只有电脑开着、黑色窗口开着才会发提醒');
+  assert.equal(groups[0].questions[0].title, '只有电脑开着、黑色窗口（Mac 上是终端窗口）开着才会发提醒');
   for (const g of groups) assert.ok(g.questions.length > 0, `${g.title} has questions`);
   const install = groups.find((g) => g.title === '安装和打开');
   assert.ok(install.questions.some((q) => q.title === '怎么重新看新手引导？'));
@@ -141,7 +141,7 @@ test('guide: page 2 is the black-window rule, in the same words as the first FAQ
   const p = GUIDE_PAGES[1];
   assert.equal(p.id, 'keep-open');
   const first = parseFaq(FAQ).groups[0].questions[0].title;
-  assert.ok(p.lines[0].startsWith(first), 'same sentence as FAQ 第一条');
+  assert.ok(p.lines[0].startsWith(first.replace('（Mac 上是终端窗口）', '')), 'same sentence as FAQ 第一条 (Windows words; test/mac.test.js checks the Mac ones)');
   assert.match(p.lines.join(''), /黑色窗口/);
   assert.match(p.lines.join(''), /睡眠/);
 });
