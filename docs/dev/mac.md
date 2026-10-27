@@ -1,4 +1,4 @@
-# Mac 版（试用，v0.3.3 起）
+# Mac 版（试用，v0.3.4 起）
 
 目标：Mac 同学下载一个 zip，解压，双击 `start.command` 就能用，不用装 Node.js。功能和 Windows 版一样；只读、只在本机、零依赖这些规则不变。我们没有 Mac，下面「请 Mac 同学验证」里的事只能在真 Mac 上确认。
 
@@ -37,4 +37,4 @@
 16. 第一次启动时，Mac 有没有问「是否允许 node 接受传入网络连接」（防火墙）？面板只监听本机，按理不会问。
 17. 意见反馈的邮件里写的是「macOS 版本」吗？
 
-试用通过后：README 下载区加 Mac 按钮；官网仓库在 `div.bb-actions` 里 `#bbDownload` 旁边加 Mac 下载按钮，链到 `/releases/latest/download/Bridgeboard-Mac.zip`。有问题就出 v0.3.4。
+试用通过后：README 下载区加 Mac 按钮；官网仓库在 `div.bb-actions` 里 `#bbDownload` 旁边加 Mac 下载按钮，链到 `/releases/latest/download/Bridgeboard-Mac.zip`。有问题就出 v0.3.5。

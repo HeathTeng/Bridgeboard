@@ -20,9 +20,16 @@ const read = (file) => readFileSync(join(ROOT, file), 'utf8');
 
 // ---- start.command: which Node.js it picks ----
 
-/** bash: Git Bash on Windows (skipped when missing), else the one on PATH. */
+/**
+ * bash by its full path: Git Bash on Windows (skipped when missing), else the
+ * one on PATH. A full path, because the launcher runs with a PATH of fake tools
+ * only, and Linux looks the command up in that PATH.
+ */
 function findBash() {
-  if (process.platform !== 'win32') return 'bash';
+  if (process.platform !== 'win32') {
+    const found = spawnSync('sh', ['-c', 'command -v bash'], { encoding: 'utf8' }).stdout?.trim();
+    return found || null;
+  }
   const git = 'C:\\Program Files\\Git\\bin\\bash.exe';
   return existsSync(git) ? git : null;
 }
