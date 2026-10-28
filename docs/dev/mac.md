@@ -37,4 +37,4 @@
 16. 第一次启动时，Mac 有没有问「是否允许 node 接受传入网络连接」（防火墙）？面板只监听本机，按理不会问。
 17. 意见反馈的邮件里写的是「macOS 版本」吗？
 
-试用通过后：README 下载区加 Mac 按钮；官网仓库在 `div.bb-actions` 里 `#bbDownload` 旁边加 Mac 下载按钮，链到 `/releases/latest/download/Bridgeboard-Mac.zip`。有问题就出 v0.3.5。
+试用结果：同学在 macOS 15 和 macOS 26（苹果芯片）上试过，下载、放行、示例、真实账号登录都正常。v0.3.6 起以试用版公开：README 顶部和官网 `div.bb-actions`（`#bbDownload` 旁边，`data-umami-event="download-mac"`）都有 Mac 下载按钮，链到 `/releases/latest/download/Bridgeboard-Mac.zip`。

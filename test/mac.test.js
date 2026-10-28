@@ -231,6 +231,13 @@ test('os words: the system from Node, --os only for previews, the same things na
   assert.match(stuckText(wordsFor('mac').window), /等待期间终端窗口不要关/);
 });
 
+test('demo and real data both running: how to switch, in the words of each system', () => {
+  assert.equal(wordsFor('windows').switchHint, '想切换的话，请先关掉之前的黑色窗口（开机自动启动的那个最小化在任务栏里），再重新双击。');
+  // Which Terminal window was unclear to students: quit Terminal from the menu bar instead.
+  assert.equal(wordsFor('mac').switchHint, '想切换的话：点屏幕最上面的『终端』菜单 →『退出终端』，再双击 start.command。');
+  assert.match(read('server.js'), /console\.log\(`\$\{WORDS\.switchHint\}\\n`\);/);
+});
+
 test('guide page 2 and FAQ 第一条: the same rule, in the words of each system', () => {
   const first = parseFaq(read('docs/FAQ.md')).groups[0].questions[0].title;
   assert.equal(first, '只有电脑开着、黑色窗口（Mac 上是终端窗口）开着才会发提醒');

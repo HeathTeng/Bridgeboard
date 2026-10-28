@@ -10,11 +10,13 @@
 
 [![最新版本](https://img.shields.io/github/v/release/HeathTeng/Bridgeboard?label=%E6%9C%80%E6%96%B0%E7%89%88%E6%9C%AC&color=2f8f6a)](https://github.com/HeathTeng/Bridgeboard/releases/latest)
 ![Windows](https://img.shields.io/badge/Windows-%E5%85%8D%E5%AE%89%E8%A3%85-1f3d33)
+![macOS](https://img.shields.io/badge/macOS-%E8%AF%95%E7%94%A8%E7%89%88-5B7C99)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-5B7C99)](LICENSE)
 
 ### [⬇ 下载 Windows 版 / Download for Windows](https://github.com/HeathTeng/Bridgeboard/releases/latest/download/Bridgeboard-Windows.zip)
+### [⬇ 下载 Mac 版（试用）/ Download for Mac (trial)](https://github.com/HeathTeng/Bridgeboard/releases/latest/download/Bridgeboard-Mac.zip)
 
-免费 · 解压后双击 `start.bat` · 不用安装任何东西<br>
+免费 · 解压后双击 `start.bat`（Mac 双击 `start.command`）· 不用安装任何东西<br>
 [官网 getboundly.com](https://getboundly.com) · [常见问题](docs/FAQ.md) · [意见反馈](mailto:feedback@getboundly.com)
 
 <img src="docs/screenshot.png" width="860" alt="Bridgeboard 截图（示例数据）">
@@ -63,7 +65,7 @@
 
 ### Mac 版（试用）
 
-Mac 版正在请同学试用，有问题请点面板最下面的 **意见反馈** 告诉我们。
+Mac 版已经过同学试用，目前是试用版。有问题请点面板最下面的 **意见反馈** 告诉我们。
 
 1. **下载** [`Bridgeboard-Mac.zip`](https://github.com/HeathTeng/Bridgeboard/releases/latest/download/Bridgeboard-Mac.zip)，双击解压（Safari 可能已经自动解压好了）。苹果芯片和 Intel 的 Mac 都能用，不用另外装 Node.js。
 2. **双击 `start.command`**。第一次 Mac 会说「无法验证开发者」或「Apple 无法检查其是否包含恶意软件」，因为我们没有向苹果付费签名。放行一次：
@@ -190,7 +192,7 @@ Mac 版暂时不能开机自动启动；电脑睡眠或合上盖子时不会发�
 - [x] 全新界面设计 · New UI design
 - [x] 新手引导、💡 帮助和可搜索的常见问题，逾期作业可以忽略，↗ 直接打开 Blackboard（v0.3.0，第一阶段完成）· First-run guide, help button and searchable FAQ, ignoring overdue work, ↗ links to Blackboard (v0.3.0, first stage done)
 - [ ] 第一阶段收尾：访问统计、整体审核、公开推广 · Wrapping up: visitor statistics, a full review, the public launch
-- [ ] 推广之前：Mac 版（试用中） · Before the launch: a Mac version (in trial)
+- [x] Mac 试用版已发布（v0.3.6）· Mac trial released (v0.3.6)
 - [ ] 推广之后：官网英文版 · After the launch: an English website
 - [ ] 之后：课程概览和复习资料包，用你自己的 API Key 做 AI 答疑 · Later: course overview, study packs, AI Q&A with your own API key
 
@@ -211,7 +213,7 @@ blackboard-mcp comes bundled in `vendor/`, so nothing else is needed. To use you
 
 **Windows:** download the portable zip from [Releases](https://github.com/HeathTeng/Bridgeboard/releases/latest), unzip it and double-click `start.bat`. Node.js is included.
 
-**Mac (trial):** download [`Bridgeboard-Mac.zip`](https://github.com/HeathTeng/Bridgeboard/releases/latest/download/Bridgeboard-Mac.zip), unzip it and double-click `start.command` (Node.js for Apple silicon and Intel is included). The first time, macOS blocks it because the app is not signed: on macOS 14 and earlier, Control-click → Open → Open; on macOS 15 and later, click Done, then System Settings → Privacy & Security → Open Anyway. Keep the Terminal window open. Starting at login is Windows-only for now.
+**Mac (trial):** tried by students on macOS 15 and 26 (Apple silicon); still a trial. Download [`Bridgeboard-Mac.zip`](https://github.com/HeathTeng/Bridgeboard/releases/latest/download/Bridgeboard-Mac.zip), unzip it and double-click `start.command` (Node.js for Apple silicon and Intel is included). The first time, macOS blocks it because the app is not signed: on macOS 14 and earlier, Control-click → Open → Open; on macOS 15 and later, click Done, then System Settings → Privacy & Security → Open Anyway. Keep the Terminal window open. Starting at login is Windows-only for now.
 
 **Command line** (any OS, Node.js 22.5+):
 

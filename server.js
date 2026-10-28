@@ -480,8 +480,7 @@ server.on('error', async (err) => {
   }
   if (running?.app === APP_ID) {
     console.log(`\n面板已经在以${running.demo ? '示例模式' : '真实数据'}运行：${link}`);
-    const autostarted = OS === 'windows' ? '（开机自动启动的那个最小化在任务栏里）' : '';
-    console.log(`想切换的话，请先关掉之前的${WORDS.window}${autostarted}，再重新双击。\n`);
+    console.log(`${WORDS.switchHint}\n`);
   } else {
     console.log(`\n端口 ${PORT} 被其他程序占用了。可以关掉占用它的程序后重试。\n`);
   }

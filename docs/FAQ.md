@@ -61,7 +61,7 @@
 Mac：双击 `Bridgeboard-Mac.zip` 就会解压，打开 `Bridgeboard` 文件夹，双击里面的 `start.command`。放在「下载」文件夹里直接用也可以。
 
 ### 用 Mac 能用吗？
-能，Mac 版现在是**试用版**。下载 [Bridgeboard-Mac.zip](https://github.com/HeathTeng/Bridgeboard/releases/latest/download/Bridgeboard-Mac.zip)，解压后双击 `start.command`；苹果芯片（M1 及以后）和 Intel 的 Mac 都能用，程序会自己选，不用知道自己是哪种。功能和 Windows 版一样，只有两处不同：
+能，**Mac 试用版已发布**。下载 [Bridgeboard-Mac.zip](https://github.com/HeathTeng/Bridgeboard/releases/latest/download/Bridgeboard-Mac.zip)，解压后双击 `start.command`；苹果芯片（M1 及以后）和 Intel 的 Mac 都能用，程序会自己选，不用知道自己是哪种。功能和 Windows 版一样，只有两处不同：
 - 面板运行在「终端」窗口里（通常是白色的），用的时候不要关。
 - 暂时不能开机自动启动，要收手机提醒就保持终端窗口开着。电脑睡眠或合上盖子时不会发提醒。
 
