@@ -376,15 +376,14 @@ const server = createServer(async (req, res) => {
       if (DEMO) return send(res, 400, { error: '示例模式不会保存文件，保存位置只是示例。' });
       return send(res, 200, saveSettings({ downloadDir: checkDownloadDir(body.downloadDir) }));
     }
-    if (DEMO && url.pathname === '/api/pick-folder' && req.method === 'POST') {
-      return send(res, 400, { error: '示例模式不会保存文件，保存位置只是示例。' });
-    }
     if (url.pathname === '/api/pick-folder' && req.method === 'POST') {
       if (!canPick()) return send(res, 400, { error: '这台电脑不支持弹出选择窗口，请直接输入文件夹路径。' });
       if (picking) return send(res, 409, { error: '选择文件夹的窗口已经打开了，可能在其他窗口后面。' });
       picking = true;
       try {
-        const chosen = await pickFolder(loadSettings().downloadDir);
+        // Demo mode opens the real window, so it can be tried, but saves nothing.
+        const chosen = await pickFolder(DEMO ? '' : loadSettings().downloadDir);
+        if (DEMO) return send(res, 200, { downloadDir: null, demoPicked: chosen });
         if (!chosen) return send(res, 200, { downloadDir: null });
         return send(res, 200, saveSettings({ downloadDir: checkDownloadDir(chosen) }));
       } finally {

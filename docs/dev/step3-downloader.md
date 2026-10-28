@@ -45,7 +45,7 @@ A new section 课程文件 (or a tab next to the existing sections) with:
 
 - `GET /api/courses/:id/files` → the file list for one course (cache for 5 minutes like the overview).
 - `GET /api/settings`, `POST /api/settings { downloadDir }`. Store in `~/.blackboard-study-hub/settings.json`.
-- `POST /api/pick-folder` → opens the native picker and returns the chosen path (or null if cancelled). On Windows use PowerShell `-STA` with `System.Windows.Forms.FolderBrowserDialog`, no extra dependency; make the dialog appear in front. On other systems return an error and let the user type a path.
+- `POST /api/pick-folder` → opens the native picker and returns the chosen path (or null if cancelled). On Windows use PowerShell `-STA` with the Explorer-style IFileOpenDialog (FOS_PICKFOLDERS, C# through Add-Type; `System.Windows.Forms.FolderBrowserDialog` as the fallback), no extra dependency; make the dialog appear in front. Before any window: DPI awareness (per-monitor v2, else `SetProcessDPIAware`) and `EnableVisualStyles`; never switch the console to UTF-8 (it turns the dialog's own words English), write the path as UTF-8 bytes instead; buttons 选择这个文件夹 / 文件夹：. In demo mode the window opens but nothing is saved (`demoPicked`). On other systems return an error and let the user type a path.
 - `POST /api/download { items, exportText }` starts a job and returns 202; `GET /api/download` returns progress; `POST /api/download/stop`. Same job pattern as `/api/connect`.
 - `POST /api/open-folder` opens the target folder in Explorer.
 - Keep the existing Host/Origin checks on every new route. Only accept a download dir that is an absolute path and exists (or can be created); never write outside it (check every resolved path stays inside the dir).

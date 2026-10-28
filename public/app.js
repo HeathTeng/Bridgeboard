@@ -1110,6 +1110,8 @@ $('pickDir').addEventListener('click', async () => {
       $('dirMsg').textContent = '已选择，下次打开会记住。';
       updateFilesSummary();
       resetDownloadedMarks();
+    } else if (r.demoPicked) {
+      $('dirMsg').textContent = `示例模式不会保存，你选的是：${r.demoPicked}`;
     } else {
       $('dirMsg').textContent = '没有选择文件夹。';
     }
